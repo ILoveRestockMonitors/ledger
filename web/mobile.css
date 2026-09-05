@@ -1,0 +1,42 @@
+/* Phone layout. Loaded after the theme sheets so these rules win below 700px. */
+#mobile-nav { display: none; }
+@media (max-width: 700px) {
+  :root { --mobile-nav-height: 70px; }
+  html, body { width: 100%; max-width: 100%; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom)); }
+  #app, #main, #view { min-width: 0; max-width: 100%; }
+  #app { display: block; width: 100%; }
+  #main { width: 100%; margin-left: 0; }
+  #view { width: 100%; }
+  .home-section { grid-template-columns: minmax(0, 1fr); }
+  #topbar { padding-top: env(safe-area-inset-top); height: calc(63px + env(safe-area-inset-top)); }
+  .view { padding-left: max(16px, 5vw); padding-right: max(16px, 5vw); padding-bottom: 90px; }
+  .card, .hero-card, .subscription-row, .review-strip { min-width: 0; }
+  .card { overflow-wrap: anywhere; }
+  .table-wrap { max-width: 100%; overscroll-behavior-x: contain; }
+  .tbl:not(.report-matrix) { min-width: 560px; }
+  button, a.btn, .nav-link, summary, select.input, input.input, textarea.input { min-height: 44px; }
+  .icon-button { min-width: 44px; }
+  .btn { padding: 10px 14px; }
+  .input, select.input, textarea.input { min-height: 44px; font-size: 16px; }
+  label.fld { margin-top: 16px; }
+  .form-pair { grid-template-columns: 1fr; gap: 0; }
+  .modal-backdrop { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
+  .modal { width: min(540px, 100%); max-height: calc(100dvh - 20px); overflow-x: hidden; }
+  #sidebar { z-index: 60; width: min(310px, 88vw); padding: max(25px, calc(18px + env(safe-area-inset-top))) 18px max(18px, env(safe-area-inset-bottom)); }
+  .nav-open #sidebar { box-shadow: 20px 0 40px rgba(22, 32, 50, .2); }
+  #nav-shade { z-index: 55 !important; }
+  .mobile-drawer-close { display: inline-flex; align-items: center; justify-content: center; position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; width: 44px; min-height: 44px; border: 0; border-radius: 12px; background: var(--soft-accent); color: var(--ink); font-size: 22px; cursor: pointer; }
+  .logo-row { padding-right: 52px; }
+  #mobile-nav { display: grid; position: fixed; z-index: 45; left: 0; right: 0; bottom: 0; grid-template-columns: repeat(4, 1fr); padding: 7px 8px max(7px, env(safe-area-inset-bottom)); min-height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--panel) 94%, transparent); border-top: 1px solid var(--border-soft); box-shadow: 0 -8px 24px rgba(36, 45, 75, .08); backdrop-filter: blur(16px); }
+  .mobile-nav-item { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 50px; padding: 5px 3px; border: 0; border-radius: 13px; background: transparent; color: var(--muted); text-decoration: none; font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
+  .mobile-nav-icon { color: var(--accent); font-size: 19px; line-height: 1.1; }
+  .mobile-nav-item[aria-current="page"] { color: var(--accent); background: var(--soft-accent); }
+  .mobile-nav-item:focus-visible, .mobile-drawer-close:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent); outline-offset: 2px; }
+  #mobile-add { right: 18px; bottom: calc(var(--mobile-nav-height) + 13px + env(safe-area-inset-bottom)); width: 56px; height: 56px; min-height: 56px; border-radius: 18px; z-index: 46; box-shadow: 0 8px 24px rgba(32, 45, 75, .22); }
+  body.keyboard-open #mobile-add, body.keyboard-open #mobile-nav { display: none !important; }
+  body.auth-active #mobile-nav, body.auth-active #mobile-add, body.modal-active #mobile-nav, body.modal-active #mobile-add { display: none !important; }
+  body.auth-active { padding-bottom: 0; }
+}
+@media (min-width: 701px) { .mobile-drawer-close { display: none; } }
+@media (prefers-reduced-motion: reduce) { #mobile-nav, #sidebar { transition: none !important; } }
