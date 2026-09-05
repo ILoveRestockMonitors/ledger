@@ -7,8 +7,8 @@
  const video=document.createElement('video');video.muted=true;video.loop=true;video.playsInline=true;video.preload='none';video.poster='/sarah-stream.png';video.tabIndex=-1;layer.append(video);document.body.append(layer);
  let failed=false,request=0;
  function allowed(){return !failed&&root.dataset.reviewMode==='custom'&&root.dataset.motionPaused!=='true'&&!reduced.matches&&!document.hidden;}
- async function sync(){const id=++request;if(!allowed()){video.pause();layer.classList.remove('playing');return;}if(!video.getAttribute('src'))video.src=config.video;try{await video.play();if(id===request&&allowed())layer.classList.add('playing');}catch{layer.classList.remove('playing');}}
+ async function sync(){const id=++request;if(!allowed()){video.pause();layer.classList.remove('playing');return;}if(root.dataset.mobileBusy==='true'){video.pause();return;}if(!video.getAttribute('src'))video.src=config.video;try{await video.play();if(id===request&&allowed())layer.classList.add('playing');}catch{layer.classList.remove('playing');}}
  video.addEventListener('error',()=>{failed=true;layer.classList.remove('playing');});
- new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-review-mode','data-motion-paused']});
+ new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-review-mode','data-motion-paused','data-mobile-busy']});
  reduced.addEventListener('change',sync);document.addEventListener('visibilitychange',sync);sync();
 })();

@@ -9,8 +9,8 @@ registerPage("transactions", "Transactions", async () => {
   const [data, receipts] = await Promise.all([api("/transactions?" + q), api("/receipts")]);
   receiptState.summary = receipts;
   return `
-  <div class="filter-row">
-    <input class="input" id="tx-search" placeholder="🔍 Search merchant, note…" value="${esc(f.search)}"
+  <div class="filter-row transaction-filters" role="search" aria-label="Transaction filters">
+    <input class="input" id="tx-search" aria-label="Search transactions" placeholder="🔍 Search merchant, note…" value="${esc(f.search)}"
       onkeydown="if(event.key==='Enter'){state.txFilters.search=this.value;state.txFilters.offset=0;navigate('transactions')}">
     <select class="input" onchange="state.txFilters.scope=this.value;state.txFilters.offset=0;navigate('transactions')">
       <option value="">All scopes</option>
@@ -21,8 +21,8 @@ registerPage("transactions", "Transactions", async () => {
       <option value="">All categories</option>
       ${state.categories.map(c=>`<option value="${c.id}" ${f.category_id===c.id?"selected":""}>${c.icon} ${esc(c.name)}</option>`).join("")}
     </select>
-    <input type="date" class="input" value="${esc(f.since)}" onchange="state.txFilters.since=this.value;state.txFilters.offset=0;navigate('transactions')">
-    <input type="date" class="input" value="${esc(f.until)}" onchange="state.txFilters.until=this.value;state.txFilters.offset=0;navigate('transactions')">
+    <label class="transaction-date">From<input type="date" class="input" value="${esc(f.since)}" onchange="state.txFilters.since=this.value;state.txFilters.offset=0;navigate('transactions')"></label>
+    <label class="transaction-date">To<input type="date" class="input" value="${esc(f.until)}" onchange="state.txFilters.until=this.value;state.txFilters.offset=0;navigate('transactions')"></label>
     <button class="btn btn-sm btn-ghost" onclick="state.txFilters={search:'',scope:'',category_id:'',since:'',until:'',offset:0};navigate('transactions')">Clear</button>
     <span class="small muted">${data.total} total</span>
   </div>

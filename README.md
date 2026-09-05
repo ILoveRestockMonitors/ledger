@@ -1,3 +1,5 @@
+Latest mobile polish: [V2.0.2](docs/MOBILE-V2.0.2.md).
+
 # Ledger V2
 
 V2.0.1 includes verified web/mobile QA corrections. See [QA details](docs/QA-V2.md).

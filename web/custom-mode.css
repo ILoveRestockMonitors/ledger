@@ -170,3 +170,23 @@ html :is(.ar-money,.money-number,.amt-pos,.amt-neg,.ar-bubble small,.ar-row .ar-
 :root[data-review-mode=custom] .ar-welcome{padding:16px 20px;border:1px solid var(--border);border-radius:18px;background:var(--panel);backdrop-filter:blur(18px)}
 :root[data-review-mode=custom] .card{backdrop-filter:blur(12px) saturate(110%)}
 @media(max-width:700px){:root[data-review-mode=custom] .ar-welcome{padding:14px 16px}}
+
+/* Keep filters readable over the stream, including empty Safari date controls. */
+.transaction-filters{padding:16px;background:var(--panel-2);border:1px solid var(--border);border-radius:18px;align-items:end}
+.transaction-date{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:12px;color:var(--text)}
+.transaction-filters .input{background:var(--bg-soft)!important;min-height:44px}
+.transaction-filters .input::placeholder{color:var(--muted);opacity:1}
+@media(max-width:700px){
+ .transaction-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+ .transaction-filters>.input{grid-column:1/-1}
+ .transaction-filters .input{width:100%!important;min-width:0!important;font-size:16px!important}
+ .transaction-date input{box-sizing:border-box;max-width:100%}
+ /* Colored glass remains; avoid repeatedly filtering video behind every surface. */
+ html :is(#sidebar,#topbar,#mobile-nav,.card,.subscription-row,.review-strip,.ar-welcome,.modal-backdrop){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ html .motion-bubble{transition:transform 150ms ease-out!important}
+ html .motion-tint::after{display:none}
+ html .motion-tint::before{inset:-10%;animation-duration:20s}
+ html[data-mobile-busy=true] .motion-tint::before,
+ html[data-mobile-busy=true] .ar-bubble{animation-play-state:paused!important}
+ button,a,input,select,summary{touch-action:manipulation}
+}

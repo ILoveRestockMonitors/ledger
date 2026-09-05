@@ -107,6 +107,20 @@
   }
   window.visualViewport?.addEventListener('resize', updateViewport);
   window.visualViewport?.addEventListener('scroll', updateViewport);
+  // Suspend decorative work during touch scrolling, drawers and text entry.
+  let scrollTimer, scrolling = false;
+  function syncMotionBudget() {
+    const busy = media.matches && (scrolling || drawerOpen || modalOpen() || document.body.classList.contains('keyboard-open'));
+    if (document.documentElement.dataset.mobileBusy !== String(busy)) document.documentElement.dataset.mobileBusy = String(busy);
+  }
+  document.addEventListener('scroll', () => {
+    if (!media.matches) return;
+    scrolling = true; syncMotionBudget(); clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => { scrolling = false; syncMotionBudget(); }, 180);
+  }, {passive:true, capture:true});
+  new MutationObserver(syncMotionBudget).observe(document.body, {attributes:true, attributeFilter:['class']});
+  media.addEventListener('change', syncMotionBudget);
+  syncMotionBudget();
   setDrawer(false);
   reconcile();
   updateRoute();

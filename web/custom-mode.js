@@ -38,11 +38,11 @@
   if(motion.matches||document.visibilityState==='hidden'){update();return;}
   const box=control.getBoundingClientRect(),point=origin||{x:box.x+box.width/2,y:box.y+box.height/2};origin=null;
   const radius=Math.hypot(Math.max(point.x,innerWidth-point.x),Math.max(point.y,innerHeight-point.y));
-  if(!document.startViewTransition){
+  if(!document.startViewTransition||matchMedia('(max-width:700px)').matches){
    update();
    const wash=document.createElement('div');wash.className='ar-custom-wash';wash.setAttribute('aria-hidden','true');
    wash.style.setProperty('--origin-x',point.x+'px');wash.style.setProperty('--origin-y',point.y+'px');document.body.append(wash);
-   wash.animate([{opacity:0},{opacity:.32,offset:.25},{opacity:0}],{duration:650,easing:'ease-out'}).onfinish=()=>wash.remove();
+   wash.animate([{opacity:0},{opacity:.32,offset:.25},{opacity:0}],{duration:matchMedia('(max-width:700px)').matches?280:650,easing:'ease-out'}).onfinish=()=>wash.remove();
    return;
   }
   const transition=document.startViewTransition(update);activeTransition=transition;
