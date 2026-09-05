@@ -8,10 +8,18 @@
 @font-face{font-family:'Manrope';font-style:normal;font-weight:400 700;font-display:swap;
   src:url(../../web/fonts/manrope-0.woff2) format('woff2');}
 :root{
-  --bg:#fbfbfc; --surface:#fff; --line:#e9e9ee; --line-2:#dcdce2;
-  --ink:#101014; --muted:#6c6c78; --faint:#9a9aa5;
   --out:cubic-bezier(.165,.84,.44,1);
   --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,'Manrope',Roboto,sans-serif;
+  --bg:#fbfbfc; --surface:#fff; --line:#e9e9ee; --line-2:#dcdce2;
+  --ink:#101014; --muted:#6c6c78; --faint:#9a9aa5;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#08080a; --surface:#0e0e11; --line:#1e1e25; --line-2:#30303a;
+  --ink:#f1f1f4; --muted:#9797a3; --faint:#6c6c79;
+} }
+:root[data-theme="dark"]{
+  --bg:#08080a; --surface:#0e0e11; --line:#1e1e25; --line-2:#30303a;
+  --ink:#f1f1f4; --muted:#9797a3; --faint:#6c6c79;
 }
 *{box-sizing:border-box;}
 body{margin:0; background:var(--bg); color:var(--ink); font:400 15px/1.6 var(--font);
@@ -35,7 +43,19 @@ h1{margin:14px 0 0; font-size:34px; letter-spacing:-.03em; font-weight:600;}
   font-size:12px; color:var(--faint);}
 .meta b{color:var(--muted); font-weight:500;}
 .sw{display:inline-flex; gap:5px; vertical-align:middle; margin-left:2px;}
-.sw i{width:11px; height:11px; border-radius:3px; display:block; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+.sw i{width:11px; height:11px; border-radius:3px; display:block; box-shadow:inset 0 0 0 1px rgba(128,128,150,.28);}
+.topline{display:flex; align-items:center; justify-content:space-between; gap:16px;}
+.icon-btn{position:relative; width:32px; height:32px; flex:none; border-radius:8px; cursor:pointer;
+  border:1px solid var(--line-2); background:var(--surface); color:var(--muted);
+  transition:transform 120ms var(--out), color 180ms ease, border-color 180ms ease;}
+.icon-btn:hover{color:var(--ink); border-color:var(--ink);}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn .ic{position:absolute; inset:0; margin:auto; width:15px; height:15px;
+  transition:opacity 220ms var(--out), transform 320ms var(--out);}
+.icon-btn .sun{opacity:0; transform:rotate(-55deg) scale(.6);}
+.icon-btn .moon{opacity:1; transform:none;}
+[data-theme="dark"] .icon-btn .sun{opacity:1; transform:none;}
+[data-theme="dark"] .icon-btn .moon{opacity:0; transform:rotate(55deg) scale(.6);}
 .foot{margin-top:44px; padding-top:20px; border-top:1px solid var(--line); font-size:13px; color:var(--faint);}
 .foot a{color:var(--muted);}
 @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
@@ -43,7 +63,13 @@ h1{margin:14px 0 0; font-size:34px; letter-spacing:-.03em; font-weight:600;}
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow">Ledger · homepage mockups</div>
+  <div class="topline">
+    <div class="eyebrow">Ledger · homepage mockups</div>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch theme" aria-pressed="false">
+      <svg class="ic sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+      <svg class="ic moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></svg>
+    </button>
+  </div>
   <h1>Three design directions</h1>
   <p class="sub">
     Non-functional homepage mockups built from a study of 18 finance products and 14 animation-led
@@ -105,11 +131,33 @@ h1{margin:14px 0 0; font-size:34px; letter-spacing:-.03em; font-weight:600;}
   </div>
 
   <p class="foot">
-    Mockups only — no network, no storage, no backend. All figures are illustrative.
+    Every mockup carries both a light and a dark mode. Each follows your system preference on
+    load and can be switched with the control in its own header; the choice is held in memory only.
+    Mockups otherwise are just mockups — no network, no storage, no backend. All figures are illustrative.
     Motion follows one contract across all three: <code>ease-out</code> on entrances, nothing over
     300ms, transform and opacity only, and everything disabled under
     <code>prefers-reduced-motion</code>.
   </p>
 </div>
+<script>
+const rootEl=document.documentElement, themeBtn=document.getElementById('themeBtn');
+const mqDark=matchMedia('(prefers-color-scheme: dark)');
+let explicitTheme=null;
+function paintTheme(){
+  const t=explicitTheme || (mqDark.matches?'dark':'light');
+  rootEl.setAttribute('data-theme',t);
+  themeBtn.setAttribute('aria-pressed',String(t==='dark'));
+  themeBtn.setAttribute('aria-label', t==='light'?'Switch to dark mode':'Switch to light mode');
+}
+paintTheme();
+mqDark.addEventListener('change',()=>{ if(!explicitTheme) paintTheme(); });
+themeBtn.addEventListener('click',()=>{
+  explicitTheme=(explicitTheme||(mqDark.matches?'dark':'light'))==='light'?'dark':'light';
+  paintTheme();
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)
+    themeBtn.animate([{transform:'scale(.86) rotate(-22deg)'},{transform:'none'}],
+      {duration:380,easing:'cubic-bezier(.165,.84,.44,1)'});
+});
+</script>
 </body>
 </html>

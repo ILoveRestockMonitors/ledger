@@ -120,6 +120,30 @@ Aurora carried to 390 × 844. What changes, and why:
 - **The constellation is re-packed**, not merely scaled: seven discs repositioned for a 326pt column.
 - Below 460px the presentation device frame drops away and the app goes full-bleed.
 
+## Light and dark
+
+Every mockup ships both modes. Each follows `prefers-color-scheme` on load and can be overridden by
+the control in its own header; the override is held in memory, never storage.
+
+The palettes are not inversions. Each mode is designed as its own thing:
+
+| | Native mode | Counterpart |
+|---|---|---|
+| **Aurora** (desktop + phone) | Cinematic dark glass | Daylight: the same aurora field at midday — frosted white surfaces over a lilac wash, iris darkened to `#6a5ae0` and cyan to `#0e93b4` to hold contrast on white. This is where Arc's glass rules earn their place. |
+| **Quiet** | Editorial light | Linear's own dark: `#08080a` ground, `#0e0e11` surfaces, hairlines at `#1e1e25`, accent lifted to `#7c8aff`. Same discipline, inverted ground. |
+| **Almanac** | Day edition | **Night edition** — warm charcoal `#15130e`, cream ink `#f0e8d9`, copper lifted to `#d9884f`. Never cold gray: Granola's warm-bias rule holds in the dark. |
+
+Two implementation notes worth keeping:
+
+- **Tints flip through one channel.** Rather than hand-swapping dozens of `rgba(255,255,255,.06)`
+  values, each file defines `--tint` as an RGB triplet and every translucent fill is written
+  `rgba(var(--tint),.06)`. One token flips the whole surface system. The same trick carries the
+  accent, cyan, mint, copper and oxblood channels.
+- **The risograph overprint had to be rebuilt.** In the day edition the copper crescent worked by
+  `mix-blend-mode: multiply` — but only because the offset landed on *light paper*. On a dark ground
+  multiply turns the crescent invisible. It is now an offset `box-shadow` duplicate behind the disc,
+  which reads on both grounds and still snaps into register when pressed.
+
 ## Interaction vocabulary (identical logic, three costumes)
 
 Every data element responds to a click, per the brief:

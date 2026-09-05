@@ -16,18 +16,45 @@
   src:url(../../../web/fonts/manrope-0.woff2) format('woff2');}
 
 :root{
-  --bg:#fcfcfd; --surface:#ffffff; --surface-2:#f7f7f9;
-  --line:#eaeaee; --line-strong:#dcdce2;
-  --ink:#0e0e11; --muted:#6b6b76; --faint:#9b9ba6;
-  --accent:#5266eb; --accent-soft:#eef0fd;
-  --pos:#0f7b52; --neg:#b3261e;
-
+  /* geometry and type — shared by both themes */
   --r-sm:5px; --r:8px;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
   --out:cubic-bezier(.165,.84,.44,1);
   --expo:cubic-bezier(.19,1,.22,1);
   --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,'Manrope',Roboto,sans-serif;
   --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,monospace;
+
+  /* ---------- light: Quiet's native mode ---------- */
+  --bg:#fcfcfd; --surface:#ffffff; --surface-2:#f7f7f9;
+  --line:#eaeaee; --line-strong:#dcdce2;
+  --ink:#0e0e11; --muted:#6b6b76; --faint:#9b9ba6;
+  --accent:#5266eb; --accent-soft:#eef0fd;
+  --pos:#0f7b52; --neg:#b3261e;
+  --on-ink:#ffffff;
+  --header-bg:rgba(252,252,253,.86);
+  --bar:#d3d3db; --bar-hover:#c3c3cc;
+}
+
+/* ---------- dark: same discipline, inverted ground ---------- */
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#08080a; --surface:#0e0e11; --surface-2:#16161a;
+  --line:#1e1e25; --line-strong:#30303a;
+  --ink:#f1f1f4; --muted:#9797a3; --faint:#6c6c79;
+  --accent:#7c8aff; --accent-soft:#191c34;
+  --pos:#3fbf85; --neg:#f0736c;
+  --on-ink:#0b0b0e;
+  --header-bg:rgba(8,8,10,.86);
+  --bar:#33333e; --bar-hover:#454553;
+} }
+:root[data-theme="dark"]{
+  --bg:#08080a; --surface:#0e0e11; --surface-2:#16161a;
+  --line:#1e1e25; --line-strong:#30303a;
+  --ink:#f1f1f4; --muted:#9797a3; --faint:#6c6c79;
+  --accent:#7c8aff; --accent-soft:#191c34;
+  --pos:#3fbf85; --neg:#f0736c;
+  --on-ink:#0b0b0e;
+  --header-bg:rgba(8,8,10,.86);
+  --bar:#33333e; --bar-hover:#454553;
 }
 *{box-sizing:border-box;}
 body{
@@ -39,7 +66,7 @@ body{
 .wrap{max-width:1180px; margin:0 auto; padding:0 var(--s6);}
 
 /* ---------- header ---------- */
-header{position:sticky; top:0; z-index:10; background:rgba(252,252,253,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
+header{position:sticky; top:0; z-index:10; background:var(--header-bg); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
 .hd{display:flex; align-items:center; gap:var(--s6); height:56px;}
 .brand{display:flex; align-items:center; gap:9px; font-weight:600; letter-spacing:-.02em; font-size:14.5px;}
 .brand i{width:16px; height:16px; border-radius:4px; background:var(--ink); display:block;}
@@ -57,7 +84,7 @@ header{position:sticky; top:0; z-index:10; background:rgba(252,252,253,.86); bac
   transition:border-color 180ms ease, color 180ms ease, transform 120ms var(--out);}
 .ghost:hover{border-color:var(--ink); color:var(--ink);}
 .ghost:active{transform:scale(.97);}
-.solid{border:0; background:var(--ink); color:#fff; border-radius:var(--r);
+.solid{border:0; background:var(--ink); color:var(--on-ink); border-radius:var(--r);
   font:500 12.5px var(--font); padding:8px 14px; cursor:pointer;
   transition:opacity 180ms ease, transform 120ms var(--out);}
 .solid:hover{opacity:.86;} .solid:active{transform:scale(.97);}
@@ -117,18 +144,18 @@ h1{margin:0; font:600 20px var(--font); letter-spacing:-.025em;}
 .bar{position:relative; height:100%; display:flex; flex-direction:column; align-items:center; gap:8px;
   border:0; padding:0; background:none; cursor:pointer; transition:opacity 200ms ease;}
 .bar .track{flex:1; width:100%; min-height:0; display:flex; align-items:flex-end; justify-content:center;}
-.bar .col{position:relative; width:60%; max-width:26px; background:#d3d3db; border-radius:2px;
+.bar .col{position:relative; width:60%; max-width:26px; background:var(--bar); border-radius:2px;
   transform-origin:bottom; transform:scaleY(0);
   transition:transform 300ms var(--out), background-color 180ms ease;}
 .bars.in .bar .col{transform:scaleY(1);}
-.bar:hover .col{background:#c3c3cc;}
+.bar:hover .col{background:var(--bar-hover);}
 .bar .m{font-size:10.5px; color:var(--faint); transition:color 160ms ease;}
 .bars.has-sel .bar{opacity:.45;}
 .bars.has-sel .bar[aria-pressed="true"]{opacity:1;}
 .bar[aria-pressed="true"] .col{background:var(--accent);}
 .bar[aria-pressed="true"] .m{color:var(--ink); font-weight:600;}
 .chip{position:absolute; bottom:calc(100% + 7px); left:50%; translate:-50% 0; white-space:nowrap;
-  background:var(--ink); color:#fff; font:500 11px var(--mono); padding:3px 7px; border-radius:4px;
+  background:var(--ink); color:var(--on-ink); font:500 11px var(--mono); padding:3px 7px; border-radius:4px;
   opacity:0; transform:scale(.95) translateY(3px); pointer-events:none;
   transition:opacity 160ms var(--out), transform 160ms var(--out);}
 .bar[aria-pressed="true"] .chip{opacity:1; transform:scale(1) translateY(0);}
@@ -219,6 +246,19 @@ h1{margin:0; font:600 20px var(--font); letter-spacing:-.025em;}
 /* ---------- reveal ---------- */
 .rv{opacity:0; transform:translateY(10px); transition:opacity 460ms var(--out), transform 460ms var(--out);}
 .rv.in{opacity:1; transform:none;}
+/* theme toggle */
+.icon-btn{position:relative; width:32px; height:32px; flex:none; border-radius:var(--r); cursor:pointer;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--muted);
+  transition:transform 120ms var(--out), color 180ms ease, border-color 180ms ease;}
+.icon-btn:hover{color:var(--ink); border-color:var(--ink);}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn .ic{position:absolute; inset:0; margin:auto; width:15px; height:15px;
+  transition:opacity 220ms var(--out), transform 320ms var(--out);}
+.icon-btn .sun{opacity:0; transform:rotate(-55deg) scale(.6);}
+.icon-btn .moon{opacity:1; transform:none;}
+[data-theme="dark"] .icon-btn .sun{opacity:1; transform:none;}
+[data-theme="dark"] .icon-btn .moon{opacity:0; transform:rotate(55deg) scale(.6);}
+
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
 
 @media (max-width:960px){
@@ -247,6 +287,10 @@ h1{margin:0; font:600 20px var(--font); letter-spacing:-.025em;}
       <button class="tab">Reports</button>
     </nav>
     <div class="hd-right">
+      <button class="icon-btn" id="themeBtn" aria-label="Switch to dark mode" aria-pressed="false">
+        <svg class="ic sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+        <svg class="ic moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></svg>
+      </button>
       <button class="ghost">Export</button>
       <button class="solid">Add transaction</button>
     </div>
@@ -421,6 +465,27 @@ document.querySelectorAll('#strip .cell').forEach(c=>c.addEventListener('click',
   c.setAttribute('aria-pressed','true');
   const n=c.querySelector('[data-count]'); n.textContent='0'; countTo(n,parseFloat(n.dataset.count),2);
 }));
+
+/* theme — system preference by default, explicit once toggled (in memory only) */
+const rootEl=document.documentElement, themeBtn=document.getElementById('themeBtn');
+const mqDark=matchMedia('(prefers-color-scheme: dark)');
+let explicitTheme=null;
+function paintTheme(){
+  const t=explicitTheme || (mqDark.matches?'dark':'light');
+  rootEl.setAttribute('data-theme',t);
+  themeBtn.setAttribute('aria-pressed',String(t==='dark'));
+  themeBtn.setAttribute('aria-label', t==='light'?'Switch to dark mode':'Switch to light mode');
+  requestAnimationFrame(()=>{ if(typeof drawGridlines==='function') drawGridlines(); });
+}
+paintTheme();
+mqDark.addEventListener('change',()=>{ if(!explicitTheme) paintTheme(); });
+themeBtn.addEventListener('click',()=>{
+  explicitTheme = (explicitTheme || (mqDark.matches?'dark':'light'))==='light' ? 'dark' : 'light';
+  paintTheme();
+  if(!REDUCED) themeBtn.animate(
+    [{transform:'scale(.86) rotate(-22deg)'},{transform:'none'}],
+    {duration:380, easing:'cubic-bezier(.165,.84,.44,1)'});
+});
 
 /* bars */
 const barsEl=document.getElementById('bars'), mx=Math.max(...DATA.months.map(m=>m[1]));
