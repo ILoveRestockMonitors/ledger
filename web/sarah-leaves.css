@@ -1,0 +1,39 @@
+/* Sarah's living foliage: leaf silhouettes with quiet central veins. */
+:root[data-review-mode=custom] #sidebar{
+ border-radius:76px 9px 76px 9px;
+ border:1px solid rgba(var(--green-rgb),.34)!important;
+ padding-top:42px;padding-bottom:32px;
+ box-shadow:inset 1px 0 rgba(255,255,255,.28),8px 12px 30px rgba(17,49,21,.12)!important;
+}
+:root[data-review-mode=custom] #sidebar>.motion-tint::after{
+ background:linear-gradient(103deg,transparent 49.6%,rgba(var(--green-rgb),.13) 49.85%,transparent 50.2%),radial-gradient(ellipse at 60% 70%,rgba(var(--green-rgb),.12),transparent 65%);
+}
+:root[data-review-mode=custom] #view .card{border-radius:64px 10px 64px 10px!important;padding:30px!important}
+:root[data-review-mode=custom] :is(.ar-account,.subscription-row,.review-strip){border-radius:34px 6px 34px 6px!important}
+:root[data-review-mode=custom] :is(.btn,.ar-range button,.segmented button,.owner-avatar,.icon-button,#mobile-add){border-radius:22px 5px 22px 5px!important}
+:root[data-review-mode=custom] .ar-bubble{
+ border-radius:72% 5% 72% 5%!important;
+ background:linear-gradient(135deg,transparent 49%,color-mix(in srgb,var(--item-color) 62%,transparent) 49.5%,transparent 51%),radial-gradient(ellipse at 28% 22%,color-mix(in srgb,var(--item-color) 48%,var(--panel)),color-mix(in srgb,var(--item-color) 25%,var(--panel)) 76%)!important;
+ border:1px solid color-mix(in srgb,var(--item-color) 65%,transparent)!important;
+ box-shadow:inset 1px 1px 0 rgba(255,255,255,.32),0 7px 18px rgba(22,49,21,.12)!important;
+ animation:leafBreeze 6s ease-in-out infinite alternate;
+ animation-delay:-2s;
+}
+:root[data-review-mode=custom] .ar-bubble:nth-child(2n){border-radius:5% 72% 5% 72%!important;animation-delay:-4s;animation-duration:7.5s}
+:root[data-review-mode=custom] .ar-bubble:nth-child(3n){animation-delay:-1s;animation-duration:8.5s}
+:root[data-review-mode=custom] .ar-bubble::after{border-radius:inherit!important}
+:root[data-review-mode=custom] .ar-bubble b{position:relative;z-index:1;text-shadow:0 1px 6px var(--panel)}
+:root[data-review-mode=custom] .ar-bubble small{position:relative;z-index:1;text-shadow:0 1px 6px var(--panel)}
+@keyframes leafBreeze{from{rotate:-2deg;translate:-50% calc(-50% + 2px)}to{rotate:2deg;translate:-50% calc(-50% - 2px)}}
+@media(hover:hover) and (pointer:fine){
+ :root[data-review-mode=custom] .ar-bubble:hover{animation-play-state:paused;transform:translateY(-6px) rotate(-4deg) scale(1.12)!important}
+ :root[data-review-mode=custom] .ar-bubble:nth-child(2n):hover{transform:translateY(-6px) rotate(4deg) scale(1.12)!important}
+}
+@media(max-width:700px){
+ :root[data-review-mode=custom] #view .card{border-radius:42px 8px 42px 8px!important;padding:24px!important}
+ :root[data-review-mode=custom] #sidebar{border-radius:50px 8px 50px 8px}
+ :root[data-review-mode=custom] .ar-bubble{min-width:48px;min-height:48px}
+}
+html[data-motion-paused=true][data-review-mode=custom] .ar-bubble{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){:root[data-review-mode=custom] .ar-bubble{animation:none!important;rotate:0deg;translate:-50% -50%}}
+:root[data-review-mode=custom] .card.motion-surface:not(.motion-visible) .ar-bubble{animation-play-state:paused}

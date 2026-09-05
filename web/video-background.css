@@ -1,0 +1,6 @@
+.sarah-video-layer{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 450ms ease}
+[data-review-mode=custom] .sarah-video-layer.playing{opacity:1}
+.sarah-video-layer video{display:block;width:100%;height:100%;object-fit:cover}
+.sarah-video-layer::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(252,248,231,.07),rgba(236,244,223,.12))}
+[data-theme=dark] .sarah-video-layer::after{background:linear-gradient(rgba(7,19,13,.64),rgba(8,22,14,.73))}
+@media(prefers-reduced-motion:reduce){.sarah-video-layer{display:none;transition:none}}

@@ -1,0 +1,172 @@
+/* Original Ledger hues, with 1.9× HSL saturation on accent/chart colors. Neutral surfaces stay calm. */
+:root[data-review-mode=custom][data-theme=light]{
+ --bg:#fffaf4!important;--bg-soft:#fbf5ed!important;--panel:#fffdf9!important;--panel-2:#f7ede3!important;
+ --text:#373a32!important;--muted:#737365!important;--faint:#767365!important;
+ --border:#71808b!important;--border-soft:#52636f!important;--accent:#6f7c38!important;--accent-2:#a9a761!important;
+ --green:#45805a!important;--red:#cf3c16!important;--amber:#c08e13!important;--cyan:#427986!important;--pink:#e27f2c!important;
+ --tint:55,58,50!important;--accent-rgb:111,124,56!important;--cyan-rgb:66,121,134!important;--green-rgb:69,128,90!important;
+ --on-accent:#fffdf9!important;--chip-bg:#373a32!important;--chip-fg:#fffaf4!important;
+ --chart-1:#a3b77c!important;--chart-2:#d59631!important;--chart-3:#5f9a92!important;--chart-4:#e27f2c!important;
+ --chart-5:#c7cb94!important;--chart-6:#9a8d67!important;--chart-7:#93a683!important;--chart-8:#c5ad74!important;
+ --field:radial-gradient(900px 620px at 12% -8%,#a9a76118,transparent 62%),radial-gradient(760px 520px at 88% 4%,#e27f2c14,transparent 60%),linear-gradient(180deg,#fffaf4,#fbf5ed)!important;
+ color-scheme:light;
+}
+:root[data-review-mode=custom][data-theme=dark]{
+ --bg:#0c0e11!important;--bg-soft:#1b1e24!important;--panel:#20242c!important;--panel-2:#292e37!important;
+ --text:#f1ede7!important;--muted:#b2b2b9!important;--faint:#90939f!important;
+ --border:#414854!important;--border-soft:#5c6978!important;--accent:#f2b381!important;--accent-2:#91c6f4!important;
+ --green:#a6e8ca!important;--red:#f3a58a!important;--amber:#f2c57a!important;--cyan:#91c6f4!important;--pink:#ea9dc8!important;
+ --tint:241,237,231!important;--accent-rgb:242,179,129!important;--cyan-rgb:145,198,244!important;--green-rgb:166,232,202!important;
+ --on-accent:#0c0e11!important;--chip-bg:#20242c!important;--chip-fg:#f1ede7!important;
+ --chart-1:#f0a468!important;--chart-2:#91c6f4!important;--chart-3:#a6e8ca!important;--chart-4:#ea9dc8!important;
+ --chart-5:#f2c57a!important;--chart-6:#7bbacb!important;--chart-7:#ec8254!important;--chart-8:#afa2de!important;
+ --field:radial-gradient(1050px 500px at 92% -15%,#91c6f414,transparent 62%),radial-gradient(800px 420px at -12% 115%,#f2b38112,transparent 62%),linear-gradient(#0c0e11,#0c0e11)!important;
+ color-scheme:dark;
+}
+:root[data-review-mode=custom] .btn-primary{background:var(--accent)!important}
+.ar-palette{width:112px!important;min-height:36px;padding:6px 9px!important;font-size:12px!important;flex:none}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-old(root){z-index:1}::view-transition-new(root){z-index:2}
+.ar-custom-wash{position:fixed;inset:0;z-index:10000;pointer-events:none;background:radial-gradient(circle at var(--origin-x) var(--origin-y),var(--accent),transparent 75%)}
+@media(max-width:700px){#topbar .ar-palette{width:96px!important;padding:5px!important;font-size:11px!important}#topbar{gap:5px!important}}
+@media(prefers-reduced-motion:reduce){::view-transition-group(root),::view-transition-old(root),::view-transition-new(root){animation:none!important}.ar-custom-wash{display:none}}
+/* Distribute the complete eight-color Ledger palette across data and controls. */
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row){--item-color:var(--chart-1)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+1){--item-color:var(--chart-1)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+2){--item-color:var(--chart-2)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+3){--item-color:var(--chart-3)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+4){--item-color:var(--chart-4)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+5){--item-color:var(--chart-5)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+6){--item-color:var(--chart-6)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+7){--item-color:var(--chart-7)}
+:root[data-review-mode=custom] :is(.ar-bubble,.ar-account,.ar-goal,.ar-row):nth-child(8n+8){--item-color:var(--chart-8)}
+:root[data-review-mode=custom] .ar-bubble{
+ background:radial-gradient(circle at 30% 22%,color-mix(in srgb,var(--item-color) 44%,var(--panel)),color-mix(in srgb,var(--item-color) 22%,var(--panel)) 72%);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--item-color) 65%,transparent),var(--hi),0 8px 24px color-mix(in srgb,var(--item-color) 12%,transparent);
+}
+:root[data-review-mode=custom] .ar-bubble b{max-width:calc(var(--size) * .8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-review-mode=custom] .ar-bubble small{color:var(--text)}
+:root[data-review-mode=custom] .ar-bubble[aria-pressed=true],
+:root[data-review-mode=custom] .ar-bubble:focus-visible{
+ box-shadow:inset 0 0 0 2px var(--item-color),var(--hi),0 0 32px color-mix(in srgb,var(--item-color) 32%,transparent)!important;
+}
+:root[data-review-mode=custom] .ar-bubble[aria-pressed=true]::after{border-color:var(--item-color)}
+@media(hover:hover){:root[data-review-mode=custom] .ar-bubble:hover{box-shadow:inset 0 0 0 2px var(--item-color),0 0 34px color-mix(in srgb,var(--item-color) 36%,transparent)!important}}
+:root[data-review-mode=custom] .ar-account{background:linear-gradient(125deg,color-mix(in srgb,var(--item-color) 15%,transparent),transparent);border-color:color-mix(in srgb,var(--item-color) 50%,var(--border))}
+:root[data-review-mode=custom] .ar-account small i{background:var(--item-color);box-shadow:0 0 10px color-mix(in srgb,var(--item-color) 45%,transparent)}
+:root[data-review-mode=custom] .ar-goal .bar>i{background:linear-gradient(90deg,var(--item-color),color-mix(in srgb,var(--item-color) 65%,var(--cyan)))!important}
+:root[data-review-mode=custom] .ar-avatar{background:color-mix(in srgb,var(--item-color) 22%,var(--panel));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--item-color) 40%,transparent);color:var(--text)}
+:root[data-review-mode=custom] .ar-column{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 70%,var(--amber)))!important}
+:root[data-review-mode=custom] .ar-grid:has([data-ar-metric=income][aria-pressed=true]) .ar-column{background:linear-gradient(180deg,var(--green),var(--cyan))!important}
+:root[data-review-mode=custom] .ar-hero{background:radial-gradient(ellipse at top left,color-mix(in srgb,var(--amber) 17%,transparent),transparent 75%),var(--panel)!important}
+:root[data-review-mode=custom] .ar-grid>.card:has(.ar-ring){background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--pink) 13%,transparent),transparent 75%),var(--panel)!important}
+:root[data-review-mode=custom] .ar-grid>.card:has(.ar-constellation){background:radial-gradient(ellipse at bottom right,color-mix(in srgb,var(--cyan) 10%,transparent),transparent 80%),var(--panel)!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="0"]{background:color-mix(in srgb,var(--chart-2) 24%,var(--panel))!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="1"]{background:color-mix(in srgb,var(--chart-1) 24%,var(--panel))!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="2"]{background:color-mix(in srgb,var(--chart-4) 24%,var(--panel))!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="3"]{background:color-mix(in srgb,var(--chart-3) 24%,var(--panel))!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="4"]{background:color-mix(in srgb,var(--chart-7) 24%,var(--panel))!important}
+:root[data-review-mode=custom] .merchant-avatar[data-color="5"]{background:color-mix(in srgb,var(--chart-5) 24%,var(--panel))!important}
+@media(max-width:700px){:root[data-review-mode=custom] .ar-bubble b{max-width:calc(var(--size) * .64)}}
+
+/* Lighter, translucent green fills; text keeps its readable foreground. */
+:root[data-review-mode=custom][data-theme=light] .ar-column{
+ background:linear-gradient(180deg,rgba(153,178,108,.78),rgba(153,178,108,.28))!important;
+ box-shadow:inset 0 1px 0 #ffffff88,inset 0 0 0 1px rgba(111,140,70,.18)!important;
+}
+:root[data-review-mode=custom][data-theme=light] :is(.btn-primary,#mobile-add){
+ background:linear-gradient(160deg,rgba(169,191,132,.76),rgba(153,178,108,.48))!important;
+ color:#344525!important;border:1px solid rgba(111,140,70,.25)!important;
+ box-shadow:inset 0 1px 0 #ffffff88,0 6px 22px rgba(111,140,70,.12)!important;
+ backdrop-filter:blur(14px);
+}
+:root[data-review-mode=custom] .ar-grid:has([data-ar-metric=income][aria-pressed=true]) .ar-column{
+ background:linear-gradient(180deg,color-mix(in srgb,var(--green) 76%,transparent),color-mix(in srgb,var(--green) 28%,transparent))!important;
+}
+/* A faint blush wash behind monthly spending complements the sage green. */
+:root[data-review-mode=custom][data-theme=light] .ar-grid>.card[data-ar-card=cashflow]{
+ background:radial-gradient(ellipse at 85% 10%,rgba(var(--blush-rgb),.11),transparent 72%),linear-gradient(rgba(var(--blush-rgb),.045),rgba(var(--blush-rgb),.045)),var(--panel)!important;
+}
+:root[data-review-mode=custom][data-theme=dark] .ar-grid>.card[data-ar-card=cashflow]{
+ background:radial-gradient(ellipse at 85% 10%,rgba(var(--blush-rgb),.07),transparent 72%),var(--panel)!important;
+}
+
+/* One shared blush accent: restrained selections, payment dates, and goal surfaces. */
+:root[data-review-mode=custom]{--blush-rgb:229,149,173}
+:root[data-review-mode=custom] :is(.ar-range button[aria-pressed=true],.segmented button.selected,.segmented button[aria-pressed=true]){
+ background:rgba(var(--blush-rgb),.14)!important;
+ box-shadow:inset 0 0 0 1px rgba(var(--blush-rgb),.25)!important;
+ color:var(--text)!important;
+}
+:root[data-review-mode=custom] .day-chip,
+:root[data-review-mode=custom] [data-ar-card=upcoming] .ar-avatar{
+ background:rgba(var(--blush-rgb),.12)!important;
+ box-shadow:inset 0 0 0 1px rgba(var(--blush-rgb),.2)!important;
+ color:var(--text)!important;
+}
+:root[data-review-mode=custom] .ar-grid>.card[data-ar-card=goals]{
+ background:radial-gradient(ellipse at bottom right,rgba(var(--blush-rgb),.065),transparent 70%),var(--panel)!important;
+}
+:root[data-review-mode=custom] .modal .modal-actions{border-top-color:rgba(var(--blush-rgb),.2)}
+/* A soft blush sidebar carries the shared pink into navigation. */
+:root[data-review-mode=custom] #sidebar{
+ background:linear-gradient(160deg,rgba(var(--blush-rgb),.12),rgba(var(--blush-rgb),.045) 75%),var(--bg-soft)!important;
+ border-color:rgba(var(--blush-rgb),.24)!important;
+}
+:root[data-review-mode=custom] #sidebar .nav-link.active{
+ background:rgba(var(--blush-rgb),.16)!important;
+ box-shadow:inset 2px 0 rgba(var(--blush-rgb),.78)!important;
+ color:var(--text)!important;
+}
+@media(hover:hover){
+ :root[data-review-mode=custom] #sidebar .nav-link:hover{
+  background:rgba(var(--blush-rgb),.10)!important;
+ }
+}
+
+/* Approved palette typography, shared by desktop and mobile. */
+:root[data-review-mode=custom]{--font:'Lora',Georgia,serif!important}
+:root[data-review-mode=aurora]{--font:'Manrope',system-ui,sans-serif!important}
+html :is(.ar-money,.money-number,.amt-pos,.amt-neg,.ar-bubble small,.ar-row .ar-money){font-family:var(--font)!important;font-variant-numeric:tabular-nums}
+/* Sarah's garden atmosphere: soft sage, daylight, and botanical edge shadows. */
+:root[data-review-mode=custom][data-theme=light]{
+ --bg:#f6f7ed!important;
+ --field:url('/nature-canopy.svg') center/cover no-repeat,
+ radial-gradient(ellipse at 88% 4%,rgba(248,224,158,.30),transparent 46%),
+ radial-gradient(ellipse at 8% 80%,rgba(139,173,126,.24),transparent 55%),
+ radial-gradient(ellipse at 70% 92%,rgba(178,199,158,.20),transparent 52%),
+ radial-gradient(ellipse at 38% 25%,rgba(var(--blush-rgb),.065),transparent 48%),
+ linear-gradient(145deg,#faf8ef,#f1f5e9 58%,#f8f4ec)!important;
+}
+:root[data-review-mode=custom][data-theme=dark]{
+ --bg:#111712!important;
+ --field:url('/nature-canopy.svg') center/cover no-repeat,
+ radial-gradient(ellipse at 88% 4%,rgba(196,176,119,.09),transparent 46%),
+ radial-gradient(ellipse at 8% 80%,rgba(82,126,91,.20),transparent 55%),
+ radial-gradient(ellipse at 70% 92%,rgba(133,164,122,.09),transparent 52%),
+ linear-gradient(145deg,#111712,#141c18 58%,#171b17)!important;
+}
+:root[data-review-mode=custom] .ar-grid>.card:has(.ar-constellation){
+ background:radial-gradient(ellipse at 10% 90%,rgba(var(--green-rgb),.13),transparent 70%),radial-gradient(ellipse at 90% 0%,rgba(var(--blush-rgb),.07),transparent 65%),var(--panel)!important;
+}
+/* Sarah's immersive forest backdrop, with readable frosted surfaces. */
+:root[data-review-mode=custom][data-theme=light]{
+ --bg:#dce6cf!important;
+ --panel:rgba(255,253,246,.88)!important;
+ --panel-2:rgba(255,251,242,.94)!important;
+ --bg-soft:#f7f5e9!important;
+ --field:linear-gradient(rgba(252,248,231,.07),rgba(236,244,223,.12)),url('/sarah-stream.png') center/cover no-repeat!important;
+}
+:root[data-review-mode=custom][data-theme=dark]{
+ --bg:#101b14!important;
+ --panel:rgba(24,35,29,.88)!important;
+ --panel-2:rgba(33,46,38,.94)!important;
+ --bg-soft:#19251d!important;
+ --field:linear-gradient(rgba(7,19,13,.64),rgba(8,22,14,.73)),url('/sarah-stream.png') center/cover no-repeat!important;
+}
+:root[data-review-mode=custom][data-theme=light] #sidebar{background:linear-gradient(160deg,rgba(var(--blush-rgb),.13),rgba(var(--blush-rgb),.04)),rgba(255,250,239,.78)!important}
+:root[data-review-mode=custom][data-theme=dark] #sidebar{background:linear-gradient(160deg,rgba(var(--blush-rgb),.09),transparent),rgba(22,34,27,.82)!important}
+:root[data-review-mode=custom] #topbar{background:var(--panel)!important;backdrop-filter:blur(18px);border-bottom:1px solid var(--border)!important}
+:root[data-review-mode=custom] .ar-welcome{padding:16px 20px;border:1px solid var(--border);border-radius:18px;background:var(--panel);backdrop-filter:blur(18px)}
+:root[data-review-mode=custom] .card{backdrop-filter:blur(12px) saturate(110%)}
+@media(max-width:700px){:root[data-review-mode=custom] .ar-welcome{padding:14px 16px}}

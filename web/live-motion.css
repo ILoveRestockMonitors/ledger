@@ -1,0 +1,31 @@
+/* Moving color lives behind content, so labels and figures remain steady. */
+.motion-surface{isolation:isolate}
+.card.motion-surface,.subscription-row.motion-surface,.review-strip.motion-surface{position:relative}
+.motion-tint{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:-1}
+.motion-tint::before,.motion-tint::after{content:'';position:absolute;inset:-35%;background:radial-gradient(ellipse at 35% 40%,rgba(var(--motion-color,var(--accent-rgb)),.13),transparent 58%);animation:tintDrift 14s ease-in-out infinite alternate;animation-delay:var(--motion-delay,0s);animation-play-state:paused}
+.motion-tint::after{background:radial-gradient(ellipse at 65% 65%,rgba(var(--cyan-rgb),.075),transparent 52%);animation-duration:19s;animation-direction:alternate-reverse}
+[data-review-mode=custom] .motion-tint{--motion-color:var(--blush-rgb)}
+[data-review-mode=custom] .motion-tint::after{background:radial-gradient(ellipse at 65% 65%,rgba(var(--green-rgb),.07),transparent 52%)}
+.motion-visible>.motion-tint::before,.motion-visible>.motion-tint::after{animation-play-state:running}
+@keyframes tintDrift{from{transform:translate(-12%,-9%) scale(.92);opacity:.55}to{transform:translate(14%,12%) scale(1.12);opacity:1}}
+.motion-bubble{transform-origin:center;transition:transform 360ms cubic-bezier(.22,1.4,.36,1),filter 240ms ease,box-shadow 240ms ease!important}
+.heat-cell.motion-bubble{transform-box:fill-box}
+@media(hover:hover) and (pointer:fine){
+ html .motion-bubble:hover{transform:translateY(-3px) scale(1.065)!important;filter:brightness(1.055) drop-shadow(0 5px 8px rgba(var(--accent-rgb),.13))}
+ html .ar-bubble.motion-bubble:hover{transform:translateY(-5px) scale(1.1)!important;filter:brightness(1.075) drop-shadow(0 7px 12px color-mix(in srgb,var(--item-color,var(--cyan)) 24%,transparent))}
+ html .ar-ring.motion-bubble:hover{transform:translateY(-2px) scale(1.055)!important}
+ html .ar-account.motion-bubble:hover,html .ar-goal.motion-bubble:hover{transform:translateY(-4px) scale(1.015)!important}
+ .ar-row .ar-avatar,.subscription-row .merchant-avatar{transition:transform 300ms cubic-bezier(.22,1.4,.36,1),filter 200ms ease}
+ .ar-row:hover .ar-avatar,.subscription-row:has(button:hover) .merchant-avatar{transform:translateY(-2px) rotate(-5deg) scale(1.09);filter:brightness(1.08)}
+}
+html .motion-bubble:focus-visible{transform:translateY(-2px) scale(1.04)!important}
+html .motion-bubble:active{transform:translateY(0) scale(.96)!important;transition-duration:100ms!important}
+.motion-toggle{margin-top:4px;width:100%;font-size:11px!important}
+html[data-motion-paused=true] .motion-tint::before,html[data-motion-paused=true] .motion-tint::after{animation-play-state:paused!important}
+html[data-motion-paused=true] .motion-bubble,html[data-motion-paused=true] .motion-bubble:hover,html[data-motion-paused=true] .motion-bubble:focus-visible,html[data-motion-paused=true] .motion-bubble:active{transform:none!important;filter:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){
+ .motion-tint::before,.motion-tint::after{animation:none!important;opacity:.6}
+ html .motion-bubble,html .motion-bubble:hover,html .motion-bubble:focus-visible,html .motion-bubble:active,.ar-row:hover .ar-avatar,.subscription-row:has(button:hover) .merchant-avatar{transform:none!important;filter:none!important;transition:none!important}
+}
+html[data-motion-paused=true] .ar-row:hover .ar-avatar,
+html[data-motion-paused=true] .subscription-row:has(button:hover) .merchant-avatar{transform:none!important;filter:none!important;transition:none!important}

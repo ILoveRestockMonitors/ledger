@@ -1,3 +1,7 @@
+## V2 appearance update
+
+Use the V2 source or Windows release for Sarah (Lora) and Cornelious (Manrope). Choose the palette from the header and light/dark separately. Hosted and connected desktop users can reload their existing app. Standalone Windows users should install the V2 package, stop Ledger and reopen it; their existing data directory is retained.
+
 # Ledger on Ubuntu 24
 
 Ledger is a single-owner finance app. The Python backend listens on

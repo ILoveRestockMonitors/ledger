@@ -1,0 +1,104 @@
+/* Aurora presentation layer over Ledger's existing routes and data actions. */
+(()=>{
+ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],cash=n=>fmtMoney(n,{decimals:2});
+ let overviewData,range=matchMedia('(max-width:700px)').matches?6:12,metric='spend';
+ const moneyFigure=n=>{let [integer,cents]=Math.abs(n).toFixed(2).split('.');return `<span class="currency">${n<0?'−':''}$</span><span>${Number(integer).toLocaleString('en-US')}</span><span class="cents">.${cents}</span>`;};
+ const head=(name,note='',right='')=>`<div class="ar-head"><div><h3>${name}</h3>${note?`<div class="ar-note">${note}</div>`:''}</div>${right}</div>`;
+ const row=(title,sub,amount,attrs)=>`<button class="ar-row" ${attrs}><span class="ar-avatar">${esc(title.slice(0,2).toUpperCase())}</span><span><b>${esc(title)}</b><small>${esc(sub)}</small></span><span class="ar-money">${cash(amount)}</span></button>`;
+ const choices=()=>`<div class="ar-range" aria-label="Chart range">${[12,6,3].map(n=>`<button data-ar-range="${n}" aria-pressed="${range===n}">${n}M</button>`).join('')}</div>`;
+ function spark(points){const values=points.map(p=>p.balance),lo=Math.min(...values),hi=Math.max(...values),den=hi-lo||1;let pts=values.map((v,i)=>[i/Math.max(1,values.length-1)*600,72-(v-lo)/den*66]);if(!pts.length)return '';let d=`M${pts[0].join(',')}`;for(let i=1;i<pts.length;i++){const [x,y]=pts[i],[px,py]=pts[i-1],mid=(x+px)/2;d+=` C${mid},${py} ${mid},${y} ${x},${y}`;}return `<svg viewBox="0 0 600 78" preserveAspectRatio="none"><defs><linearGradient id="arSG"><stop stop-color="var(--accent)"/><stop offset="1" stop-color="var(--cyan)"/></linearGradient><linearGradient id="arAG" x2="0" y2="1"><stop stop-color="var(--accent)" stop-opacity=".25"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><path d="${d} L600,78 L0,78Z" fill="url(#arAG)"/><path class="ar-spark-line" d="${d}" fill="none" stroke="url(#arSG)" stroke-width="1.8"/></svg>`;}
+ function bars(){const rows=overviewData.cf.slice(-range),max=Math.max(1,...rows.map(m=>m[metric]));return rows.map(m=>`<button class="ar-bar" data-ar-month="${m.month}" aria-pressed="false" aria-label="${m.month} ${metric==='spend'?'spending':'income'} ${cash(m[metric])}"><span class="ar-track"><span class="ar-column" style="height:${m[metric]/max*100}%"><span class="ar-chip">${cash(m[metric])}</span></span></span><span>${esc(m.label)}</span></button>`).join('');}
+ function catDetail(c){const b=overviewData.budgets.find(b=>b.cat_name===c.name),pct=b?Math.min(100,b.pct):c.pct;return `<h4 class="ar-category-name">${esc(c.name)}</h4><span class="ar-note">${c.pct}% of recorded spending this month</span><div class="ar-category-value">${cash(c.amt)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="ar-cat-stats"><div><span>Budget</span><b>${b?cash(b.month_limit):'Not set'}</b></div><div><span>Purchases / allocations</span><b>${c.n}</b></div><div><span>Remaining</span><b>${b?cash(b.remaining):'—'}</b></div></div><div class="ar-foot" style="margin-top:22px">${action('page','Manage budgets →','budgets','link-button')}<button class="link-button" data-ar-filter="${esc(c.name)}">View transactions →</button></div>`;}
+ registerPage('overview','Home',async()=>{
+ const [ov,plan,subs,recent,cf,goals,cats,budgets,accounts,nw]=await Promise.all([api('/summary/overview'),api('/monthly-plan'),api('/subscriptions'),api('/transactions?limit=6'),api('/summary/cashflow?months=12'),api('/goals'),api('/summary/categories?days='+Math.max(0,new Date().getDate()-1)+'&kind=expense'),api('/budgets'),api('/accounts'),api('/summary/networth?months=12')]);
+ overviewData={ov,plan,subs,recent,cf,goals,cats,budgets,accounts,nw};updateBadge(subs);comfort.subscriptions=[...subs.items,...subs.candidates,...(subs.canceled||[])];
+ const target=Number(comfort.config.monthly_spending_target||0),left=target-plan.total_expected,pct=target?Math.round(plan.total_expected/target*100):0,assets=accounts.reduce((s,a)=>s+Math.max(0,a.balance),0),debt=accounts.reduce((s,a)=>s-Math.min(0,a.balance),0),cashTotal=accounts.filter(a=>['depository','checking','savings','cash'].includes(a.type)).reduce((s,a)=>s+a.balance,0),month=new Date().toLocaleDateString('en-US',{month:'long'}), reviewCount=subs.candidates.length+(subs.price_reviews||[]).length;
+ const spots=[[28,50],[60,28],[74,66],[44,82],[12,82],[86,22],[10,18]],top=cats.slice(0,7),max=top[0]?.amt||1;
+ const first=top[0],period=new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ return `<div class="ar-welcome"><div><h2>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}${comfort.config.owner_name?', '+esc(comfort.config.owner_name):''}</h2><p>${period} · ${accounts.length} accounts</p></div>${action('add-tx','Add transaction','','btn btn-primary')}</div><div class="ar-grid">
+ <section class="card ar-hero ar-7"><div class="ar-eyebrow">Total net worth</div><div class="ar-figure">${moneyFigure(ov.net_worth)}</div><button class="ar-delta" data-ar-page="personal" style="border:0;cursor:pointer">${ov.net_this_month>=0?'▲':'▼'} ${cash(ov.net_this_month)} · net income this month</button><div class="ar-meta"><div><small>Assets</small><strong>${cash(assets)}</strong></div><div><small>Liabilities</small><strong>${cash(debt)}</strong></div><div><small>Cash on hand</small><strong>${cash(cashTotal)}</strong></div></div><button class="ar-spark" aria-label="Inspect estimated net worth history" data-ar-history>${spark(nw)}</button></section>
+ <section class="card ar-5">${head(month+' budget',new Date().getDate()+' days in',action('spending-plan','Edit plan','','link-button'))}<div class="ar-ring-row"><button class="ar-ring" data-ar-ring aria-label="Inspect monthly spending plan"><svg viewBox="0 0 120 120"><defs><linearGradient id="arRG"><stop stop-color="var(--accent)"/><stop offset="1" stop-color="var(--cyan)"/></linearGradient></defs><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(var(--tint),.07)" stroke-width="9"/><circle class="ar-ring-progress" cx="60" cy="60" r="50" fill="none" stroke="url(#arRG)" stroke-width="9" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="${314.159*(1-Math.min(pct,100)/100)}"/></svg><span><b>${target?pct+'%':'—'}</b><small>OF PLAN</small></span></button><div class="ar-ring-stats"><div><small>Spent</small><strong>${cash(plan.spent)}</strong></div><div><small>Pending & expected</small><strong>${cash((plan.pending_spend||0)+plan.upcoming)}</strong></div><div><small>Remaining after commitments</small><strong style="color:var(--amber)">${target?cash(left):'Set a plan'}</strong></div></div></div></section>
+ <section class="card ar-8" data-ar-card="cashflow">${head('Monthly spending','Select a month to inspect',choices())}<div class="ar-range" style="width:fit-content;margin-top:-12px;margin-bottom:14px"><button data-ar-metric="spend" aria-pressed="${metric==='spend'}">Spending</button><button data-ar-metric="income" aria-pressed="${metric==='income'}">Income</button></div><div class="ar-bars" style="grid-template-columns:repeat(${range},minmax(0,1fr))">${bars()}</div><div class="ar-foot"><span id="arBarLabel">${range}-month average</span><strong id="arBarValue">${cash(cf.slice(-range).reduce((s,m)=>s+m[metric],0)/range)}</strong></div></section>
+ <section class="card ar-4">${head('Accounts',accounts.length+' tracked',action('page','View all','accounts','link-button'))}<div class="ar-accts">${accounts.slice(0,4).map(a=>`<button class="ar-account" data-ar-account="${a.id}"><small><i></i>${esc(a.name)}</small><b>${cash(a.balance)}</b><small>${esc(a.scope)} · ${esc(a.type)}${a.mask?' · '+esc(a.mask):''}</small></button>`).join('')||action('manual-account','Add an account','','btn')}</div></section>
+ <section class="card ar-7">${head('Spend constellation','Bubble area is share of month · tap to inspect')}<div class="ar-constellation">${top.map((c,i)=>`<button class="ar-bubble" data-ar-cat="${i}" aria-pressed="${i===0}" aria-label="${esc(c.name)} ${cash(c.amt)}" style="--x:${spots[i][0]}%;--y:${spots[i][1]}%;--size:${Math.max(44,Math.sqrt(c.amt/max)*128)}px"><b>${esc(c.name)}</b><small>${cash(c.amt)}</small></button>`).join('')||'<div class="empty">Your spending will appear here.</div>'}</div>${cats.length>7?action('page',`Explore all ${cats.length} categories →`,'reports','link-button'):''}</section>
+ <section class="card ar-5">${head('Category detail')}<div id="arCategory" style="display:flex;flex-direction:column;flex:1">${first?catDetail(first):'<p class="quiet-note">Add a transaction to start.</p>'}</div></section>
+ <section class="card ar-6" data-ar-card="recent">${head('Recent activity','',action('page','View all','transactions','link-button'))}${recent.rows.map(t=>row(receiptDisplayName(t),(t.allocations?.length>1?'Split purchase':t.cat_name||'Uncategorized')+' · '+fmtDate(t.posted),t.amount,`data-ar-tx="${t.id}"`)).join('')||'<p class="quiet-note">No recent activity.</p>'}</section>
+ <section class="card ar-6" data-ar-card="upcoming">${head('Upcoming payments',cash(plan.upcoming)+' expected',action('page','View all','subscriptions','link-button'))}${plan.upcoming_items.slice(0,6).map(s=>row(s.merchant,fmtDate(s.due)+' · '+s.cadence,s.expected??s.amount,`data-action="edit-sub" data-id="${s.id||s.subscription_id}"`)).join('')||'<p class="quiet-note">No more tracked payments this month.</p>'}</section>
+ ${reviewCount?`<section class="card ar-review">${head('Recurring payments to review',reviewCount+' candidates or price changes',action('page','Review payments','subscriptions','btn'))}</section>`:''}
+ <section class="card ar-12" data-ar-card="goals">${head('Savings goals','',action('page','Manage goals','goals','link-button'))}<div class="ar-goals">${goals.slice(0,3).map(g=>`<button class="ar-goal" data-ar-goal="${g.id}"><b>${esc(g.name)} <span class="muted">${Math.round(g.pct)}%</span></b><div class="bar"><i style="width:${Math.min(100,g.pct)}%"></i></div><small>${cash(g.saved)} of ${cash(g.target)}</small></button>`).join('')||action('page','Create a goal','goals','btn')}</div></section>
+ <section class="card ar-12">${head('Money in, money out','Posted payments · transfers excluded')}<div class="ar-meta" style="margin:0;justify-content:space-between;flex-wrap:wrap">${[['Income',cash(ov.income_this_month),'transactions'],['Spending',cash(ov.spend_this_month),'reports'],['Saved',cash(ov.net_this_month),'goals'],['Savings rate',ov.savings_rate===null?'—':(ov.savings_rate*100).toFixed(1)+'%','personal']].map(([k,v,page])=>`<button class="ar-goal" data-ar-page="${page}"><small>${k}</small><strong>${v}</strong></button>`).join('')}</div></section></div>`;
+ });
+ function updateBars(){const wrap=$('.ar-bars');wrap.innerHTML=bars();wrap.style.gridTemplateColumns=`repeat(${range},minmax(0,1fr))`;$$('[data-ar-range]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.arRange===range)));$$('[data-ar-metric]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.arMetric===metric)));$('#arBarLabel').textContent=range+'-month average';$('#arBarValue').textContent=cash(overviewData.cf.slice(-range).reduce((s,m)=>s+m[metric],0)/range);}
+ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.hasAttribute('data-ar-page'))navigate(b.dataset.arPage);
+ if(b.hasAttribute('data-ar-tx'))openTxEdit(b.dataset.arTx);
+ if(b.hasAttribute('data-ar-account')){const a=overviewData.accounts.find(a=>a.id===b.dataset.arAccount);if(!a.item_id)openManualAccount(a.id);else navigate('accounts');}
+ if(b.hasAttribute('data-ar-goal')){const g=overviewData.goals.find(g=>g.id===b.dataset.arGoal);contribute(g.id,g.name,Math.max(0,g.target-g.saved));}
+ if(b.hasAttribute('data-ar-range')){range=+b.dataset.arRange;updateBars();}
+ if(b.hasAttribute('data-ar-metric')){metric=b.dataset.arMetric;updateBars();}
+ if(b.hasAttribute('data-ar-month')){const on=b.getAttribute('aria-pressed')==='true';$$('.ar-bar').forEach(x=>x.setAttribute('aria-pressed','false'));if(on){updateBars();return;}b.setAttribute('aria-pressed','true');const m=overviewData.cf.find(m=>m.month===b.dataset.arMonth);$('#arBarLabel').textContent=m.month+' · '+(metric==='spend'?'spending':'income');$('#arBarValue').textContent=cash(m[metric]);}
+ if(b.hasAttribute('data-ar-cat')){$$('.ar-bubble').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));$('#arCategory').innerHTML=catDetail(overviewData.cats[+b.dataset.arCat]);}
+ if(b.hasAttribute('data-ar-filter')){state.txFilters.category_id=state.categories.find(c=>c.name===b.dataset.arFilter)?.id||'';navigate('transactions');}
+ if(b.hasAttribute('data-ar-ring')){showModal(`${modalTitle('Your monthly plan')}<p class="sub">Actual payments, pending charges, and tracked commitments are counted once.</p>${[['Spent',overviewData.plan.spent],['Pending',overviewData.plan.pending_spend||0],['Upcoming',overviewData.plan.upcoming],['Total expected',overviewData.plan.total_expected]].map(([k,v])=>`<div class="setting-row"><span>${k}</span><b>${cash(v)}</b></div>`).join('')}<div class="modal-actions">${action('close','Close')}${action('spending-plan','Edit plan','','btn btn-primary')}</div>`);}
+ if(b.hasAttribute('data-ar-history'))showModal(`${modalTitle('Estimated net worth history')}<p class="sub">Reconstructed from current balances and recorded transactions. It excludes historical investment price changes.</p>${lineChart(overviewData.nw.map(p=>({label:p.month,v:p.balance})))}<div class="modal-actions">${action('close','Close')}${action('page','Explore your future','future','btn btn-primary')}</div>`);
+ });
+ // Keep Aurora as the default while respecting the existing font and density settings.
+ $('.logo-word').textContent='Ledger';$('.logo-sub').textContent='Cornelious';
+ const appearance=document.createElement('button');appearance.className='icon-button';appearance.title='Switch light / dark';appearance.setAttribute('aria-label','Switch light / dark');appearance.textContent='◐';appearance.onclick=()=>$('#btn-theme').click();$('#topbar').insertBefore(appearance,$('#btn-refresh'));
+ const search=document.createElement('button');search.className='btn btn-ghost desktop-only';search.textContent='Search transactions  ⌘K';search.onclick=()=>navigate('transactions');$('#topbar').insertBefore(search,$('#btn-refresh'));
+ const customize=document.createElement('button');customize.className='btn btn-ghost desktop-only';customize.textContent='Edit design';customize.onclick=()=>showModal(`${modalTitle('Palette design controls')}<p class="sub">Adjust the presentation locally. Your financial records are unchanged.</p><label class="fld" for="arRadius">Card radius</label><input id="arRadius" class="input" type="range" min="8" max="32" value="${localStorage.getItem('aurora-radius')||22}"><div class="modal-actions">${action('close','Done')}</div>`);$('#topbar').insertBefore(customize,$('#btn-link'));
+ document.addEventListener('input',e=>{if(e.target.id==='arRadius'){document.documentElement.style.setProperty('--aurora-radius',e.target.value+'px');localStorage.setItem('aurora-radius',e.target.value);}});
+ try{const radius=localStorage.getItem('aurora-radius');if(radius)document.documentElement.style.setProperty('--aurora-radius',radius+'px');}catch{}
+ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();navigate('transactions');}});
+ // Animate new charts once in view; add keyboard selection to existing chart marks.
+ const reduced=matchMedia('(prefers-reduced-motion:reduce)');const reveal=new IntersectionObserver(es=>es.forEach(({target,isIntersecting})=>{if(!isIntersecting)return;reveal.unobserve(target);if(reduced.matches)return;target.animate([{opacity:.45,transform:'scaleY(.95)'},{opacity:1,transform:'scaleY(1)'}],{duration:240,easing:'cubic-bezier(.165,.84,.44,1)'});}),{threshold:.1});
+ function enhance(){
+ const enabled=comfort.config.home_cards||['recent','upcoming','cashflow','goals'];
+ $$('[data-ar-card]').forEach(el=>{el.hidden=!enabled.includes(el.dataset.arCard);});
+ $$('.ar-column,.ar-spark,.bar>i').forEach(el=>{if(el.dataset.arObserved)return;el.dataset.arObserved='1';reveal.observe(el);});$$('#view svg rect:has(title),#view svg circle:has(title),#view .heat-cell').forEach(el=>{if(el.dataset.arKeyboard)return;el.dataset.arKeyboard='1';el.tabIndex=0;el.setAttribute('role','button');const label=el.querySelector('title')?.textContent||el.getAttribute('title')||'Inspect chart value';el.setAttribute('aria-label',label);el.setAttribute('aria-pressed','false');const activate=()=>{const on=el.getAttribute('aria-pressed')==='true';el.setAttribute('aria-pressed',String(!on));el.classList.toggle('ar-chart-selected',!on);toast(label);};el.addEventListener('click',activate);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate();}});});}
+ new MutationObserver(enhance).observe($('#view'),{childList:true,subtree:true});
+})();
+// Messages are accepted only from the same-origin local review studio.
+addEventListener('message',event=>{
+ if(event.origin!==location.origin)return;
+ if(event.data?.type==='review-theme'&&['dark','light'].includes(event.data.theme))applyTheme(event.data.theme);
+ if(event.data?.type==='review-radius'&&Number.isFinite(event.data.radius)){const radius=Math.max(8,Math.min(32,event.data.radius));document.documentElement.style.setProperty('--aurora-radius',radius+'px');localStorage.setItem('aurora-radius',radius);}
+});
+// Preserve the full app's typography, spacing and accent preferences.
+(()=>{
+ const originalComfort=applyComfort;
+ let themeFadeTimer;
+ applyComfort=config=>{
+  const rootBefore=document.documentElement;
+  const preference=config.theme||comfort.config.theme||'system';
+  const nextTheme=preference==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):preference;
+  const animateTheme=rootBefore.dataset.reviewMode!=='custom'&&Boolean(comfort.config.theme)&&rootBefore.dataset.theme!==nextTheme&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let oldField;
+  if(animateTheme){
+   document.querySelectorAll('.ar-theme-field').forEach(el=>el.remove());
+   oldField=document.createElement('div');
+   oldField.className='ar-theme-field';oldField.setAttribute('aria-hidden','true');
+   oldField.style.background=getComputedStyle(rootBefore).getPropertyValue('--field');
+   document.body.append(oldField);
+   rootBefore.classList.add('ar-theme-changing');
+   clearTimeout(themeFadeTimer);
+  }
+  originalComfort(config);
+  const c=comfort.config,root=document.documentElement;
+  const fonts={manrope:"'Manrope',system-ui,sans-serif",lora:"'Lora',Georgia,serif",nunito:"'Nunito Sans',system-ui,sans-serif",'nunito-sans':"'Nunito Sans',system-ui,sans-serif"};
+  root.style.setProperty('--font',fonts[c.font_family]||fonts.manrope,'important');
+  const accents={sage:['#558779','85,135,121'],plum:['#8f78a0','143,120,160'],clay:['#aa7967','170,121,103']};
+  if(root.dataset.reviewMode!=='custom'&&accents[c.accent]){root.style.setProperty('--accent',accents[c.accent][0],'important');root.style.setProperty('--accent-rgb',accents[c.accent][1],'important');}
+  else{root.style.removeProperty('--accent');root.style.removeProperty('--accent-rgb');}
+  if(oldField){
+   const fade=oldField.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-out',fill:'forwards'});
+   fade.onfinish=()=>oldField.remove();
+   themeFadeTimer=setTimeout(()=>root.classList.remove('ar-theme-changing'),280);
+  }
+ };
+ const originalApi=api;let refreshPending=false;
+ api=async(path,options={})=>{const result=await originalApi(path,options);if(options.method&&options.method!=='GET'){try{localStorage.setItem('aurora-data-revision',Date.now()+':'+Math.random());}catch{}}return result;};
+ async function refresh(){if(document.querySelector('.modal-backdrop')){refreshPending=true;return;}refreshPending=false;try{const [config,accounts,categories]=await Promise.all([originalApi('/config'),originalApi('/accounts'),originalApi('/categories')]);applyComfort(config);state.accounts=accounts;state.categories=categories;await navigate(state.page);}catch{}}
+ addEventListener('storage',e=>{if(e.key==='aurora-data-revision')refresh();if(e.key==='aurora-radius'&&e.newValue)document.documentElement.style.setProperty('--aurora-radius',e.newValue+'px');});
+ new MutationObserver(()=>{if(refreshPending&&!document.querySelector('.modal-backdrop'))refresh();}).observe(document.getElementById('modal-root'),{childList:true});
+})();

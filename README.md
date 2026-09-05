@@ -1,3 +1,7 @@
+# Ledger V2
+
+Sarah and Cornelious are now the two interchangeable designs, each with light and dark modes. See [V2 release details](docs/V2-RELEASE.md) for appearance, motion, platform coverage and upgrade behavior.
+
 # Ledger
 
 A private finance dashboard for everyday spending, subscriptions, and the future you are planning. Built on the original Ledger.zip foundation with vanilla JavaScript, Python's standard library, SQLite, and locally bundled fonts.
