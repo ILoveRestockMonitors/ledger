@@ -8,8 +8,27 @@
  control.id='arPalette';control.className='input ar-palette';control.setAttribute('aria-label','Color mode');
  control.innerHTML='<option value="aurora">Cornelious</option><option value="custom">Sarah</option>';
  control.value=mode;document.getElementById('topbar').insertBefore(control,document.querySelector('[aria-label="Switch light / dark"]'));
+ function syncSettings(){
+  const palette=document.getElementById('setting-palette');
+  if(!palette)return;
+  if(!palette.dataset.v2Palette){
+   palette.removeAttribute('data-pref');palette.dataset.v2Palette='true';
+   palette.innerHTML=control.innerHTML;
+   const label=document.querySelector('label[for="setting-palette"]');if(label)label.textContent='Palette';
+   const fontLink=document.querySelector('[data-action="page"][data-id="typography"]');
+   if(fontLink){const value=document.createElement('span');value.id='palette-font';fontLink.replaceWith(value);}
+   const swatches=document.querySelector('.swatches');
+   if(swatches){const label=swatches.previousElementSibling;if(label?.textContent==='Your accent color')label.remove();swatches.remove();}
+   const note=palette.closest('.card')?.querySelector('.quiet-note');if(note)note.textContent='Palette and font stay on this browser. Appearance and spacing save across your devices.';
+  }
+  if(palette.value!==mode)palette.value=mode;
+  const font=document.getElementById('palette-font'),value=mode==='custom'?'Lora · Sarah':'Manrope · Cornelious';
+  if(font&&font.textContent!==value)font.textContent=value;
+ }
+ new MutationObserver(syncSettings).observe(document.getElementById('view'),{childList:true,subtree:true});
+ document.addEventListener('change',e=>{if(e.target.id==='setting-palette')setMode(e.target.value);});
  function announce(){
-  control.value=mode;
+  control.value=mode;syncSettings();
   root.style.setProperty('--font',mode==='custom'?"'Lora',Georgia,serif":"'Manrope',system-ui,sans-serif",'important');
   const logo=document.querySelector('.logo-sub');if(logo)logo.textContent=mode==='custom'?'Sarah':'Cornelious';
   if(parent!==window)parent.postMessage({type:'review-appearance-state',mode,theme:root.dataset.theme},location.origin);

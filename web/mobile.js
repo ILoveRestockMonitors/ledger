@@ -38,6 +38,7 @@
     toggleClass('nav-open', active);
     menu.setAttribute('aria-expanded', String(active));
     more.setAttribute('aria-expanded', String(active));
+    sidebar.inert = media.matches && !active;
     main.inert = active;
     add.inert = active || modalOpen();
     bottom.inert = active || modalOpen();

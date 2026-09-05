@@ -207,3 +207,12 @@ button.owner-avatar:active,button.icon-button:active,
  .ar-figure{font-size:40px;min-width:0}
  :root[data-review-mode=custom] #view .card{padding:20px!important}
 }
+
+/* Medium screens retain navigation while secondary header actions stay in their pages. */
+@media(min-width:701px) and (max-width:1100px){
+ #topbar{min-width:0;padding:0 24px;gap:6px}
+ #topbar .desktop-only,#topbar .topbar-home{display:none!important}
+ #topbar #page-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #topbar .topbar-spacer{display:none}
+ #topbar>.icon-button,#topbar>.owner-avatar{flex-shrink:0}
+}

@@ -1,5 +1,7 @@
 # Ledger V2
 
+V2.0.1 includes verified web/mobile QA corrections. See [QA details](docs/QA-V2.md).
+
 Sarah and Cornelious are now the two interchangeable designs, each with light and dark modes. See [V2 release details](docs/V2-RELEASE.md) for appearance, motion, platform coverage and upgrade behavior.
 
 # Ledger
