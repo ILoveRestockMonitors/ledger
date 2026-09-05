@@ -23,3 +23,7 @@ Deploy frontend overlays onto each existing production image so worker dependenc
 Runtime assets are in `web/`. The generated video is a bundled local asset: no generation API or API key is needed by the deployed app. Comparison screenshots, generation credentials and provider job records are excluded.
 
 The historical reconstruction document describes the earlier base. Use the V2 tagged repository or V2 source release to reproduce this version.
+
+## Mobile fit correction
+
+The V2 release also addresses two emailed iPhone screenshots: toolbar controls now fit at 320 CSS pixels, and the leaf drawer is capped at 280 pixels with tighter navigation spacing, safe-area padding and independent scrolling. Verified at 320 × 693 and 390 × 844; 44-pixel tap targets are retained.

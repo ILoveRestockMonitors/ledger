@@ -9,7 +9,7 @@ import zipfile
 
 RUNTIME_SHA256 = "d1f04d990aee1253d8569e8e5104e30fa9f5fa830899f14843448872d936a2cf"
 RUNTIME_URL = "https://www.python.org/ftp/python/3.13.15/python-3.13.15-embed-amd64.zip"
-SOURCE_SHA256 = "51417a97e6a64c4954391da8917d5c8e9e48597ceeaaae6392670abc7be5a2a5"
+SOURCE_SHA256 = "dd4f27e259badfc36936f5dc7e650be9cc590c060c7eb1b3fa69d0df5eb9e353"
 
 GUIDE = """LEDGER FOR WINDOWS — START HERE
 
