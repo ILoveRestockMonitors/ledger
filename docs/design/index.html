@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger — Design directions</title>
+<style>
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(../../web/fonts/manrope-0.woff2) format('woff2');}
+:root{
+  --bg:#fbfbfc; --surface:#fff; --line:#e9e9ee; --line-2:#dcdce2;
+  --ink:#101014; --muted:#6c6c78; --faint:#9a9aa5;
+  --out:cubic-bezier(.165,.84,.44,1);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,'Manrope',Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--ink); font:400 15px/1.6 var(--font);
+  -webkit-font-smoothing:antialiased;}
+.wrap{max-width:940px; margin:0 auto; padding:72px 32px 96px;}
+.eyebrow{font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint);}
+h1{margin:14px 0 0; font-size:34px; letter-spacing:-.03em; font-weight:600;}
+.sub{margin:12px 0 0; color:var(--muted); max-width:62ch;}
+.sub a{color:var(--ink); text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line-2);}
+.grid{display:grid; gap:16px; margin-top:44px;}
+.card{display:block; text-decoration:none; color:inherit; background:var(--surface);
+  border:1px solid var(--line); border-radius:10px; padding:26px 28px;
+  transition:border-color 220ms ease, transform 160ms var(--out);}
+.card:hover{border-color:var(--line-2); transform:translateY(-2px);}
+.card:active{transform:translateY(0) scale(.995);}
+.card-top{display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap;}
+.name{font-size:19px; font-weight:600; letter-spacing:-.02em;}
+.role{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint);}
+.desc{margin:10px 0 0; color:var(--muted); font-size:14px; max-width:64ch;}
+.meta{display:flex; gap:20px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);
+  font-size:12px; color:var(--faint);}
+.meta b{color:var(--muted); font-weight:500;}
+.sw{display:inline-flex; gap:5px; vertical-align:middle; margin-left:2px;}
+.sw i{width:11px; height:11px; border-radius:3px; display:block; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+.foot{margin-top:44px; padding-top:20px; border-top:1px solid var(--line); font-size:13px; color:var(--faint);}
+.foot a{color:var(--muted);}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Ledger · homepage mockups</div>
+  <h1>Three design directions</h1>
+  <p class="sub">
+    Non-functional homepage mockups built from a study of 18 finance products and 14 animation-led
+    sites. Each is a self-contained HTML file on the same curated dataset, so they compare
+    like-for-like. Every bar, bubble, meter and row responds to a click. The study notes are in
+    <a href="RESEARCH.md">RESEARCH.md</a>.
+  </p>
+
+  <div class="grid">
+    <a class="card" href="mockups/aurora.html">
+      <div class="card-top"><span class="name">Aurora</span><span class="role">Futuristic</span></div>
+      <p class="desc">Cinematic dark glass. A fixed aurora field with grain, translucent surfaces over it,
+        a 76px net-worth figure, and a spend constellation whose bubbles drift until you press one.</p>
+      <div class="meta">
+        <span><b>Lineage</b> Runway × Arc × Igloo</span>
+        <span><b>Accent</b> Iris + cyan
+          <span class="sw"><i style="background:#06070c"></i><i style="background:#8b7cff"></i><i style="background:#4fd8f5"></i></span></span>
+        <span><b>Type</b> Manrope</span>
+      </div>
+    </a>
+
+    <a class="card" href="mockups/quiet.html">
+      <div class="card-top"><span class="name">Quiet</span><span class="role">Minimalist</span></div>
+      <p class="desc">Hairlines and one indigo, nothing else. No gradients, no shadows, radius capped at
+        8px. Density where the data lives, generosity around the chrome — spend bubbles reduced to
+        circles resting on a single axis.</p>
+      <div class="meta">
+        <span><b>Lineage</b> Linear × Vercel × Mercury</span>
+        <span><b>Accent</b> Indigo, alone
+          <span class="sw"><i style="background:#fcfcfd"></i><i style="background:#5266eb"></i><i style="background:#101014"></i></span></span>
+        <span><b>Type</b> System / Inter</span>
+      </div>
+    </a>
+
+    <a class="card" href="mockups/almanac.html">
+      <div class="card-top"><span class="name">Almanac</span><span class="role">The surprise</span></div>
+      <p class="desc">The month set as a printed broadsheet — letterpress rules, engraved hatch columns,
+        ink-blot spend discs, and a risograph overprint that sits out of register until you press
+        something and it snaps into place. Built on Ledger's own paper, Lora and copper.</p>
+      <div class="meta">
+        <span><b>Lineage</b> Granola × Mercury × Toss</span>
+        <span><b>Accent</b> Copper + ledger green
+          <span class="sw"><i style="background:#f7f4ec"></i><i style="background:#b0562f"></i><i style="background:#2f6b4f"></i></span></span>
+        <span><b>Type</b> Lora + Nunito Sans</span>
+      </div>
+    </a>
+  </div>
+
+  <p class="foot">
+    Mockups only — no network, no storage, no backend. All figures are illustrative.
+    Motion follows one contract across all three: <code>ease-out</code> on entrances, nothing over
+    300ms, transform and opacity only, and everything disabled under
+    <code>prefers-reduced-motion</code>.
+  </p>
+</div>
+</body>
+</html>

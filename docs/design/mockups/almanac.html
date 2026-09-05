@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en" data-mock="almanac">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger — Almanac</title>
+<style>
+/* ============================================================
+   LEDGER · ALMANAC — the surprise
+   A month of money set as a printed broadsheet: letterpress rules,
+   engraved column charts, ink-blot spend bubbles, and a risograph
+   misregistration that snaps into register when you press something.
+   Lineage: Granola (warm glass) x Mercury (editorial money type) x
+            Toss (finance legibility), built on Ledger's own paper DNA.
+   Rejects: cold grays, pure black, drop shadows, large radii, dark canvas.
+   ============================================================ */
+@font-face{font-family:'Lora';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(../../../web/fonts/lora-0.woff2) format('woff2');}
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(../../../web/fonts/nunito-sans-0.woff2) format('woff2');}
+
+:root{
+  --paper:#f7f4ec; --paper-2:#f1ece0; --paper-3:#eae3d4;
+  --ink:#1f1c16; --ink-2:#4e463a; --faint:#8d8375;
+  --copper:#b0562f; --copper-soft:#e8d3c4;
+  --ledger:#2f6b4f; --oxblood:#9c3b2e;
+  --rule:rgba(31,28,22,.14); --rule-2:rgba(31,28,22,.28);
+
+  --r:3px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --out:cubic-bezier(.165,.84,.44,1);
+  --expo:cubic-bezier(.19,1,.22,1);
+  --serif:'Lora',Georgia,'Times New Roman',serif;
+  --sans:'Nunito Sans',-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font:400 14.5px/1.6 var(--sans);
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;
+}
+/* laid-paper grain */
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:99; opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+.sheet{max-width:1120px; margin:0 auto; padding:var(--s7) var(--s6) var(--s8);}
+
+/* ---------- masthead ---------- */
+.rule{height:1px; background:var(--rule-2); transform:scaleX(0); transform-origin:left;
+  transition:transform 900ms var(--expo);}
+.rule.in{transform:scaleX(1);}
+.rule-double{height:4px; border-top:1px solid var(--rule-2); border-bottom:1px solid var(--rule-2);
+  transform:scaleX(0); transform-origin:left; transition:transform 900ms var(--expo) 120ms;}
+.rule-double.in{transform:scaleX(1);}
+.mast-row{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s5); padding:var(--s4) 0 var(--s2);}
+.mast-side{font:400 10.5px var(--sans); letter-spacing:.22em; text-transform:uppercase; color:var(--faint); white-space:nowrap;}
+.mast-name{margin:0; font:600 58px/1 var(--serif); letter-spacing:.02em;}
+.mast-sub{text-align:center; font:italic 400 14px var(--serif); color:var(--ink-2); padding-bottom:var(--s4);}
+.dateline{display:flex; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;
+  font:400 10px var(--sans); letter-spacing:.2em; text-transform:uppercase; color:var(--faint); padding:10px 0 0;}
+
+/* ---------- lead ---------- */
+.lead{display:grid; grid-template-columns:1fr 320px; gap:var(--s7); padding:var(--s7) 0 var(--s6);}
+.kicker{font:400 10px var(--sans); letter-spacing:.22em; text-transform:uppercase; color:var(--copper); margin-bottom:var(--s3);}
+.bignum{display:flex; align-items:baseline; gap:5px; font:500 66px/1 var(--serif); letter-spacing:-.02em;}
+.bignum .cur{font-size:30px; color:var(--faint);}
+.bignum .cents{font-size:30px; color:var(--ink-2);}
+.lead-note{margin-top:var(--s4); font:italic 400 15px/1.55 var(--serif); color:var(--ink-2); max-width:46ch;}
+.lead-note b{font-style:normal; font-weight:600; color:var(--ledger);}
+.lead-stats{display:flex; flex-direction:column; border-top:1px solid var(--rule); padding-left:var(--s5);}
+.lstat{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4);
+  padding:13px 0; border-bottom:1px solid var(--rule); width:100%;
+  border-left:0; border-right:0; background:none; cursor:pointer; color:inherit; text-align:left;
+  transition:background-color 180ms ease, padding-left 200ms var(--out);}
+.lstat:hover{background:rgba(31,28,22,.03); padding-left:6px;}
+.lstat .k{font:400 10.5px var(--sans); letter-spacing:.16em; text-transform:uppercase; color:var(--faint);}
+.lstat .v{font:500 20px var(--serif); letter-spacing:-.01em;}
+.lstat .v .cur{font-size:13px; color:var(--faint);}
+.lstat .v.pos{color:var(--ledger);} .lstat .v.neg{color:var(--oxblood);}
+
+/* ---------- section heads ---------- */
+.sec{margin-top:var(--s7);}
+.sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4); padding-bottom:10px;}
+.sec-title{font:600 21px var(--serif); letter-spacing:-.01em;}
+.sec-note{font:italic 400 12.5px var(--serif); color:var(--faint);}
+.sec-rule{height:3px; border-top:1px solid var(--rule-2); border-bottom:1px solid var(--rule); margin-bottom:var(--s5);}
+
+/* ---------- broadsheet columns ---------- */
+.cols{display:grid; grid-template-columns:1fr 320px; gap:var(--s7); align-items:start;}
+.col-side{border-left:1px solid var(--rule); padding-left:var(--s5);}
+
+/* ---------- engraved column chart ---------- */
+.chart{position:relative;}
+.bars{display:grid; grid-template-columns:repeat(12,1fr); gap:10px; align-items:end; height:210px;
+  border-bottom:1px solid var(--rule-2);}
+.bar{position:relative; height:100%; display:flex; flex-direction:column; align-items:center; gap:0;
+  border:0; padding:0; background:none; cursor:pointer; transition:opacity 220ms ease;}
+.bar .track{flex:1; width:100%; min-height:0; display:flex; align-items:flex-end;}
+.bar .col{
+  position:relative; width:100%; transform-origin:bottom; transform:scaleY(0);
+  background-color:var(--paper-3);
+  background-image:repeating-linear-gradient(45deg, rgba(31,28,22,.30) 0 1px, transparent 1px 5px);
+  border:1px solid var(--rule-2); border-bottom:0;
+  transition:transform 420ms var(--out), background-color 240ms ease;
+}
+.bars.in .bar .col{transform:scaleY(1);}
+/* risograph overprint — sits out of register until you press it */
+.bar .col::after{
+  content:''; position:absolute; inset:-1px; background:var(--copper); mix-blend-mode:multiply;
+  opacity:0; transform:translate(4px,-4px);
+  transition:opacity 240ms ease, transform 320ms var(--out);
+}
+.bar:hover .col{background-color:var(--copper-soft);}
+.bar .m{font:400 10.5px var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--faint);
+  padding-top:9px; transition:color 180ms ease;}
+.bars.has-sel .bar{opacity:.42;}
+.bars.has-sel .bar[aria-pressed="true"]{opacity:1;}
+.bar[aria-pressed="true"] .col::after{opacity:.9; transform:translate(0,0);}
+.bar[aria-pressed="true"] .m{color:var(--ink); font-weight:600;}
+.chip{position:absolute; bottom:calc(100% + 8px); left:50%; translate:-50% 0; white-space:nowrap;
+  font:500 11px var(--mono); color:var(--paper); background:var(--ink); padding:3px 7px; border-radius:2px;
+  opacity:0; transform:scale(.95) translateY(3px); pointer-events:none;
+  transition:opacity 170ms var(--out), transform 170ms var(--out);}
+.bar[aria-pressed="true"] .chip{opacity:1; transform:none;}
+.chart-foot{display:flex; align-items:baseline; justify-content:space-between; padding-top:var(--s4);}
+.chart-foot .k{font:italic 400 13px var(--serif); color:var(--ink-2);}
+.chart-foot .v{font:500 19px var(--serif);}
+.chart-foot .v .cur{font-size:13px; color:var(--faint);}
+
+/* ---------- ink blots ---------- */
+.blots{display:flex; align-items:flex-end; justify-content:space-between; gap:var(--s3); padding:var(--s5) 0 0;}
+.blot{position:relative; border:0; background:none; padding:0; cursor:pointer; display:flex;
+  flex-direction:column; align-items:center; gap:10px;}
+.blot .disc{position:relative; border-radius:50%; background:var(--ink);
+  transition:transform 260ms var(--out);}
+.blot .disc::after{
+  content:''; position:absolute; inset:0; border-radius:50%; background:var(--copper);
+  mix-blend-mode:multiply; opacity:.55; transform:translate(4px,-4px);
+  transition:transform 340ms var(--out), opacity 240ms ease;
+}
+.blot:hover .disc{transform:scale(1.03);}
+.blot:active .disc{transform:scale(.96);}
+.blot[aria-pressed="true"] .disc{transform:scale(1.06);}
+.blot[aria-pressed="true"] .disc::after{transform:translate(0,0); opacity:.95;}
+.blot .lb{text-align:center;}
+.blot .n{display:block; font:400 11.5px var(--sans); color:var(--ink-2); transition:color 180ms ease;}
+.blot .v{display:block; font:500 11.5px var(--mono); color:var(--faint); margin-top:2px; transition:color 180ms ease;}
+.blot[aria-pressed="true"] .n{color:var(--ink); font-weight:700;}
+.blot[aria-pressed="true"] .v{color:var(--ink);}
+.halo{position:absolute; inset:0; border-radius:50%; border:1px solid var(--copper); pointer-events:none;
+  animation:halo 640ms var(--out) forwards;}
+@keyframes halo{to{transform:scale(1.7); opacity:0;}}
+.blot-read{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4);
+  padding-bottom:var(--s3); border-bottom:1px solid var(--rule);}
+.blot-read .l{font:italic 400 14px var(--serif); color:var(--ink-2);}
+.blot-read .r{font:500 19px var(--serif);}
+.blot-read .r .cur{font-size:13px; color:var(--faint);}
+
+/* ---------- ledger table ---------- */
+.ledger{width:100%;}
+.lhead{display:grid; grid-template-columns:76px 1fr 120px 118px; gap:var(--s3);
+  font:400 10px var(--sans); letter-spacing:.18em; text-transform:uppercase; color:var(--faint);
+  padding-bottom:8px; border-bottom:1px solid var(--rule-2);}
+.lhead span:last-child{text-align:right;}
+.lline{border-bottom:1px solid var(--rule);}
+.lrow{display:grid; grid-template-columns:76px 1fr 120px 118px; gap:var(--s3); align-items:baseline;
+  width:100%; border:0; background:none; cursor:pointer; text-align:left; color:inherit; font:inherit;
+  padding:12px 0; transition:background-color 160ms ease, padding-left 220ms var(--out);}
+.lrow:hover{background:rgba(31,28,22,.03); padding-left:6px;}
+.lrow .dt{font:400 11.5px var(--mono); color:var(--faint);}
+.lrow .nm{font:500 14.5px var(--serif);}
+.lrow .ct{font:400 12px var(--sans); color:var(--ink-2);}
+.lrow .am{font:500 13.5px var(--mono); text-align:right;}
+.lrow .am.pos{color:var(--ledger);}
+.exp{display:grid; grid-template-rows:0fr; transition:grid-template-rows 250ms var(--out);}
+.exp.open{grid-template-rows:1fr;}
+.exp > div{overflow:hidden;}
+.exp-in{display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s4);
+  margin:0 0 var(--s3) 76px; padding:var(--s3) var(--s4); background:var(--paper-2);
+  border-left:2px solid var(--copper); border-radius:0 var(--r) var(--r) 0;
+  opacity:0; transform:translateY(-3px);
+  transition:opacity 210ms var(--out) 40ms, transform 210ms var(--out) 40ms;}
+.exp.open .exp-in{opacity:1; transform:none;}
+.exp-in .k{font:400 9.5px var(--sans); letter-spacing:.16em; text-transform:uppercase; color:var(--faint);}
+.exp-in .v{font:400 12.5px var(--sans); margin-top:3px;}
+
+/* ---------- side: budget rules ---------- */
+.side-h{font:600 13px var(--serif); letter-spacing:.02em; padding-bottom:8px; border-bottom:1px solid var(--rule-2); margin-bottom:var(--s3);}
+.brow{display:block; width:100%; border:0; background:none; cursor:pointer; text-align:left; color:inherit;
+  font:inherit; padding:10px 0; border-bottom:1px solid var(--rule);
+  transition:padding-left 200ms var(--out), background-color 160ms ease;}
+.brow:hover{background:rgba(31,28,22,.03); padding-left:5px;}
+.brow-top{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3); margin-bottom:7px;}
+.brow .n{font:400 13.5px var(--serif);}
+.brow .f{font:500 11.5px var(--mono); color:var(--faint);}
+.brow .f b{color:var(--ink); font-weight:600;}
+.meter{display:block; height:6px; background:var(--paper-3); border:1px solid var(--rule); position:relative; overflow:hidden;}
+.meter i{position:absolute; inset:0; transform-origin:left; transform:scaleX(0);
+  background-image:repeating-linear-gradient(45deg,var(--copper) 0 2px, rgba(176,86,47,.35) 2px 5px);
+  transition:transform 780ms var(--expo);}
+.meter.over i{background-image:repeating-linear-gradient(45deg,var(--oxblood) 0 2px, rgba(156,59,46,.35) 2px 5px);}
+
+/* ---------- side: dues ---------- */
+.due{display:grid; grid-template-columns:38px 1fr auto; gap:var(--s3); align-items:baseline;
+  width:100%; border:0; background:none; cursor:pointer; text-align:left; color:inherit; font:inherit;
+  padding:9px 0; border-bottom:1px solid var(--rule);
+  transition:padding-left 200ms var(--out), background-color 160ms ease;}
+.due:hover{background:rgba(31,28,22,.03); padding-left:5px;}
+.due .d{font:500 12px var(--mono); color:var(--copper);}
+.due .n{display:block; font:400 13px var(--serif);}
+.due .s{display:block; font:400 10.5px var(--sans); color:var(--faint); margin-top:1px;}
+.due .a{font:500 12.5px var(--mono);}
+.due.paid{opacity:.45;}
+.due.paid .n{text-decoration:line-through;}
+
+/* ---------- stamp ---------- */
+.stamp-wrap{display:flex; justify-content:center; padding:var(--s6) 0 var(--s4);}
+.stamp{
+  position:relative; border:2px solid var(--copper); border-radius:var(--r); cursor:pointer;
+  background:none; padding:10px 18px; color:var(--copper); rotate:-7deg; opacity:.72;
+  transition:transform 200ms var(--out), opacity 200ms ease, rotate 320ms var(--out);
+}
+.stamp:hover{opacity:.86;}
+.stamp:active{transform:scale(.92);}
+.stamp[data-pressed="true"]{opacity:1; rotate:-4deg;}
+.stamp .t{font:700 15px var(--sans); letter-spacing:.24em; text-transform:uppercase; display:block;}
+.stamp .s{font:400 9.5px var(--sans); letter-spacing:.18em; text-transform:uppercase; display:block; margin-top:3px; opacity:.8;}
+.stamp::before{content:''; position:absolute; inset:3px; border:1px solid var(--copper); border-radius:2px; opacity:.5;}
+.marginalia{font:italic 400 13px/1.6 var(--serif); color:var(--faint); text-align:center; padding-top:var(--s3);}
+
+/* ---------- colophon ---------- */
+.colophon{margin-top:var(--s8); padding-top:var(--s4); border-top:1px solid var(--rule-2);
+  display:flex; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;
+  font:400 10px var(--sans); letter-spacing:.18em; text-transform:uppercase; color:var(--faint);}
+
+.rv{opacity:0; transform:translateY(12px); transition:opacity 560ms var(--out), transform 560ms var(--out);}
+.rv.in{opacity:1; transform:none;}
+:focus-visible{outline:2px solid var(--copper); outline-offset:3px;}
+
+@media (max-width:900px){
+  .sheet{padding:var(--s5) var(--s4) var(--s7);}
+  .lead{grid-template-columns:1fr; gap:var(--s5);}
+  .cols{grid-template-columns:1fr;}
+  .col-side{border-left:0; border-top:1px solid var(--rule); padding-left:0; padding-top:var(--s5);}
+  .mast-name{font-size:40px;} .bignum{font-size:44px;}
+  .lrow,.lhead{grid-template-columns:64px 1fr 100px;} .lrow .ct,.lhead span:nth-child(3){display:none;}
+  .blots{overflow-x:auto; justify-content:flex-start;}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important;}
+  .rv{opacity:1; transform:none;} .rule,.rule-double{transform:scaleX(1);} .bars .col{transform:scaleY(1);}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="rule" id="r1"></div>
+    <div class="mast-row">
+      <span class="mast-side">No. IX</span>
+      <h1 class="mast-name">Ledger</h1>
+      <span class="mast-side">MMXXVI</span>
+    </div>
+    <div class="mast-sub">A private almanac of spending, subscriptions, and the future you are planning</div>
+    <div class="rule-double" id="r2"></div>
+    <div class="dateline">
+      <span>Saturday · 5 September 2026</span>
+      <span>Four accounts in good standing</span>
+      <span>Synced four minutes ago</span>
+    </div>
+  </header>
+
+  <section class="lead rv">
+    <div>
+      <div class="kicker">The month in one number</div>
+      <div class="bignum"><span class="cur">$</span><span data-count="184320" data-dp="0">0</span><span class="cents">.55</span></div>
+      <p class="lead-note">
+        Net worth rose <b>$4,318.20</b> in the twenty-five days elapsed — the fourth consecutive
+        month of gain. Spending runs eighty-one per cent of budget with five days yet to account for.
+      </p>
+    </div>
+    <div class="lead-stats">
+      <button class="lstat"><span class="k">Spent in September</span><span class="v"><span class="cur">$</span><span data-count="3412.80" data-dp="2">0</span></span></button>
+      <button class="lstat"><span class="k">Income received</span><span class="v pos"><span class="cur">$</span><span data-count="7850.00" data-dp="2">0</span></span></button>
+      <button class="lstat"><span class="k">Still to be spent</span><span class="v"><span class="cur">$</span><span data-count="787.20" data-dp="2">0</span></span></button>
+      <button class="lstat"><span class="k">Owing on cards</span><span class="v neg"><span class="cur">$</span><span data-count="1842.11" data-dp="2">0</span></span></button>
+    </div>
+  </section>
+
+  <div class="cols">
+    <!-- ============ main column ============ -->
+    <div>
+      <section class="sec rv">
+        <div class="sec-head">
+          <h2 class="sec-title">The year in columns</h2>
+          <span class="sec-note">press a column to read the month</span>
+        </div>
+        <div class="sec-rule"></div>
+        <div class="chart">
+          <div class="bars" id="bars"></div>
+          <div class="chart-foot">
+            <span class="k" id="barLabel">Twelve-month average</span>
+            <span class="v"><span class="cur">$</span><span id="barValue" data-count="4079.40" data-dp="2">0</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec rv">
+        <div class="sec-head">
+          <h2 class="sec-title">Where the ink fell</h2>
+          <span class="sec-note">disc area is share of the month</span>
+        </div>
+        <div class="sec-rule"></div>
+        <div class="blot-read">
+          <span class="l" id="blotName">Home — rent, utilities and maintenance</span>
+          <span class="r"><span class="cur">$</span><span id="blotVal" data-count="1180.00" data-dp="2">0</span></span>
+        </div>
+        <div class="blots" id="blots"></div>
+      </section>
+
+      <section class="sec rv">
+        <div class="sec-head">
+          <h2 class="sec-title">Particulars</h2>
+          <span class="sec-note">six most recent entries</span>
+        </div>
+        <div class="sec-rule"></div>
+        <div class="ledger">
+          <div class="lhead"><span>Date</span><span>Particulars</span><span>Category</span><span>Amount</span></div>
+          <div id="tbody"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ side column ============ -->
+    <aside class="col-side">
+      <section class="rv">
+        <div class="side-h">Budgets, ruled</div>
+        <div id="budgets"></div>
+      </section>
+
+      <section class="rv" style="margin-top:var(--s6)">
+        <div class="side-h">Dues of the month</div>
+        <div id="dues"></div>
+      </section>
+
+      <section class="rv">
+        <div class="stamp-wrap">
+          <button class="stamp" id="stamp" data-pressed="false">
+            <span class="t">Reconciled</span>
+            <span class="s">September 2026</span>
+          </button>
+        </div>
+        <p class="marginalia">Every figure on this sheet is illustrative.<br>Nothing here is connected to a bank.</p>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="colophon">
+    <span>Ledger · Almanac edition</span>
+    <span>Set in Lora &amp; Nunito Sans</span>
+    <span>Printed locally · no data leaves this page</span>
+  </footer>
+</div>
+
+<script>
+/* Non-functional mockup — curated static data, no network, no storage. */
+const yearOf=m=>['Oct','Nov','Dec'].includes(m)?2025:2026;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DATA={
+  months:[["Oct",3980],["Nov",4410],["Dec",5240],["Jan",3120],["Feb",3460],["Mar",3905],
+          ["Apr",4180],["May",3640],["Jun",4720],["Jul",4050],["Aug",3870],["Sep",3412.8]],
+  cats:[
+    {n:"Home",         s:1180.00, b:1180, d:"rent, utilities and maintenance"},
+    {n:"Groceries",    s:742.18,  b:800,  d:"supermarkets and produce"},
+    {n:"Dining",       s:512.40,  b:450,  d:"restaurants, coffee, takeout"},
+    {n:"Shopping",     s:306.30,  b:400,  d:"retail and household goods"},
+    {n:"Transport",    s:288.65,  b:350,  d:"rideshare, transit and fuel"},
+    {n:"Subscriptions",s:214.97,  b:240,  d:"recurring software and media"},
+    {n:"Health",       s:168.30,  b:250,  d:"pharmacy, clinic and fitness"}
+  ],
+  tx:[
+    {d:"5 Sep", n:"Blue Bottle Coffee", c:"Dining",        v:-6.75,    a:"Everyday Checking", m:"Card ·4471",     st:"Posted",  nt:"Morning, Ashland St"},
+    {d:"4 Sep", n:"Whole Foods Market", c:"Groceries",     v:-84.12,   a:"Everyday Checking", m:"Card ·4471",     st:"Posted",  nt:"Weekly shop"},
+    {d:"3 Sep", n:"Payroll — Northwind",c:"Salary",        v:3925.00,  a:"Everyday Checking", m:"Direct deposit", st:"Cleared", nt:"Semi-monthly"},
+    {d:"3 Sep", n:"Uber",               c:"Transport",     v:-18.40,   a:"Sapphire Card",     m:"Card ·4471",     st:"Pending", nt:"Airport, outbound"},
+    {d:"2 Sep", n:"Figma",              c:"Subscriptions", v:-16.00,   a:"Sapphire Card",     m:"Card ·4471",     st:"Posted",  nt:"Annual seat"},
+    {d:"1 Sep", n:"Rent — Ashland St",  c:"Home",          v:-1180.00, a:"Everyday Checking", m:"ACH transfer",   st:"Cleared", nt:"Lease of 2026"}
+  ],
+  dues:[
+    {d:"01", n:"Rent — Ashland St", s:"Paid · ACH",       v:1180.00, paid:true},
+    {d:"08", n:"Figma",             s:"Monthly · card",   v:16.00},
+    {d:"09", n:"iCloud+ 2TB",       s:"Monthly · Apple",  v:9.99},
+    {d:"12", n:"Spotify Duo",       s:"Monthly · card",   v:16.99},
+    {d:"18", n:"Auto insurance",    s:"Monthly · ACH",    v:142.30},
+    {d:"22", n:"Adobe CC",          s:"Annual · card",    v:59.99}
+  ]
+};
+const money=(n,dp=2)=>n.toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+function countTo(el,to,dp=2){
+  if(REDUCED){el.textContent=money(to,dp);return;}
+  const from=parseFloat(String(el.textContent).replace(/[^0-9.-]/g,''))||0, dur=1100, t0=performance.now();
+  const step=now=>{const p=Math.min((now-t0)/dur,1), e=1-Math.pow(2,-10*p);
+    el.textContent=money(from+(to-from)*e,dp); if(p<1)requestAnimationFrame(step);};
+  requestAnimationFrame(step);
+}
+
+/* masthead rules draw first */
+requestAnimationFrame(()=>{document.getElementById('r1').classList.add('in');
+                           document.getElementById('r2').classList.add('in');});
+
+const io=new IntersectionObserver(es=>{es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  e.target.classList.add('in');
+  if(e.target.querySelector('#bars')) setTimeout(()=>document.getElementById('bars').classList.add('in'),120);
+  if(e.target.querySelector('#budgets')) setTimeout(fillMeters,140);
+  e.target.querySelectorAll('[data-count]').forEach(n=>{
+    if(n.dataset.done)return; n.dataset.done='1';
+    countTo(n,parseFloat(n.dataset.count),parseInt(n.dataset.dp||2));
+  });
+  io.unobserve(e.target);
+});},{threshold:.12});
+document.querySelectorAll('.rv').forEach(n=>io.observe(n));
+
+/* lead stats — press to re-count */
+document.querySelectorAll('.lstat').forEach(b=>b.addEventListener('click',()=>{
+  const n=b.querySelector('[data-count]'); n.textContent='0';
+  countTo(n,parseFloat(n.dataset.count),parseInt(n.dataset.dp||2));
+}));
+
+/* engraved columns */
+const barsEl=document.getElementById('bars'), mx=Math.max(...DATA.months.map(m=>m[1]));
+DATA.months.forEach(([m,v],i)=>{
+  const b=document.createElement('button');
+  b.className='bar'; b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<span class="track"><span class="col" style="height:${(v/mx*100).toFixed(1)}%; transition-delay:${i*45}ms"><span class="chip">$${money(v)}</span></span></span><span class="m">${m}</span>`;
+  b.addEventListener('click',()=>{
+    const on=b.getAttribute('aria-pressed')==='true';
+    barsEl.querySelectorAll('.bar').forEach(x=>x.setAttribute('aria-pressed','false'));
+    const lb=document.getElementById('barLabel'), vl=document.getElementById('barValue');
+    if(on){barsEl.classList.remove('has-sel'); lb.textContent='Twelve-month average'; countTo(vl,4079.40); return;}
+    b.setAttribute('aria-pressed','true'); barsEl.classList.add('has-sel');
+    lb.textContent=`${m} ${yearOf(m)} — total spending`; countTo(vl,v);
+  });
+  barsEl.appendChild(b);
+});
+
+/* ink blots */
+const blots=document.getElementById('blots'), maxS=Math.max(...DATA.cats.map(c=>c.s));
+DATA.cats.forEach((c,i)=>{
+  const size=Math.round(30+Math.sqrt(c.s/maxS)*54);
+  const b=document.createElement('button');
+  b.className='blot'; b.setAttribute('aria-pressed',i===0?'true':'false');
+  b.setAttribute('aria-label',`${c.n} $${money(c.s)}`);
+  b.innerHTML=`<span class="disc" style="width:${size}px;height:${size}px"></span>
+    <span class="lb"><span class="n">${c.n}</span><span class="v">$${money(c.s,0)}</span></span>`;
+  b.addEventListener('click',()=>{
+    blots.querySelectorAll('.blot').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    if(!REDUCED){const h=document.createElement('span'); h.className='halo';
+      b.querySelector('.disc').appendChild(h); setTimeout(()=>h.remove(),660);}
+    document.getElementById('blotName').textContent=`${c.n} — ${c.d}`;
+    countTo(document.getElementById('blotVal'),c.s);
+  });
+  blots.appendChild(b);
+});
+
+/* particulars */
+document.getElementById('tbody').innerHTML=DATA.tx.map((t,i)=>`
+  <div class="lline">
+    <button class="lrow" aria-expanded="false" data-row="${i}">
+      <span class="dt">${t.d}</span>
+      <span class="nm">${t.n}</span>
+      <span class="ct">${t.c}</span>
+      <span class="am ${t.v>0?'pos':''}">${t.v>0?'+':'−'}$${money(Math.abs(t.v))}</span>
+    </button>
+    <div class="exp" data-exp="${i}"><div><div class="exp-in">
+      <span><div class="k">Account</div><div class="v">${t.a}</div></span>
+      <span><div class="k">Method</div><div class="v">${t.m}</div></span>
+      <span><div class="k">Standing</div><div class="v">${t.st}</div></span>
+      <span><div class="k">Note</div><div class="v">${t.nt}</div></span>
+    </div></div></div>
+  </div>`).join('');
+document.querySelectorAll('[data-row]').forEach(r=>r.addEventListener('click',()=>{
+  const e=document.querySelector(`[data-exp="${r.dataset.row}"]`), open=r.getAttribute('aria-expanded')==='true';
+  r.setAttribute('aria-expanded',String(!open)); e.classList.toggle('open',!open);
+}));
+
+/* budgets */
+document.getElementById('budgets').innerHTML=DATA.cats.map((c,i)=>`
+  <button class="brow" data-b="${i}">
+    <span class="brow-top"><span class="n">${c.n}</span><span class="f"><b>$${money(c.s,0)}</b> of $${money(c.b,0)}</span></span>
+    <span class="meter ${c.s>c.b?'over':''}"><i style="transition-delay:${i*55}ms"></i></span>
+  </button>`).join('');
+function fillMeters(){
+  document.querySelectorAll('#budgets .brow').forEach((r,i)=>{
+    r.querySelector('.meter i').style.transform=`scaleX(${Math.min(DATA.cats[i].s/DATA.cats[i].b,1)})`;
+  });
+}
+document.querySelectorAll('#budgets .brow').forEach(r=>r.addEventListener('click',()=>{
+  const f=r.querySelector('.meter i'), c=DATA.cats[+r.dataset.b];
+  f.style.transition='none'; f.style.transform='scaleX(0)';
+  requestAnimationFrame(()=>{f.style.transition=''; f.style.transform=`scaleX(${Math.min(c.s/c.b,1)})`;});
+}));
+
+/* dues */
+document.getElementById('dues').innerHTML=DATA.dues.map(u=>`
+  <button class="due ${u.paid?'paid':''}">
+    <span class="d">${u.d}</span>
+    <span><span class="n">${u.n}</span><span class="s">${u.s}</span></span>
+    <span class="a">$${money(u.v)}</span>
+  </button>`).join('');
+
+/* the stamp presses */
+const stamp=document.getElementById('stamp');
+stamp.addEventListener('click',()=>{
+  stamp.dataset.pressed = stamp.dataset.pressed==='true' ? 'false' : 'true';
+  if(REDUCED) return;
+  stamp.animate(
+    [{transform:'scale(1)'},{transform:'scale(.9)',offset:.35},{transform:'scale(1.02)',offset:.7},{transform:'scale(1)'}],
+    {duration:420, easing:'cubic-bezier(.165,.84,.44,1)'}
+  );
+});
+</script>
+</body>
+</html>
