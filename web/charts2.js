@@ -69,8 +69,15 @@ function closeModal() {
   document.getElementById('app').inert = false;
   document.getElementById('mobile-add').inert = false;
   document.body.style.overflow = '';
-  if (modalReturnFocus?.isConnected) modalReturnFocus.focus();
+  const returnTarget = modalReturnFocus;
   modalReturnFocus = null;
+  // Mobile controls become visible after the modal-state observer runs.
+  requestAnimationFrame(() => {
+    if (!document.querySelector('.modal') && returnTarget?.isConnected &&
+        !returnTarget.closest('[inert]') && returnTarget.getClientRects().length) {
+      returnTarget.focus({preventScroll: true});
+    }
+  });
 }
 document.addEventListener('keydown',e=>{
   const modal=document.querySelector('.modal'); if(!modal)return;
