@@ -64,7 +64,9 @@ _config_lock = threading.RLock()
 
 def public_config():
     cfg = get_config()
-    cfg["plaid_configured"] = bool(cfg.get("plaid_client_id") and cfg.get("plaid_secret"))
+    cfg["plaid_client_id_saved"] = bool(str(cfg.get("plaid_client_id") or "").strip())
+    cfg["plaid_secret_saved"] = bool(str(cfg.get("plaid_secret") or "").strip())
+    cfg["plaid_configured"] = cfg["plaid_client_id_saved"] and cfg["plaid_secret_saved"]
     cfg.pop("plaid_secret", None)
     cfg["plaid_client_id"] = ""
     return cfg

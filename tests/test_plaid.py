@@ -40,6 +40,23 @@ class PlaidPersistenceTests(unittest.TestCase):
         db.DATA_DIR, db.DB_PATH, db.CONFIG_PATH = self.old
         self.tmp.cleanup()
 
+    def test_redirect_setup_error_gives_safe_actionable_guidance(self):
+        import io
+        import json
+        from urllib.error import HTTPError
+        for detail, expected in [
+            ("OAuth redirect URI must be configured in the developer dashboard. secret", "Allowed redirect URIs"),
+            ("Another invalid field secret", "Please try again"),
+        ]:
+            error = HTTPError("https://production.plaid.com/link/token/create", 400, "Bad request", {},
+                              io.BytesIO(json.dumps({"error_code": "INVALID_FIELD", "error_message": detail}).encode()))
+            with patch("urllib.request.urlopen", side_effect=error):
+                with self.assertRaises(plaid_client.PlaidError) as caught:
+                    plaid_client.create_link_token()
+            self.assertEqual(caught.exception.code, "INVALID_FIELD")
+            self.assertIn(expected, str(caught.exception))
+            self.assertNotIn("secret", str(caught.exception))
+
     def test_repeated_exchange_reuses_plaid_item_and_account_ids(self):
         responses = {
             "/item/public_token/exchange": {"access_token": "access", "item_id": "plaid-item"},

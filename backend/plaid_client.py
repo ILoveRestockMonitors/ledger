@@ -32,7 +32,14 @@ def _post(path, payload, env=None):
         except (ValueError, OSError): body = {}
         code = body.get("error_code", "BANK_ERROR")
         messages = {"ITEM_LOGIN_REQUIRED":"Your bank needs you to reconnect.", "INVALID_CREDENTIALS":"Check your Plaid credentials and environment.", "PRODUCT_NOT_READY":"Your bank is still preparing transactions. We will try again.", "TRANSACTIONS_SYNC_MUTATION_DURING_PAGINATION":"Bank transactions changed during sync. Retrying safely."}
-        raise PlaidError(messages.get(code, "The bank connection needs attention. Please try again."), code, e.code) from None
+        # Match the known setup failure without exposing provider response text,
+        # which can include submitted values. Only return our own safe guidance.
+        detail = str(body.get("error_message", "")).lower()
+        if code == "INVALID_FIELD" and "redirect" in detail and "uri" in detail:
+            message = "Add the exact OAuth return URL from Ledger's bank settings to Plaid Dashboard → Developers → API → Allowed redirect URIs, then save and try Link account again."
+        else:
+            message = messages.get(code, "The bank connection needs attention. Please try again.")
+        raise PlaidError(message, code, e.code) from None
     except (OSError, ValueError):
         raise PlaidError("The bank connection is temporarily unavailable. Your saved data is safe.", "NETWORK_ERROR") from None
 

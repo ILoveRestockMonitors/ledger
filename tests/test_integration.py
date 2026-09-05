@@ -87,10 +87,15 @@ class IntegratedLedger(unittest.TestCase):
         self.request('/api/transactions?id='+result['body']['id'],method='DELETE')
         self.assertEqual(db.q1('SELECT balance FROM accounts WHERE id="cash"')['balance'],80)
     def test_config_redaction_and_demo_action_boundaries(self):
-        saved=self.request('/api/config',{'plaid_client_id':'fake-client','plaid_secret':'fake-secret','theme':'light'})
-        self.assertEqual(saved['code'],200);self.assertNotIn('fake-secret',str(saved));self.assertTrue(saved['body']['plaid_configured'])
+        db.save_config({'plaid_client_id':'fake-client'})
+        partial=self.request('/api/config')
+        self.assertTrue(partial['body']['plaid_client_id_saved']);self.assertFalse(partial['body']['plaid_secret_saved']);self.assertFalse(partial['body']['plaid_configured'])
+        self.assertNotIn('fake-client',str(partial['body']));self.assertNotIn('fake-secret',str(partial['body']))
+        saved=self.request('/api/config',{'plaid_secret':'fake-secret','theme':'light'})
+        self.assertEqual(saved['code'],200);self.assertNotIn('fake-client',str(saved));self.assertNotIn('fake-secret',str(saved));self.assertTrue(saved['body']['plaid_configured'])
+        self.assertTrue(saved['body']['plaid_client_id_saved']);self.assertTrue(saved['body']['plaid_secret_saved'])
         self.request('/api/config',{'theme':'dark','plaid_secret':''})
-        self.assertEqual(db.get_config()['plaid_secret'],'fake-secret')
+        self.assertEqual(db.get_config()['plaid_client_id'],'fake-client');self.assertEqual(db.get_config()['plaid_secret'],'fake-secret')
         for path in ['/api/plaid/link-token','/api/plaid/exchange','/api/plaid/sandbox-token','/api/plaid/sandbox-full-link','/api/cancellations/request']:
             self.assertEqual(self.request(path,{})['code'],400,path)
         self.assertEqual(self.request('/api/config',{'theme':'other'})['code'],400)

@@ -455,15 +455,15 @@ let plaidHandler = null;
 
 async function startLinkFlow() {
   let cfg;
-  try { cfg = await api("/config"); } catch { cfg = {}; }
+  try { cfg = await api("/config"); } catch (e) { toast(e.message, "err"); return; }
   if (!cfg.plaid_configured) {
     showModal(`
       <h2>Connect Plaid first</h2>
       <p class="sub">Add your Plaid credentials in Settings to connect a bank.</p>
       <ol class="small muted" style="padding-left:18px;line-height:1.7">
-        <li>Create an account at <b>dashboard.plaid.com</b> (free)</li>
+        <li>Open your account at <b>dashboard.plaid.com</b></li>
         <li>Copy your <code class="kbd">client_id</code> and <code class="kbd">secret</code></li>
-        <li>Paste them in Settings → Plaid, choose <b>Sandbox</b>, save</li>
+        <li>Paste them in Settings → Bank connection settings and save. Choose <b>Production</b> for real banks; Sandbox is only for test data.</li>
         <li>Come back and hit Link account</li>
       </ol>
       <div class="modal-actions">
@@ -472,12 +472,28 @@ async function startLinkFlow() {
       </div>`);
     return;
   }
+  // OAuth return state lives in this origin's sessionStorage. Start on the
+  // configured app address so the bank can return to the same session.
+  if (cfg.plaid_redirect_uri) {
+    const redirect = new URL(cfg.plaid_redirect_uri);
+    if (redirect.origin !== location.origin) {
+      showModal(`<h2>Connect from your Ledger address</h2>
+        <p class="sub">Open your private Ledger address to connect a bank. This lets your bank return you to the same session afterward.</p>
+        <div class="modal-actions"><button class="btn" onclick="closeModal()">Later</button>
+        <a class="btn btn-primary" href="${esc(redirect.href)}">Open Ledger</a></div>`);
+      return;
+    }
+  }
   askScopeThen(async scope => {
     try {
       toast("Opening Plaid Link…", "ok");
       const lt = await api("/plaid/link-token", { method: "POST", body: "{}" });
       await openPlaidLink(lt.link_token, scope);
-    } catch (e) { toast(e.message, "err"); }
+    } catch (e) {
+      showModal(`<h2>Bank connection needs a setup step</h2><p class="sub">${esc(e.message)}</p>
+        <div class="modal-actions"><button class="btn" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="closeModal();navigate('settings')">Bank settings</button></div>`);
+    }
   });
 }
 
