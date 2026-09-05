@@ -46,7 +46,8 @@ def extract(manual, destination, with_mobile=False):
     if with_mobile:
         mobile_record = re.compile(RECORD.pattern.replace('LEDGER_SOURCE', 'LEDGER_MOBILE_SOURCE'), RECORD.flags)
         expected = {'web/index.html', 'web/mobile.css', 'web/mobile.js', 'web/manifest.json',
-                    'web/apple-touch-icon.png', 'web/icon-192.png', 'web/icon-512.png'}
+                    'web/apple-touch-icon.png', 'web/icon-192.png', 'web/icon-512.png',
+                    'web/comfort.js', 'tests/test_finance.py'}
         overlay = {}
         for match in mobile_record.finditer(text):
             meta = json.loads(match.group(1))
@@ -64,7 +65,7 @@ def extract(manual, destination, with_mobile=False):
                 raise ValueError('Mobile content check failed: ' + name)
             overlay[name] = (PurePosixPath(name), data, int(meta['mode'], 8))
         if set(overlay) != expected:
-            raise ValueError('Expected all seven mobile source records.')
+            raise ValueError('Expected all nine update source records.')
         combined = {str(path): (path, data, mode) for path, data, mode in parsed}
         combined.update(overlay)
         parsed = list(combined.values())

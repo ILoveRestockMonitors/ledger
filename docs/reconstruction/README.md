@@ -1,7 +1,7 @@
 # Reconstructing Ledger
 
-The complete guide includes a pinned 75-file base application and a seven-file
-mobile overlay. The overlay replaces two existing files and adds five, producing
+The complete guide includes a pinned 75-file base application and a nine-file
+mobile overlay. The overlay replaces four existing files and adds five, producing
 80 application files in a fresh destination.
 
 Run from this directory:

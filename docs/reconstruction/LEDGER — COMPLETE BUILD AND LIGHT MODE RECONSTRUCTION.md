@@ -30,8 +30,9 @@ This is a standalone guide for building your own personal budgeting app. Manual 
 - 15. Self-contained source extraction
 - 16. Complete source inventory and recoverable implementation
 - 17. September 2026 update: phone layout, home-screen installation and connected desktop access
+- 18. Manual cancellation tracking button
 
-> **Latest phone update:** Section 17 contains the complete seven-file mobile overlay, including the revised shell, navigation behavior, styles and home-screen icons. Use the extractor with `--with-mobile` for the current phone-capable build. The 75-file base snapshot and packaged ZIPs remain the earlier release; their existing checksums and reconstruction contract remain valid.
+> **Latest phone update:** Section 17 contains the complete nine-file mobile overlay, including the revised shell, navigation behavior, styles and home-screen icons. Use the extractor with `--with-mobile` for the current phone-capable build. The 75-file base snapshot and packaged ZIPs remain the earlier release; their existing checksums and reconstruction contract remain valid.
 
 ## 1. How to use this guide
 
@@ -1043,7 +1044,8 @@ def extract(manual, destination, with_mobile=False):
     if with_mobile:
         mobile_record = re.compile(RECORD.pattern.replace('LEDGER_SOURCE', 'LEDGER_MOBILE_SOURCE'), RECORD.flags)
         expected = {'web/index.html', 'web/mobile.css', 'web/mobile.js', 'web/manifest.json',
-                    'web/apple-touch-icon.png', 'web/icon-192.png', 'web/icon-512.png'}
+                    'web/apple-touch-icon.png', 'web/icon-192.png', 'web/icon-512.png',
+                    'web/comfort.js', 'tests/test_finance.py'}
         overlay = {}
         for match in mobile_record.finditer(text):
             meta = json.loads(match.group(1))
@@ -1061,7 +1063,7 @@ def extract(manual, destination, with_mobile=False):
                 raise ValueError('Mobile content check failed: ' + name)
             overlay[name] = (PurePosixPath(name), data, int(meta['mode'], 8))
         if set(overlay) != expected:
-            raise ValueError('Expected all seven mobile source records.')
+            raise ValueError('Expected all nine update source records.')
         combined = {str(path): (path, data, mode) for path, data, mode in parsed}
         combined.update(overlay)
         parsed = list(combined.values())
@@ -14453,13 +14455,15 @@ The result is one shared responsive application: desktop retains its sidebar; ph
 
 ### 17.2 Exact files and load order
 
-The verified overlay contains seven complete files, printed below with their byte counts and SHA256 hashes:
+The verified overlay contains nine complete files, printed below with their byte counts and SHA256 hashes:
 
 | File | Purpose |
 |---|---|
 | `web/index.html` | Complete current shell, correct stylesheet/script order, viewport metadata and home-screen references |
 | `web/mobile.css` | Phone geometry, touch controls, drawer, bottom navigation and overlay precedence |
 | `web/mobile.js` | Navigation creation, route state, drawer accessibility and keyboard/overlay coordination |
+| `web/comfort.js` | Current page behavior including manual cancellation and restoring tracking |
+| `tests/test_finance.py` | Accounting checks including manual-cancellation regression |
 | `web/manifest.json` | Standalone app identity, scope, launch URL, colors and local icon references |
 | `web/apple-touch-icon.png` | 180-pixel opaque home-screen icon |
 | `web/icon-192.png` | 192-pixel manifest icon |
@@ -14503,7 +14507,7 @@ python3 RESTORE-LEDGER-SOURCE.py \
   Ledger-With-Mobile --with-mobile
 ```
 
-The destination must not already exist. The extractor first validates all 75 base records. With this option it also requires exactly the seven allowed mobile records, rejects duplicates or unexpected paths, decodes the PNG assets, and validates every byte count and checksum before creating the destination. It replaces the base index and manifest and adds the two mobile modules plus three PNG assets, yielding **80 application files**. The base source ZIP and old Windows package are still the earlier snapshot; extracting those alone does not apply this update.
+The destination must not already exist. The extractor first validates all 75 base records. With this option it also requires exactly the nine allowed update records, rejects duplicates or unexpected paths, decodes the PNG assets, and validates every byte count and checksum before creating the destination. It replaces the base index, manifest, comfort behavior and finance tests, and adds the two mobile modules plus three PNG assets, yielding **80 application files**. The base source ZIP and old Windows package are still the earlier snapshot; extracting those alone does not apply this update.
 
 For a reference preview, use a fresh synthetic data directory and the existing demo/test environment flags. Never point a demo seed at a live directory. Keep the initial appearance in paper/light/Lora. Compare the exact source below rather than inventing a separate React app or changing the financial model.
 
@@ -14899,6 +14903,626 @@ DgARAIDxjwaACADA+EcDQAgAUB/+dACIAADK458OACEAYPjL8gEgAgCMvwAQAgAYfgEgAgAw/gJA
 CABg+AWAEADA8AsAEQCA8RcAQgAAwy8AhAAAhl8ACAEADL8AEAIAGH4BIAQAMPwCQAgAGH4EgBgA
 MPoIACEAYPgRAGIAwOgjAIQAgOFHAIgBAKOPABADAEZfACAIAAy+AEAMABh9AYAgADD4AgBRABh7
 BADCADD0CABEAmDcOdoncwssG7cSjfsAAAAASUVORK5CYII=
+````````````
+<!-- END_LEDGER_MOBILE_SOURCE -->
+
+
+
+## 18. Manual cancellation tracking button
+
+Each active subscription row now includes **Mark as canceled**, alongside Details and the existing agent cancellation action. A click sends the existing authenticated `POST /api/subscriptions/review` request with the subscription ID and `decision: "cancel"`. After the server confirms success, the current page rerenders immediately. No separate confirmation dialog, new tab, new database field or provider login is needed for this bookkeeping action.
+
+The subscription moves out of the active list into the existing **Previously canceled** disclosure. Monthly commitment and future expected renewals exclude it. Historical posted transactions and already-pending bank charges remain: recording cancellation cannot erase money already spent or undo a charge at the bank. The backend's existing recurring-payment scan preserves canceled status instead of reactivating the record from old transactions.
+
+A **Restore tracking** button in Previously canceled uses the same endpoint with `decision: "activate"`, rerenders, and brings the subscription back into the plan. This is a persistent recovery path for an accidental click. It only restores tracking; it does not restart service with a merchant. The success messages explain both actions.
+
+**Mark as canceled does not cancel with the provider or dispatch a new agent.** Use it after completing cancellation yourself. The separate Cancel subscription action still requests the existing agent workflow. Manual marking does not claim to interrupt an agent already operating in an external browser; it changes Ledger's tracking state.
+
+Both actions use the existing delegated action handler, which disables the clicked button during its request and surfaces API errors. The list is refreshed only after a successful response. Canceled records are retained, not deleted. There is no backend or schema migration for this feature. The existing phone CSS makes these buttons touch-sized; the desktop and phone use the same `web/comfort.js`.
+
+### Validation and deployment
+
+The finance suite passes 33 tests. The new regression creates posted and pending charges plus an expected renewal, marks the subscription canceled, rescans, checks that future commitment is removed and every transaction is unchanged, then restores tracking and checks the expected payment returns.
+
+An isolated synthetic-data Chromium test at 390-pixel phone and 1280-pixel desktop widths clicked the actual button, verified removal survives reload, verified expected spending decreased by the renewal amount, confirmed posted and pending spend were unchanged, confirmed no cancellation jobs were dispatched, and clicked Restore tracking to verify recovery. No horizontal overflow or JavaScript errors appeared in these tested flows. Live subscriptions were not modified for testing.
+
+Deployment uses a small frontend-only overlay for each independent hosted installation, preserving that installation's existing image behavior, data volume and configuration. The updated asset is verified over each instance's private address. No private addresses, owner names or financial records belong in this record. Native device checking remains distinct from Chromium emulation.
+
+### Reconstruction
+
+The following two complete records join the seven records in section 17. The extractor's `--with-mobile` option now applies all nine update records, including this change. The resulting source still contains 80 unique files because these two records replace files already present in the 75-file base. Earlier ZIP packages remain the base release.
+
+### Update source: `web/comfort.js`
+
+<!-- LEDGER_MOBILE_SOURCE {"path":"web/comfort.js","encoding":"utf-8","bytes":55175,"sha256":"bdf90656737061e809ad91a5c1e076549cf41603524679dc9369fa5df91dba18","mode":"100644"} -->
+````````````javascript
+/* The everyday surface. Deeper tools remain in app.js and app2.js. */
+const comfort = { config: {}, subscriptions: [], jobs: [], forecast: null, forecastInput: null, futureMode: 'networth', reviewLimit: 3 };
+const post = (path, body = {}) => api(path, { method: 'POST', body });
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const dollars = n => fmtMoney(Number(n) || 0, { decimals: 2 });
+const attr = value => esc(String(value ?? ''));
+const quietEmpty = (text, button = '') => `<div class="empty inline-empty">${text}${button}</div>`;
+const action = (name, label, id = '', cls = 'btn btn-sm') => `<button type="button" class="${cls}" data-action="${name}" data-id="${attr(id)}">${label}</button>`;
+const modalTitle = title => `<button type="button" class="close-button" data-action="close" aria-label="Close dialog">×</button><h2>${title}</h2>`;
+const field = (name, label, value = '', type = 'text', extra = '') => `<label class="fld" for="f-${name}">${label}</label><input class="input" id="f-${name}" name="${name}" type="${type}" value="${attr(value)}" ${extra}>`;
+const formActions = label => `<p class="auth-error" role="alert" data-form-error></p><div class="modal-actions">${action('close','Never mind')}<button class="btn btn-primary" type="submit">${label}</button></div>`;
+function safeURL(value) { try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : ''; } catch { return ''; } }
+function merchantAvatar(name) { return `<span class="merchant-avatar" data-color="${[...(name||'')].reduce((a,c)=>a+c.charCodeAt(0),0)%6}" aria-hidden="true">${esc((name || '·').slice(0,1).toUpperCase())}</span>`; }
+function dateChip(value) { const d = new Date(value+'T12:00:00'); return `<span class="day-chip">${d.getDate()}<small>${d.toLocaleDateString('en-US',{month:'short'})}</small></span>`; }
+function updateBadge(subs) { const n = subs.candidates.length+(subs.price_reviews||[]).length, el = document.getElementById('review-count'); el.textContent = n; el.hidden = !n; }
+function applyComfort(config) {
+  comfort.config = {...comfort.config, ...config};
+  const c = comfort.config;
+  state.theme = c.theme || 'system';
+  document.documentElement.dataset.theme = state.theme === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : state.theme;
+  document.documentElement.dataset.accent = c.accent || 'blue';
+  document.documentElement.dataset.density = c.density || 'comfortable';
+  document.documentElement.dataset.font = c.font_family || 'lora';
+  document.documentElement.dataset.palette = new URLSearchParams(location.search).get('look') === 'paper' ? 'paper' : (c.palette||'paper');
+  localStorage.setItem('ledger-theme', state.theme);
+  const themeButton = document.getElementById('btn-theme');
+  const darkMode = document.documentElement.dataset.theme === 'dark';
+  const themeIcon = themeButton.querySelector('.sidebar-button-icon');
+  const themeLabel = themeButton.querySelector('.sidebar-button-label');
+  if (themeIcon && themeLabel) { themeIcon.textContent = darkMode ? '☀' : '☾'; themeLabel.textContent = darkMode ? 'Light mode' : 'Dark mode'; }
+  else themeButton.textContent = darkMode ? '☀ Light mode' : '☾ Dark mode';
+  document.getElementById('demo-banner').hidden = !c.demo;
+  document.getElementById('sidebar-mode').textContent = c.demo ? 'A safe space to explore' : 'Your private Ledger';
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+}
+applyTheme = theme => applyComfort({theme});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyComfort({}));
+
+/* Credential state: the API returns only per-field saved flags, never values. */
+function credentialField(name, label, saved, type = 'text', autocomplete = 'off') {
+  const id = `f-${name}`;
+  const placeholder = saved ? '••••••••••••••••' : (name === 'plaid_secret' ? 'Paste your Plaid secret' : 'Paste your Plaid client ID');
+  const state = saved ? 'saved' : 'empty';
+  const status = saved ? '✓ Saved' : 'Not saved';
+  return `<label class="fld" for="${id}">${label}</label><input class="input" id="${id}" name="${name}" type="${type}" value="" placeholder="${placeholder}" autocomplete="${autocomplete}" data-credential="${name}" aria-describedby="${id}-status"><span id="${id}-status" class="credential-status" data-state="${state}" role="status" aria-live="polite">${status}</span>`;
+}
+function credentialInputs() {
+  return [...document.querySelectorAll('input[data-credential]')];
+}
+function credentialState(input, saved) {
+  return input.value.trim() ? 'unsaved' : (saved ? 'saved' : 'empty');
+}
+function updateCredentialState(config = comfort.config || {}) {
+  for (const input of credentialInputs()) {
+    const saved = input.name === 'plaid_client_id' ? !!config.plaid_client_id_saved : !!config.plaid_secret_saved;
+    const state = credentialState(input, saved);
+    input.placeholder = saved ? '••••••••••••••••' : (input.name === 'plaid_secret' ? 'Paste your Plaid secret' : 'Paste your Plaid client ID');
+    const badge = document.getElementById(`${input.id}-status`);
+    if (!badge) continue;
+    badge.dataset.state = state;
+    badge.textContent = state === 'saved' ? '✓ Saved' : state === 'unsaved' ? 'Unsaved' : 'Not saved';
+  }
+  const help = document.getElementById('plaid-credential-help');
+  if (help) help.textContent = config.plaid_configured ? 'Plaid credentials are saved. Leave the fields empty to keep them.' : 'Add the credentials from your Plaid dashboard to enable bank linking.';
+  updatePlaidNextStep(config);
+}
+function updatePlaidNextStep(config = comfort.config || {}) {
+  const next = document.getElementById('plaid-next-step');
+  if (!next) return;
+  const editing = credentialInputs().some(input => input.value.trim());
+  const bothSaved = !!config.plaid_client_id_saved && !!config.plaid_secret_saved;
+  next.hidden = !bothSaved || editing;
+  if (!next.hidden) {
+    const env = config.plaid_env === 'production' ? 'Production' : config.plaid_env === 'development' ? 'Development' : 'Sandbox';
+    next.innerHTML = `<div><strong>Saved.</strong> Connect your bank to start importing transactions.</div><div class="small muted">${env} credentials are stored for Ledger.</div>${action('link', '🔗 Link bank', '', 'btn btn-accent btn-sm')}`;
+  }
+}
+function plaidNextStep(config = {}) {
+  const env = config.plaid_env === 'production' ? 'Production' : config.plaid_env === 'development' ? 'Development' : 'Sandbox';
+  const saved = !!config.plaid_client_id_saved && !!config.plaid_secret_saved;
+  return `<div id="plaid-next-step" class="plaid-next-step" role="status" aria-live="polite"${saved ? '' : ' hidden'}><div><strong>Saved.</strong> Connect your bank to start importing transactions.</div><div class="small muted">${env} credentials are stored for Ledger.</div>${action('link', '🔗 Link bank', '', 'btn btn-accent btn-sm')}</div>`;
+}
+document.addEventListener('input', event => {
+  if (event.target.matches('input[data-credential]')) updateCredentialState();
+});
+
+registerPage('overview', 'Home', async () => {
+  setPill(null);
+  const [ov, plan, subs, recent, cashflow, goals] = await Promise.all([api('/summary/overview'),api('/monthly-plan'),api('/subscriptions'),api('/transactions?limit=5'),api('/summary/cashflow?months=6'),api('/goals')]);
+  updateBadge(subs); comfort.subscriptions = [...subs.items,...subs.candidates,...(subs.canceled || [])];
+  const c = comfort.config, target = Number(c.monthly_spending_target || 0), pending = Number(plan.pending_spend || 0);
+  const remaining = target - plan.total_expected;
+  const reviewCount=subs.candidates.length+(subs.price_reviews||[]).length;
+  const month = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  const recentCard = `<section class="card"><h3>Recent activity ${action('add-tx','＋ Add', '', 'link-button h3-extra')}</h3>${recent.rows.map(t=>{const label=receiptDisplayName(t);const ids=[...new Set((Array.isArray(t.allocations)?t.allocations:[]).map(a=>a.category_id).filter(Boolean))];const category=ids.length>1?`Split across ${ids.length} budgets`:esc(t.allocations?.[0]?.cat_name||t.cat_name||'Uncategorized');return `<div class="transaction-row">${merchantAvatar(label)}<div class="merchant-info"><b>${esc(label)}</b>${receiptOriginalName(t)}<small>${category} · ${fmtDate(t.posted)}${t.pending?' · Pending':''}${t.is_transfer?' · Transfer':''}</small></div><span class="money-number ${t.amount>0?'amt-pos':''}">${t.amount>0?'+':''}${dollars(t.amount)}</span></div>`}).join('') || quietEmpty('Your first transaction is a small step toward a clearer picture.', action('add-tx','Add a transaction','','btn btn-sm btn-primary'))}<div class="card-footer"><span>Everything in one place.</span>${action('page','View all →','transactions','link-button')}</div></section>`;
+  const upcomingCard = `<section class="card"><h3>Still to come <span class="h3-extra">this month</span></h3>${plan.upcoming_items.slice(0,4).map(s=>`<div class="bill-row">${dateChip(s.due)}<div class="merchant-info"><b>${esc(s.merchant)}</b><small>${esc(s.cadence)} payment</small></div><span class="money-number">${dollars(s.expected ?? s.amount)}</span></div>`).join('') || quietEmpty('No more tracked subscription payments expected this month.')}<div class="card-footer"><span>${dollars(plan.upcoming)} expected</span>${action('page','Subscriptions →','subscriptions','link-button')}</div></section>`;
+  const cashflowCard = `<section class="card"><h3>Money in, money out <span class="h3-extra">6 months</span></h3>${cashflow.some(x=>x.income||x.spend)?barChart(cashflow):quietEmpty('Your monthly rhythm will appear as you add transactions.')}<p class="quiet-note">Posted income and spending. Transfers between accounts stay out.</p></section>`;
+  const goalsCard = `<section class="card"><h3>A little closer ${action('page','Your goals →','goals','link-button h3-extra')}</h3>${goals.slice(0,3).map(g=>`<div style="padding:12px 0"><div class="row-between small"><b>${esc(g.name)}</b><span class="muted">${Math.round(g.pct)}%</span></div><div class="bar"><i style="width:${Math.min(100,g.pct)}%"></i></div><div class="small muted" style="margin-top:6px">${dollars(g.saved)} of ${dollars(g.target)}</div></div>`).join('')||quietEmpty('Something worth saving for?',action('page','Create a goal','goals','btn btn-sm'))}<p class="quiet-note">Small, steady progress counts.</p></section>`;
+  const cards = { recent:recentCard, upcoming:upcomingCard, cashflow:cashflowCard, goals:goalsCard };
+  return `<div class="welcome"><div><h2>${greeting}${c.owner_name?', '+esc(c.owner_name):''},</h2><p>Here’s where things stand.</p></div><span class="period-pill">${month}</span></div>
+  <div class="hero-grid"><section class="card hero-card primary"><div class="stat-label">${target ? (remaining>=0?'Room in your monthly plan':'Above your monthly plan') : 'Your month, accounted for'}</div><div class="stat-value">${fmtMoney(target?Math.abs(remaining):plan.total_expected)}</div><div class="small muted">${target?`${fmtMoney(plan.total_expected)} spent or expected · ${fmtMoney(target)} plan`:`${fmtMoney(plan.spent)} spent + ${fmtMoney(pending+plan.upcoming)} pending & expected`}</div>${target?`<div class="spend-rail" aria-label="${Math.round(plan.total_expected/target*100)} percent of spending plan"><span style="width:${Math.min(100,plan.spent/target*100)}%"></span><span class="expected" style="width:${Math.min(100,(pending+plan.upcoming)/target*100)}%"></span></div>`:`<div style="margin-top:16px">${action('spending-plan','Set a monthly spending plan →','','link-button')}</div>`}<div class="metric-foot">Tracked commitments only · other spending may still come up</div></section>
+  <section class="card hero-card"><div class="stat-label">Spent so far</div><div class="stat-value">${fmtMoney(plan.spent)}</div><div class="small muted">${fmtMoney(plan.monthly_subscriptions)} / month in subscriptions</div><div class="metric-foot"><i class="metric-dot"></i>${pending?`${dollars(pending)} also pending`:'Posted payments · no duplicate commitments'}</div></section>
+  <section class="card hero-card"><div class="stat-label">Your net worth</div><div class="stat-value">${fmtMoney(ov.net_worth)}</div><div class="small muted">Assets, less what you owe</div><div class="metric-foot">${action('page','See what’s possible →','future','link-button')}</div></section></div>
+  ${reviewCount?`<div class="review-strip"><span class="review-badge">↻</span><div class="review-copy">${(subs.price_reviews||[]).length?'A recurring payment may have changed.':subs.candidates.length===1?'A payment looks recurring.':'A few payments look recurring.'}<small>A quick check helps keep your monthly picture accurate.</small></div>${action('page',`Review ${reviewCount}`,'subscriptions','btn btn-sm')}</div>`:''}
+  ${!state.accounts.length?`<div class="review-strip"><span class="review-badge">＋</span><div class="review-copy">Make yourself at home.<small>Start with a manual account or connect your bank.</small></div>${action('manual-account','Add an account','','btn btn-sm btn-primary')}</div>`:''}
+  <div class="home-section"><div class="home-cards">${(c.home_cards||['recent','upcoming','cashflow','goals']).map(k=>cards[k]||'').join('')}</div></div>`;
+});
+
+registerPage('subscriptions','Subscriptions',async()=>{
+  setPill(null);
+  const [subs,jobs,worker] = await Promise.all([api('/subscriptions'),api('/cancellations'),api('/cancellations/status')]);
+  comfort.subscriptions=[...subs.items,...subs.candidates,...(subs.canceled||[])]; comfort.jobs=jobs; comfort.worker=worker; updateBadge(subs);
+  const row = s => { const job=jobs.find(j=>j.subscription_id===s.id); return `<section class="card subscription-row">${merchantAvatar(s.merchant)}<div class="merchant-info"><b>${esc(s.merchant)}</b><small>${s.next_due?'Next '+fmtDate(s.next_due):'No next date set'} · ${esc(s.scope)}</small>${s.status==='cancel_requested'?'<span class="sub-status">Cancellation in progress</span>':''}</div><div class="subscription-money"><b>${dollars(s.amount)}</b><small>${esc(s.cadence)} · ${dollars(s.monthly_cost)} / mo</small></div><div class="subscription-actions">${action('edit-sub','Details',s.id)}${action('mark-canceled','Mark as canceled',s.id,'btn btn-sm btn-ghost')}${job&&job.status!=='completed'?action('job','View request',job.id):action('cancel-sub','Cancel subscription',s.id,'btn btn-sm btn-ghost')}</div></section>`; };
+  return `<div class="page-intro"><div><h2>Keep what earns its place.</h2><p>Your recurring payments, with room to change your mind.</p></div>${action('new-sub','＋ Add subscription','','btn btn-primary')}</div>
+  <div class="sub-summary"><div><div class="stat-label">Monthly commitment</div><div class="stat-value">${fmtMoney(subs.monthly_total)}</div></div><div><div class="stat-label">A year at this pace</div><div class="stat-value">${fmtMoney(subs.monthly_total*12)}</div></div><div><div class="stat-label">Active</div><div class="stat-value">${subs.items.length}</div></div></div>
+  ${subs.candidates.length?`<div class="card review-card mb"><h3>A quick check <span class="h3-extra">${subs.candidates.length} to review</span></h3><p class="small muted">We notice repeats early. These stay out of your plan until you confirm them.</p>${subs.candidates.slice(0,comfort.reviewLimit).map(s=>`<div class="subscription-row" style="padding:16px 0">${merchantAvatar(s.merchant)}<div class="merchant-info"><b>Is ${esc(s.merchant)} a subscription?</b><small>${dollars(s.amount)} · ${esc(s.cadence)}</small><div class="review-copy">${esc(s.reason)}</div></div><div class="subscription-actions">${action('dismiss-sub','No, dismiss',s.id)}${action('confirm-sub','Yes, track it',s.id,'btn btn-sm btn-primary')}</div></div>`).join('')}${subs.candidates.length>comfort.reviewLimit?`<div class="card-footer"><span>Take these a few at a time.</span>${action('more-reviews','Show a few more','','link-button')}</div>`:''}</div>`:''}
+  ${(subs.price_reviews||[]).length?`<div class="card review-card mb"><h3>A price may have changed</h3><p class="small muted">Your current plan stays in place until you decide.</p>${subs.price_reviews.map(s=>`<div class="setting-row"><div><b>${esc(s.merchant)}</b><p class="small muted">Planned ${dollars(s.amount)} · latest charge ${dollars(s.observed_amount)}</p></div><div class="row">${action('keep-price','Keep my amount',s.id)}${action('accept-price','Use new amount',s.id,'btn btn-sm btn-primary')}</div></div>`).join('')}</div>`:''}
+  <div class="subscription-list">${subs.items.map(row).join('')||quietEmpty('Only the things you choose to keep will live here.',action('new-sub','Add a subscription','','btn btn-sm btn-primary'))}</div>
+  <div class="card-footer"><span>Annual and weekly payments are normalized for the monthly total.</span>${action('scan','Check for repeats','','link-button')}</div>
+  ${(subs.canceled||[]).length?`<details class="disclosure"><summary>Previously canceled · ${subs.canceled.length}</summary><div class="subscription-list" style="margin-top:15px">${subs.canceled.map(s=>`<div class="card subscription-row">${merchantAvatar(s.merchant)}<div class="merchant-info"><b>${esc(s.merchant)}</b><small>Canceled · ${dollars(s.monthly_cost)} / month no longer planned</small></div>${action('edit-sub','Details',s.id)}${action('restore-sub','Restore tracking',s.id,'btn btn-sm btn-ghost')}</div>`).join('')}</div></details>`:''}
+  <p class="quiet-note">Mark as canceled records a cancellation you already completed; it does not contact the provider. Past payments stay in your spending history. An agent cancellation request keeps counting until cancellation is confirmed. Some services need you to sign in or finish a provider-specific step.</p>`;
+});
+
+function accountOptions(value='',allowNone=false) { return (allowNone?'<option value="">No account assigned</option>':'')+state.accounts.map(a=>`<option value="${attr(a.id)}" ${a.id===value?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join(''); }
+function openSubscription(id='') {
+  const s = comfort.subscriptions.find(s=>s.id===id)||{scope:'personal',amount:'',cadence:'monthly',next_due:todayISO(),status:'active'};
+  showModal(`${modalTitle(id?'Subscription details':'Add a subscription')}<form data-form="subscription" data-id="${attr(id)}">${field('merchant','Name',s.merchant,'text','required maxlength="160" placeholder="e.g. Google One"')}<div class="form-pair"><div>${field('amount','Payment amount',s.amount,'number','min="0.01" step="0.01" required')}</div><div><label class="fld" for="f-cadence">Repeats</label><select class="input" name="cadence" id="f-cadence">${['weekly','biweekly','monthly','quarterly','semiannual','annual','custom'].map(k=>`<option value="${k}" ${s.cadence===k?'selected':''}>${k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></div></div><div class="form-pair"><div>${field('next_due','Next payment',s.next_due,'date','required')}</div><div><label class="fld" for="f-scope">For</label><select class="input" id="f-scope" name="scope"><option value="personal" ${s.scope==='personal'?'selected':''}>Personal</option><option value="business" ${s.scope==='business'?'selected':''}>Business</option></select></div></div><label class="fld" for="f-account">Paid from</label><select class="input" name="account_id" id="f-account">${accountOptions(s.account_id,true)}</select><details class="disclosure"><summary>More details</summary>${field('management_url','Subscription page (optional)',s.management_url,'url','placeholder="https://…"')}${field('billing_channel','Billed through (optional)',s.billing_channel,'text','placeholder="Direct, Apple, Google Play…"')}${field('custom_interval_days','Days between custom payments',s.custom_interval_days||30,'number','min="1" max="366"')}${field('notes','Notes',s.notes,'text','maxlength="2000"')}<label class="fld" for="f-status">Status</label><select class="input" name="status" id="f-status"><option value="active" ${s.status==='active'?'selected':''}>Active</option>${s.status==='cancel_requested'?'<option value="cancel_requested" selected>Cancellation requested</option>':''}<option value="canceled" ${s.status==='canceled'?'selected':''}>Already canceled</option></select><p class="form-help">“Already canceled” records a cancellation you completed yourself.</p></details>${formActions('Save subscription')}</form>`);
+}
+function openCancellation(id) {
+  const s=comfort.subscriptions.find(s=>s.id===id); if(!s)return;
+  showModal(`${modalTitle(`Cancel ${esc(s.merchant)}?`)}<p class="sub">Your agent will find the cancellation page and work through the steps for this subscription.</p><div class="status-panel"><b>${dollars(s.amount)} · ${esc(s.cadence)}</b><br>It may ask you to sign in, choose a billing provider, or complete a step the service requires. Ledger will only mark it canceled after a confirmation.</div><p class="quiet-note">${comfort.config.demo?'This preview cannot dispatch real cancellations.':'Uses your home-lab Codex sign-in. The app does not fall back to a paid API.'}</p><div class="modal-actions">${action('close','Keep for now')}${action('request-cancel',comfort.config.demo?'Unavailable in preview':'Start cancellation',id,'btn btn-primary')}</div>`);
+}
+function openJob(id) {
+  const job=comfort.jobs.find(j=>j.id===id); if(!job)return;
+  const s=comfort.subscriptions.find(s=>s.id===job.subscription_id), url=safeURL(job.handoff_url||job.url||'');
+  showModal(`${modalTitle(esc(s?.merchant||'Cancellation request'))}<p class="sub">${esc(({queued:'Waiting for your agent',running:'Your agent is working',needs_user:'A small handoff for you',completed:'Cancellation confirmed',failed:'This request needs attention'})[job.status]||job.status)}</p><div class="status-panel">${esc(job.message||'Your request is saved.')} ${job.effective_date?`<p>Effective ${fmtDate(job.effective_date)}</p>`:''}</div>${Array.isArray(job.evidence)?job.evidence.map(e=>`<div class="quiet-note">${e.text?`<p>${esc(e.text)}</p>`:''}${e.instructions?`<p>${esc(e.instructions)}</p>`:''}${safeURL(e.url||e.provider_url)?`<a href="${attr(safeURL(e.url||e.provider_url))}" target="_blank" rel="noopener noreferrer">View provider confirmation ↗</a>`:''}</div>`).join(''):''}${url?`<p><a class="btn" href="${attr(url)}" target="_blank" rel="noopener noreferrer">Open subscription page ↗</a></p>`:''}<p class="quiet-note">A provider login on your phone does not sign in the home-lab browser. Follow the handoff instructions for that browser when requested.</p><div class="modal-actions">${action('refresh-job','Refresh',id)}${['needs_user','failed'].includes(job.status)?action('resume-job','Continue request',id,'btn btn-primary'):action('close','Done')}</div>`);
+}
+
+function projectionChart(result,mode) {
+  const i=result.assumptions, values=result.series;
+  const rows=[{year:0,base:i.starting_cash+i.starting_investments-i.starting_debt,conservative:i.starting_cash+i.starting_investments-i.starting_debt,optimistic:i.starting_cash+i.starting_investments-i.starting_debt,investments:i.starting_investments},...values];
+  const keys=mode==='investments'?['investments']:['conservative','base','optimistic'];
+  let lo=Math.min(0,...rows.flatMap(r=>keys.map(k=>r[k]))),hi=Math.max(1,...rows.flatMap(r=>keys.map(k=>r[k]))); if(hi===lo)hi++;
+  const x=r=>56+r.year/i.years*620,y=v=>235-(v-lo)/(hi-lo)*200;
+  const path=k=>rows.map((r,n)=>`${n?'L':'M'}${x(r).toFixed(2)},${y(r[k]).toFixed(2)}`).join(' ');
+  return `<svg viewBox="0 0 705 270" width="100%" role="img" aria-label="${mode==='investments'?'Investment':'Net worth'} projection over ${i.years} years"><defs><linearGradient id="projection-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".16"/><stop offset="100%" stop-color="var(--accent)" stop-opacity=".01"/></linearGradient></defs>${[0,.25,.5,.75,1].map(t=>`<line x1="56" x2="676" y1="${235-200*t}" y2="${235-200*t}" stroke="var(--border-soft)"/><text x="46" y="${239-200*t}" text-anchor="end" class="ax-label">${fmtMoney(lo+(hi-lo)*t,{compact:true})}</text>`).join('')}<path d="${path(mode==='investments'?'investments':'base')} L676,235 L56,235 Z" fill="url(#projection-fill)"/>${keys.map(k=>`<path d="${path(k)}" fill="none" stroke="var(--accent)" stroke-width="${k==='base'||k==='investments'?2.8:1.3}" ${k==='conservative'||k==='optimistic'?'stroke-dasharray="5 5" opacity=".5"':''}/>`).join('')}${[0,.25,.5,.75,1].map(t=>`<text x="${56+t*620}" y="259" text-anchor="middle" class="ax-label">${t===0?'Today':Math.round(i.years*t)+' yr'}</text>`).join('')}</svg>`;
+}
+function forecastOutput() {
+  const r=comfort.forecast, s=r.summary, investments=comfort.futureMode==='investments';
+  return `<div class="micro-label">${investments?'Projected investments':'Projected net worth'} · in ${s.years} years</div><div class="forecast-hero"><div class="stat-value">${fmtMoney(investments?s.investments:s.base)}</div><div class="small muted">${investments?'Contributions plus assumed growth':`${fmtMoney(s.real_value)} in today’s purchasing power`}</div></div>${projectionChart(r,comfort.futureMode)}${investments?`<div class="scenario-values"><div><small>Starting investments</small><b>${fmtMoney(r.assumptions.starting_investments)}</b></div><div><small>You add</small><b>${fmtMoney(r.assumptions.monthly_investment*s.years*12)}</b></div><div><small>Assumed annual return</small><b>${r.assumptions.annual_return}%</b></div></div>`:`<div class="scenario-values"><div><small>Lower return · ${Math.max(-99.9,r.assumptions.annual_return-3)}%</small><b>${fmtMoney(s.conservative)}</b></div><div><small>Your assumption · ${r.assumptions.annual_return}%</small><b>${fmtMoney(s.base)}</b></div><div><small>Higher return · ${r.assumptions.annual_return+3}%</small><b>${fmtMoney(s.optimistic)}</b></div></div>`}<details class="disclosure"><summary>See the numbers</summary><div class="table-wrap"><table class="tbl"><tr><th>Year</th><th>Cash</th><th>Investments</th><th>Debt</th><th>Net worth</th></tr>${r.series.map(p=>`<tr><td>${p.year}</td><td>${fmtMoney(p.cash)}</td><td>${fmtMoney(p.investments)}</td><td>${fmtMoney(p.debt)}</td><td>${fmtMoney(p.base)}</td></tr>`).join('')}</table></div></details><p class="quiet-note">An illustration, not a prediction. Returns are constant assumptions; taxes, fees, and market swings are not modeled. Cash savings earn no interest here. Debt payments and investment contributions are separate amounts from your income.</p>`;
+}
+registerPage('future','Your future',async()=>{
+  setPill(null);
+  if(!comfort.forecastInput)comfort.forecastInput=await api('/projections/defaults');
+  comfort.forecast=await post('/projections',comfort.forecastInput);
+  const i=comfort.forecast.assumptions;
+  return `<div class="page-intro"><div><h2>Give your future some space.</h2><p>A few small choices today. A wider view of what they could become.</p></div></div><div class="forecast-layout"><section class="card"><div class="segmented" aria-label="Projection view">${['networth','investments'].map(k=>action('future-mode',k==='networth'?'Net worth':'Investments',k,comfort.futureMode===k?'selected':'')).join('')}</div><div id="forecast-output" style="margin-top:23px">${forecastOutput()}</div></section><aside class="card projection-controls"><h3>Make it yours</h3><form data-form="forecast"><label class="fld" for="f-years">Years ahead <output id="years-label">${i.years}</output></label><input type="range" id="f-years" name="years" value="${i.years}" min="1" max="40" oninput="document.getElementById('years-label').textContent=this.value"><div>${field('monthly_savings','Save as cash / month',i.monthly_savings,'number','min="0" step="25" required')}</div><div>${field('monthly_investment','Invest / month',i.monthly_investment,'number','min="0" step="25" required')}</div><div class="form-pair"><div>${field('annual_return','Return % / year',i.annual_return,'number','min="-95" max="100" step="0.5" required')}</div><div>${field('inflation','Inflation %',i.inflation,'number','min="0" max="100" step="0.5" required')}</div></div><details class="disclosure"><summary>Balances & debt</summary>${field('starting_cash','Starting cash',i.starting_cash,'number','min="0" step="0.01" required')}${field('starting_investments','Starting investments',i.starting_investments,'number','min="0" step="0.01" required')}${field('starting_debt','Starting debt',i.starting_debt,'number','min="0" step="0.01" required')}${field('monthly_debt_payment','Debt payment / month',i.monthly_debt_payment,'number','min="0" step="0.01" required')}${field('debt_apr','Debt APR %',i.debt_apr,'number','min="0" max="100" step="0.1" required')}${action('reset-forecast','Use current account balances','','link-button')}</details><p class="auth-error" role="alert" data-form-error></p><button class="btn btn-primary" type="submit" style="width:100%">Update the picture</button><p class="form-help">Try a different pace. This won’t move money or change your accounts.</p></form></aside></div>`;
+});
+
+function openManualAccount(id='',thenAdd=false) {
+ const a=state.accounts.find(a=>a.id===id)||{name:'',balance:0,scope:'personal',type:'depository'};
+ showModal(`${modalTitle(id?'Update account':'Add a manual account')}<p class="sub">A place for cash, investments, or a balance you track yourself.</p><form data-form="manual-account" data-id="${attr(id)}" data-then-add="${thenAdd}">${field('name','Account name',a.name,'text','required maxlength="120" placeholder="e.g. Everyday checking"')}<div class="form-pair"><div>${field('balance','Current balance',a.balance,'number','step="0.01" required')}</div><div><label class="fld" for="f-type">Account type</label><select class="input" name="type" id="f-type">${Object.entries({depository:'Cash / bank',investment:'Investment',credit:'Credit card',loan:'Loan',other:'Other asset'}).map(([k,v])=>`<option value="${k}" ${a.type===k?'selected':''}>${v}</option>`).join('')}</select></div></div><label class="fld" for="f-scope">For</label><select name="scope" id="f-scope" class="input"><option value="personal" ${a.scope==='personal'?'selected':''}>Personal</option><option value="business" ${a.scope==='business'?'selected':''}>Business</option></select><p class="form-help">For a card or loan, enter the amount you owe. Ledger subtracts it from net worth.</p>${formActions(id?'Save balance':'Add account')}</form>`);
+}
+openAddTx = async function() {
+ state.accounts=await api('/accounts');
+ if(!state.accounts.length)return openManualAccount('',true);
+ showModal(`${modalTitle('Add a transaction')}<p class="sub">The little things count, too.</p><form data-form="transaction"><div class="form-pair"><div><label class="fld" for="f-kind">Type</label><select class="input" name="kind" id="f-kind"><option value="expense">Money out</option><option value="income">Money in</option><option value="transfer-out">Transfer out</option><option value="transfer-in">Transfer in</option></select></div><div>${field('amount','Amount','', 'number','min="0.01" step="0.01" required autofocus placeholder="0.00"')}</div></div>${field('name','Name / merchant','','text','required maxlength="200" placeholder="e.g. Coffee with a friend"')}<div class="form-pair"><div>${field('posted','Date',todayISO(),'date',`required max="${todayISO()}"`)}</div><div><label class="fld" for="f-account">Account</label><select class="input" id="f-account" name="account_id">${accountOptions(localStorage.getItem('ledger-last-account')||'')}</select></div></div><label class="fld" for="f-category">Category</label><select class="input" id="f-category" name="category_id">${catOptions('')}</select><details class="disclosure"><summary>Add a note</summary>${field('note','Note','','text','maxlength="2000"')}</details>${formActions('Save transaction')}</form>`);
+};
+
+registerPage('accounts','Accounts',async()=>{
+ setPill(null);
+ const [accounts,items,sync,archived,history]=await Promise.all([api('/accounts'),api('/items'),api('/sync/status'),api('/accounts?archived=1'),api('/summary/networth?months=12')]);state.accounts=accounts;
+ return `<div class="page-intro"><div><h2>Your money, together.</h2><p>Connected accounts and the balances you track yourself.</p></div>${action('manual-account','＋ Manual account','','btn btn-primary')}</div><div class="account-manual-bar"><span class="sync-indicator">${esc(comfort.config.demo?'Sample accounts stay separate from live banks.':sync.message)}</span><div class="row">${action('link','Connect a bank')}${action('sync','Sync now')}</div></div><div class="grid cols-2">${accounts.map(a=>`<section class="card"><div class="row-between"><span class="merchant-avatar">${a.type==='investment'?'↗':a.type==='credit'||a.type==='loan'?'−':'▣'}</span>${scopeTag(a.scope)}</div><h3 style="margin-top:19px">${esc(a.name)}</h3><div class="stat-value">${dollars(a.balance)}</div><div class="card-footer"><span>${a.item_id?'Linked':'Manual'} · ${esc(a.type)}${a.mask?' · '+esc(a.mask):''}</span><span class="row">${!a.item_id?action('manual-account','Update balance',a.id,'link-button'):action('account-scope',a.scope==='personal'?'Make business':'Make personal',a.id,'link-button')}${action('archive-account','Archive',a.id,'link-button')}</span></div></section>`).join('')||quietEmpty('Start wherever is easiest. You can add banks later.')}</div>${items.length?`<div class="card mt"><h3>Connections</h3>${items.map(i=>`<div class="setting-row"><div><b>${esc(i.institution)}</b><div class="small muted">${esc(i.env_label)}${sync.items?.find(r=>r.item_id===i.id)?.finished_at?' · Checked '+esc(sync.items.find(r=>r.item_id===i.id).finished_at.replace('T',' ').slice(0,16)):''}${sync.items?.find(r=>r.item_id===i.id)?.error?' · '+esc(sync.items.find(r=>r.item_id===i.id).error):''}</div></div><div class="row">${i.has_token?action('relink','Reconnect',i.id):''}${action('unlink','Remove',i.id,'btn btn-sm btn-ghost')}</div></div>`).join('')}</div>`:''}${archived.length?`<details class="disclosure"><summary>Archived accounts · ${archived.length}</summary>${archived.map(a=>`<div class="setting-row"><span>${esc(a.name)}</span>${action('restore-account','Restore',a.id)}</div>`).join('')}</details>`:''}<details class="disclosure"><summary>Estimated balance history</summary><div class="card mt"><h3>Net worth over time</h3>${lineChart(history.map(p=>({label:p.month,v:p.balance})))}<p class="quiet-note">Reconstructed from current balances and recorded transactions. This is an estimate; it does not capture past investment price changes or missing transactions.</p></div></details><p class="quiet-note">Investment projections use account balances, including manually entered investments. Holding-level performance and live stock prices are not imported.</p>`;
+});
+
+registerPage('settings','Settings',async()=>{
+ setPill(null);const [c,worker,receiptSummary]=await Promise.all([api('/config'),api('/cancellations/status'),api('/receipts').catch(()=>({}))]);applyComfort(c);
+ const labels={recent:'Recent activity',upcoming:'Upcoming payments',cashflow:'Cash flow',goals:'Goals'};const order=[...(c.home_cards||[]),...Object.keys(labels).filter(k=>!c.home_cards?.includes(k))];
+ return `<div class="page-intro"><div><h2>A space that feels like you.</h2><p>A little personalization. Only as much as you want.</p></div></div><div class="settings-grid"><section class="card"><h3>Look & feel</h3><div class="setting-row"><label for="setting-palette">Color direction</label><select id="setting-palette" class="input" data-pref="palette"><option value="paper" ${c.palette==='paper'?'selected':''}>Warm newsprint</option><option value="colorful" ${c.palette!=='paper'?'selected':''}>Colorful</option></select></div><div class="setting-row"><span>Your font</span>${action('page','Compare three styles →','typography','link-button')}</div><div class="setting-row"><label for="setting-theme">Appearance</label><select id="setting-theme" class="input" data-pref="theme">${['system','light','dark'].map(v=>`<option value="${v}" ${c.theme===v?'selected':''}>${v==='system'?'Match my device':v==='light'?'Light':'Dark'}</option>`).join('')}</select></div><div class="setting-row"><label for="setting-density">Spacing</label><select id="setting-density" class="input" data-pref="density"><option value="comfortable" ${c.density==='comfortable'?'selected':''}>Room to breathe</option><option value="compact" ${c.density==='compact'?'selected':''}>A little closer</option></select></div><p class="small muted">Your accent color</p><div class="swatches">${Object.entries({blue:'#7596aa',sage:'#759e8c',plum:'#a28eaf',clay:'#bd9683'}).map(([k,v])=>`<button class="swatch ${c.accent===k?'selected':''}" style="background:${v}" data-action="accent" data-id="${k}" aria-label="${k} accent" aria-pressed="${c.accent===k}"></button>`).join('')}</div><p class="quiet-note">Changes save across your devices.</p></section><section class="card"><h3>Your home dashboard</h3><p class="small muted">Choose what you see. Move your favorites up.</p>${order.map((k,n)=>`<div class="layout-item"><input type="checkbox" id="card-${k}" data-home-card="${k}" ${c.home_cards?.includes(k)?'checked':''}><label for="card-${k}" style="flex:1">${labels[k]}</label><button data-action="move-card" data-id="${k}" aria-label="Move ${labels[k]} up" ${n===0?'disabled':''}>↑</button></div>`).join('')}</section><section class="card"><h3>The everyday details</h3><form data-form="preferences">${field('owner_name','What should we call you?',c.owner_name,'text','maxlength="50" placeholder="Your first name"')}${field('monthly_spending_target','Monthly spending plan',c.monthly_spending_target||'','number','min="0" step="1" placeholder="Optional"')}<p class="form-help">Your total spending target, including subscriptions. Leave empty to focus on actual spending.</p>${field('tax_rate_business','Business tax set-aside (%)',Number(c.tax_rate_business)*100,'number','min="0" max="100" step="0.1"')}<p class="auth-error" role="alert" data-form-error></p><button type="submit" class="btn">Save preferences</button></form></section>${receiptSettingsCard(receiptSummary,c)}<section class="card"><h3>Cancellation assistant</h3><div class="status-panel">${esc(worker.message||worker.reason||(worker.ready?'Your local worker is ready.':'Finish Codex setup on your home lab to enable cancellation requests.'))}</div><p class="quiet-note">Uses your existing Codex sign-in and the configured Luna model. Provider sign-ins stay in a separate browser on your home lab.</p>${action('page','View subscriptions →','subscriptions','link-button')}<details class="disclosure"><summary>Bank connection settings</summary><p class="quiet-note" id="plaid-credential-help">${c.plaid_configured?'Plaid credentials are saved. Leave the fields empty to keep them.':'Add the credentials from your Plaid dashboard to enable bank linking.'}</p><form data-form="plaid">${credentialField('plaid_client_id','Plaid client ID',c.plaid_client_id_saved,'text','off')}${credentialField('plaid_secret','Plaid secret',c.plaid_secret_saved,'password','new-password')}<label class="fld" for="f-plaid_env">Environment</label><select class="input" name="plaid_env" id="f-plaid_env"><option value="production" ${c.plaid_env==='production'?'selected':''}>Production · real banks</option><option value="sandbox" ${c.plaid_env==='sandbox'?'selected':''}>Sandbox · test banks</option></select>${field('plaid_redirect_uri','Registered HTTPS redirect URL',c.plaid_redirect_uri,'url','placeholder="https://your-private-ledger/"')}${field('sync_interval_minutes','Sync interval (minutes)',c.sync_interval_minutes,'number','min="30" max="1440"')}<p class="auth-error" role="alert" data-form-error></p><button class="btn" type="submit">Save bank settings</button>${plaidNextStep(c)}</form></details></section><section class="card"><h3>Your data</h3><p class="small muted">Your Ledger lives on your home lab. Keep a backup somewhere separate.</p><div class="row">${action('export','Export transactions')}${!c.demo?action('logout','Lock Ledger'):''}</div><details class="disclosure"><summary>Sample data & reset</summary><p class="quiet-note">Sample data is for exploring before linking real accounts. Reset permanently clears financial records; your login remains.</p><div class="row">${action('seed','Load samples')}${action('reset','Reset financial data','','btn btn-danger')}</div></details></section></div>`;
+});
+
+function spendingPlan() {showModal(`${modalTitle('A little room for your month.')}<form data-form="spending-plan">${field('monthly_spending_target','Monthly spending target',comfort.config.monthly_spending_target||'','number','min="0" step="1" required')}<p class="form-help">Include everyday spending and subscriptions. This is a plan you can adjust anytime.</p>${formActions('Save my plan')}</form>`);}
+async function savePreference(prefs) {const c=await post('/config',prefs);applyComfort(c);return c;}
+async function refreshJobs(id) {comfort.jobs=await api('/cancellations');openJob(id);}
+
+registerPage('typography','Choose a font',async()=>{
+ setPill(null);
+ const fonts=[{id:'nunito',family:'Nunito Sans',tag:'01 · Friendly & rounded',copy:'Soft curves and a welcoming feel. The most relaxed of the three.'},{id:'manrope',family:'Manrope',tag:'02 · Clear & modern',copy:'Crisp shapes and confident numbers. Clean, with a little more character.'},{id:'lora',family:'Lora',tag:'03 · Warm & editorial',copy:'Serif headings paired with simple body text. A quieter, more personal feel.'}];
+ return `<div class="page-intro"><div><h2>Which one feels like home?</h2><p>Three font directions, with the same colors and sample content.</p></div>${action('page','Back to Home','overview','btn')}</div><div class="font-comparison">${fonts.map(f=>`<section class="font-option"><div class="font-option-label"><span>${f.tag}</span><h3>${f.family}</h3><p>${f.copy}</p></div><div class="font-sample font-${f.id}"><div class="sample-brand">ledger<span>·</span></div><h2>Good afternoon,</h2><p>Here’s where things stand.</p><div class="sample-balance"><small>Room in your monthly plan</small><strong>$485.20</strong><p>A little breathing room.</p><div class="sample-rail"><i></i></div></div><h4>Recent activity</h4><div class="transaction-row">${merchantAvatar('Spotify')}<div class="merchant-info"><b>Spotify</b><small>Subscriptions · Sep 4</small></div><span class="money-number">$12.99</span></div><div class="transaction-row">${merchantAvatar('Coffee')}<div class="merchant-info"><b>Coffee with a friend</b><small>Dining · Sep 4</small></div><span class="money-number">$4.75</span></div><div class="sample-future"><span>Your future</span><b>Small steps. More possibilities.</b></div></div>${action('choose-font',comfort.config.font_family===f.id?'Current font':'Try '+f.family,f.id,'btn btn-primary font-choice')}</section>`).join('')}</div><p class="quiet-note">Choose one to see it across your dashboard. You can switch anytime in Settings → Your font. Fonts are bundled with Ledger and load from your own device/server.</p>`;
+});
+
+const actions = {
+ 'more-reviews':async()=>{comfort.reviewLimit+=3;await navigate('subscriptions');},
+ 'keep-price':async id=>{await post('/subscriptions/review',{id,decision:'keep_price'});await navigate('subscriptions');toast('Your planned amount is unchanged.');},
+ 'accept-price':async id=>{await post('/subscriptions/review',{id,decision:'accept_price'});await navigate('subscriptions');toast('Your monthly plan reflects the new amount.');},
+ 'choose-font':async id=>{await savePreference({font_family:id});await navigate('overview');toast('Font applied. You can compare again in Settings.');},
+ close:()=>closeModal(),page:id=>navigate(id),'add-tx':()=>openAddTx(),'manual-account':id=>openManualAccount(id),'new-sub':()=>openSubscription(),'edit-sub':id=>openSubscription(id),'cancel-sub':id=>openCancellation(id),job:id=>openJob(id),
+ 'mark-canceled':async id=>{await post('/subscriptions/review',{id,decision:'cancel'});await navigate(state.page);toast('Marked as canceled. Restore tracking under Previously canceled if needed.');},
+ 'restore-sub':async id=>{await post('/subscriptions/review',{id,decision:'activate'});await navigate(state.page);toast('Subscription tracking restored. This does not restart service with the provider.');},
+ 'spending-plan':()=>spendingPlan(),
+ 'confirm-sub':async id=>{await post('/subscriptions/review',{id,decision:'confirm'});toast('Added to your monthly plan.');await navigate(state.page);},
+ 'dismiss-sub':async id=>{await post('/subscriptions/review',{id,decision:'dismiss'});toast('Got it. We’ll remember this choice.');await navigate(state.page);},
+ scan:async()=>{await post('/subscriptions/scan');await navigate(state.page);toast('Recurring payments checked.');},
+ 'request-cancel':async id=>{if(comfort.config.demo)return toast('Cancellation agents are off in this preview.');const job=await post('/cancellations/request',{subscription_id:id});comfort.jobs.unshift(job);openJob(job.id);},
+ 'refresh-job':id=>refreshJobs(id),'resume-job':async id=>{await post('/cancellations/resume',{id});await refreshJobs(id);},
+ 'future-mode':id=>{comfort.futureMode=id;document.querySelectorAll('[data-action="future-mode"]').forEach(b=>b.classList.toggle('selected',b.dataset.id===id));document.getElementById('forecast-output').innerHTML=forecastOutput();},
+ 'reset-forecast':async()=>{comfort.forecastInput=null;await navigate('future');},
+ accent:async id=>{await savePreference({accent:id});document.querySelectorAll('.swatch').forEach(b=>{b.classList.toggle('selected',b.dataset.id===id);b.setAttribute('aria-pressed',String(b.dataset.id===id));});},
+ 'move-card':async id=>{const all=[...document.querySelectorAll('[data-home-card]')].map(e=>e.dataset.homeCard),at=all.indexOf(id);if(at>0)[all[at-1],all[at]]=[all[at],all[at-1]];await savePreference({home_cards:all.filter(k=>comfort.config.home_cards.includes(k))});await navigate('settings');},
+ 'account-scope':async id=>{const a=state.accounts.find(a=>a.id===id);await post('/accounts/classify',{id,scope:a.scope==='personal'?'business':'personal'});await navigate('accounts');},
+ 'restore-account':async id=>{await post('/accounts/archive',{id,restore:true});await navigate('accounts');toast('Account restored.');},
+ 'archive-account':async id=>{await post('/accounts/archive',{id});state.accounts=await api('/accounts');await navigate('accounts');toast('Account archived. Transaction history is kept.');},
+ link:()=>{if(comfort.config.demo)return toast('Real bank linking is off in this preview.');return startLinkFlow();},
+ relink:async id=>{const r=await post('/plaid/link-token',{item_id:id});await loadPlaidScript();await openPlaidLink(r.link_token,'personal',null,id);},
+ unlink:async id=>{if(!confirm('Remove this bank connection and its imported accounts and transactions?'))return;await api('/items?id='+encodeURIComponent(id),{method:'DELETE'});state.accounts=await api('/accounts');await navigate('accounts');},
+ sync:async()=>{const result=await post('/sync');toast(result.message||'Your accounts have been checked.');state.accounts=await api('/accounts');await navigate(state.page);},
+ export:()=>exportCSV(),logout:async()=>{await post('/auth/logout');location.reload();},
+ seed:async()=>{await post('/demo/seed');state.accounts=await api('/accounts');await navigate('overview');toast('Sample data is ready.');},
+ reset:async()=>{if(!confirm('Permanently delete all accounts, transactions, subscriptions, budgets, and goals?'))return;await post('/data/reset');state.accounts=[];comfort.forecastInput=null;await navigate('overview');toast('Your financial records were cleared.');}
+};
+document.addEventListener('click',async e=>{const el=e.target.closest('[data-action]');if(!el||el.disabled)return;e.preventDefault();const fn=actions[el.dataset.action];if(!fn)return;el.disabled=true;try{await fn(el.dataset.id);}catch(err){toast(err.message,'err',6500);}finally{el.disabled=false;}});
+document.addEventListener('change',async e=>{try{if(e.target.dataset.pref){if(e.target.dataset.pref==='palette')history.replaceState(null,'',location.pathname+location.hash);await savePreference({[e.target.dataset.pref]:e.target.value});}if(e.target.dataset.homeCard)await savePreference({home_cards:[...document.querySelectorAll('[data-home-card]:checked')].map(e=>e.dataset.homeCard)});}catch(err){toast(err.message,'err');}});
+document.addEventListener('submit',async e=>{
+ const form=e.target.closest('form[data-form]');if(!form)return;e.preventDefault();const button=form.querySelector('button[type="submit"]'),error=form.querySelector('[data-form-error]');if(button.disabled)return;button.disabled=true;error.textContent='';
+ const data=Object.fromEntries(new FormData(form));
+ try{
+  switch(form.dataset.form){
+   case 'auth':await post('/auth/'+form.dataset.mode,{password:data.password});document.getElementById('auth-screen').remove();await bootLedger();return;
+   case 'transaction': {const amount=Number(data.amount)*(data.kind==='income'||data.kind==='transfer-in'?1:-1);await post('/transactions',{transaction:{...data,amount,is_transfer:data.kind.startsWith('transfer'),category_id:data.category_id||null}});localStorage.setItem('ledger-last-account',data.account_id);state.accounts=await api('/accounts');break;}
+   case 'manual-account':{const r=await post('/accounts/manual',{...data,balance:Number(data.balance),...(form.dataset.id?{id:form.dataset.id}:{})});state.accounts=await api('/accounts');localStorage.setItem('ledger-last-account',r.id);if(form.dataset.thenAdd==='true'){closeModal();await openAddTx();return;}break;}
+   case 'subscription':await post('/subscriptions',{...data,...(form.dataset.id?{id:form.dataset.id}:{}),amount:Number(data.amount),account_id:data.account_id||null,management_url:data.management_url||null,custom_interval_days:Number(data.custom_interval_days||30)});break;
+   case 'forecast':comfort.forecastInput=Object.fromEntries(Object.entries(data).map(([k,v])=>[k,Number(v)]));comfort.forecast=await post('/projections',comfort.forecastInput);document.getElementById('forecast-output').innerHTML=forecastOutput();return;
+   case 'preferences':await savePreference({owner_name:data.owner_name,monthly_spending_target:Number(data.monthly_spending_target||0),tax_rate_business:Number(data.tax_rate_business)/100});toast('Your preferences are saved.');return;
+   case 'spending-plan':await savePreference({monthly_spending_target:Number(data.monthly_spending_target)});break;
+   case 'plaid':{const saved=await savePreference({...data,sync_interval_minutes:Number(data.sync_interval_minutes)});form.querySelector('[name="plaid_secret"]').value='';form.querySelector('[name="plaid_client_id"]').value='';updateCredentialState(saved);toast('Bank settings saved.');return;}
+  }
+  closeModal();toast(form.dataset.form==='transaction'?'Saved. One less thing to keep in your head.':'Saved.');await navigate(state.page);
+ }catch(err){error.textContent=err.message;}finally{button.disabled=false;}
+});
+
+async function bootLedger(){
+ const status=await api('/auth/status');
+ if(!status.authenticated){const mode=status.configured?'login':'setup';document.body.insertAdjacentHTML('beforeend',`<div class="auth-page" id="auth-screen"><div class="auth-card"><span class="ledger-mark" style="display:block">L<span>·</span></span><h1>${status.configured?'Welcome back.':'Make yourself at home.'}</h1><p>${status.configured?'Your money deserves a quiet, private space.':'Choose a password for your private Ledger. You only need to do this once, on your home-lab computer.'}</p><form data-form="auth" data-mode="${mode}">${field('password',status.configured?'Your password':'Create a password','','password',`required minlength="${status.configured?1:12}" autocomplete="${status.configured?'current-password':'new-password'}"`)}${!status.configured?'<p class="form-help">At least 12 characters. A few memorable words work well.</p>':''}<p class="auth-error" role="alert" data-form-error></p><button type="submit" class="btn btn-primary">${status.configured?'Open my Ledger':'Create my space'}</button></form></div></div>`);document.getElementById('f-password').focus();return;}
+ const [c,categories,accounts]=await Promise.all([api('/config'),api('/categories'),api('/accounts')]);applyComfort(c);state.categories=categories;state.accounts=accounts;
+ await navigate(location.hash.slice(1)||'overview');
+ if(new URLSearchParams(location.search).has('oauth_state_id')){const saved=JSON.parse(sessionStorage.getItem('ledger-link')||'null');if(saved)await openPlaidLink(saved.token,saved.scope,location.href,saved.updateItem);else toast('The bank return session expired. Connect the bank again from Accounts.','err');}
+}
+document.getElementById('btn-add-tx').onclick=()=>openAddTx().catch(e=>toast(e.message,'err'));
+document.getElementById('mobile-add').onclick=document.getElementById('btn-add-tx').onclick;
+document.getElementById('btn-theme').onclick=async()=>{const mode=document.documentElement.dataset.theme==='dark'?'light':'dark';try{await savePreference({theme:mode});}catch(e){toast(e.message,'err');}};
+document.getElementById('btn-menu').onclick=()=>document.body.classList.toggle('nav-open');
+document.getElementById('nav-shade').onclick=()=>document.body.classList.remove('nav-open');
+document.getElementById('btn-link').onclick=async()=>{try{await actions.link();}catch(e){toast(e.message,'err');}};
+document.getElementById('btn-refresh').onclick=()=>actions.sync().catch(e=>toast(e.message,'err'));
+document.getElementById('btn-export').onclick=exportCSV;
+(() => {
+ const root=document.documentElement, toggle=document.getElementById('sidebar-collapse'), more=document.querySelector('.more-nav'), moreSummary=more?.querySelector('summary');
+ if(!toggle)return;
+ const setCollapsed=collapsed=>{root.classList.toggle('sidebar-collapsed',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Expand sidebar':'Collapse sidebar');toggle.title=collapsed?'Expand sidebar':'Collapse sidebar';toggle.querySelector('.sidebar-collapse-label').textContent=collapsed?'Expand':'Collapse';try{localStorage.setItem('ledger-sidebar-collapsed',collapsed?'1':'0');}catch{}};
+ setCollapsed(root.classList.contains('sidebar-collapsed'));
+ toggle.onclick=()=>setCollapsed(!root.classList.contains('sidebar-collapsed'));
+ moreSummary?.addEventListener('click',event=>{if(!root.classList.contains('sidebar-collapsed'))return;event.preventDefault();setCollapsed(false);more.open=true;});
+ more?.querySelectorAll('.nav-link').forEach(link=>link.addEventListener('click',()=>{if(root.classList.contains('sidebar-collapsed'))setCollapsed(false);}));
+})();
+bootLedger().catch(e=>{document.getElementById('view').innerHTML=quietEmpty(esc(e.message));});
+
+````````````
+<!-- END_LEDGER_MOBILE_SOURCE -->
+
+### Update source: `tests/test_finance.py`
+
+<!-- LEDGER_MOBILE_SOURCE {"path":"tests/test_finance.py","encoding":"utf-8","bytes":20228,"sha256":"94ad89092b01c4a714727c8de43b8932d7b9874923e0e1d3190fe7dbf5bad15b","mode":"100644"} -->
+````````````python
+import os
+import sys
+import tempfile
+import unittest
+from datetime import date, timedelta
+
+ROOT = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
+
+
+class FinanceTests(unittest.TestCase):
+    def setUp(self):
+        import db
+        self.tmp = tempfile.TemporaryDirectory()
+        db.DB_PATH = os.path.join(self.tmp.name, "ledger.db")
+        db.DATA_DIR = self.tmp.name
+        db.init_db()
+        import subscriptions
+        subscriptions.init_schema()
+        self.db = db
+        self.subscriptions = subscriptions
+        self.forecasts = __import__("forecasts")
+        self.analytics = __import__("analytics")
+        self._add_account()
+
+    def tearDown(self): self.tmp.cleanup()
+
+    def _add_account(self):
+        self.db.ex("INSERT INTO accounts(id,name,scope,balance,created_at) VALUES(?,?,?,?,?)", ("a", "Checking", "personal", 0, "2026-01-01"))
+
+    def _tx(self, merchant, when, amount=12):
+        self.db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,created_at) VALUES(?,?,?,?,?,?,?,?)", ("t" + when.replace("-", ""), "a", "personal", -amount, when, merchant, merchant, when))
+
+    def _pending_tx(self, merchant, when, amount=12):
+        self.db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,pending,created_at) VALUES(?,?,?,?,?,?,?,?,?)", ("p" + when.replace("-", ""), "a", "personal", -amount, when, merchant, merchant, 1, when))
+
+    def test_scan_is_idempotent_and_detects_early_candidate(self):
+        for d in (date(2026, 1, 5), date(2026, 2, 5)):
+            self._tx("Warm Cloud", d.isoformat())
+        one = self.subscriptions.scan(); two = self.subscriptions.scan()
+        self.assertEqual(len(one["candidates"]), 1)
+        self.assertEqual(len(self.db.q("SELECT * FROM subscriptions")), 1)
+        self.assertEqual(len(two["candidates"]), 1)
+
+    def test_dismissal_is_remembered(self):
+        self._tx("Maybe", "2026-01-01"); self._tx("Maybe", "2026-02-01")
+        sub = self.subscriptions.scan()["candidates"][0]
+        self.subscriptions.review(sub["id"], "dismiss")
+        self.assertEqual(self.subscriptions.scan()["candidates"], [])
+
+    def test_annual_cadence_and_monthly_equivalent(self):
+        self._tx("Renewal", "2025-01-15", 120); self._tx("Renewal", "2026-01-15", 132)
+        sub = self.subscriptions.scan()["candidates"][0]
+        self.assertEqual(sub["cadence"], "annual")
+        self.assertEqual(sub["monthly_equivalent"], 11.0)
+
+    def test_monthly_billing_anchor_survives_short_february(self):
+        jan = date(2026, 1, 31)
+        feb = self.subscriptions._add_due(jan, "monthly", anchor_day=31)
+        mar = self.subscriptions._add_due(feb, "monthly", anchor_day=31)
+        self.assertEqual(feb, date(2026, 2, 28))
+        self.assertEqual(mar, date(2026, 3, 31))
+
+    def test_plan_does_not_double_count_posted_subscription(self):
+        self._tx("Cloud", "2026-09-01", 20); self.subscriptions.save({"merchant":"Cloud","scope":"personal","account_id":"a","amount":20,"cadence":"monthly","next_due":"2026-09-01","status":"active"})
+        plan = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(plan["spent"], 20)
+        self.assertEqual(plan["upcoming"], 0)
+
+    def test_pending_subscription_is_expected_once(self):
+        self._pending_tx("Pending Cloud", "2026-09-05", 20)
+        self.subscriptions.save({"merchant":"Pending Cloud","scope":"personal","account_id":"a","amount":20,"cadence":"monthly","next_due":"2026-09-05","status":"active"})
+        plan = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(plan["spent"], 0)
+        self.assertEqual(plan["upcoming"], 0)
+        self.assertEqual(plan["total_expected"], 20)
+
+    def test_manual_cancel_removes_future_commitment_and_preserves_payments(self):
+        self._tx("Manual Cloud", "2026-09-01", 20)
+        self._pending_tx("Manual Cloud", "2026-09-05", 3)
+        sub = self.subscriptions.save({"merchant":"Manual Cloud", "scope":"personal",
+            "account_id":"a", "amount":20, "cadence":"monthly",
+            "next_due":"2026-09-25", "status":"active"})
+        before = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(before["upcoming"], 20)
+        payments = self.db.q("SELECT * FROM transactions ORDER BY id")
+        self.subscriptions.review(sub["id"], "cancel")
+        self.subscriptions.scan()
+        self.assertEqual(self.db.q1("SELECT status FROM subscriptions WHERE id=?", (sub["id"],))["status"], "canceled")
+        after = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(after["upcoming"], 0)
+        self.assertEqual(after["monthly_subscriptions"], 0)
+        self.assertEqual(after["spent"], before["spent"])
+        self.assertEqual(after["pending_spend"], before["pending_spend"])
+        self.assertEqual(self.db.q("SELECT * FROM transactions ORDER BY id"), payments)
+        self.subscriptions.review(sub["id"], "activate")
+        self.assertEqual(self.subscriptions.monthly_plan("personal", "2026-09")["upcoming"], 20)
+
+    def test_forecast_compounds_and_rejects_bad_math(self):
+        result = self.forecasts.project({"years": 2, "starting_investments": 1000, "monthly_investment": 100, "annual_return": 12})
+        self.assertGreater(result["summary"]["base"], result["summary"]["conservative"])
+        with self.assertRaises(ValueError): self.forecasts.project({"years": 2, "annual_return": float("nan")})
+
+    def test_forecast_uses_effective_annual_return_exactly(self):
+        row = self.forecasts.project({"years": 1, "starting_investments": 1000, "annual_return": 12})["series"][0]
+        self.assertEqual((row["conservative"], row["base"], row["optimistic"]), (1090.0, 1120.0, 1150.0))
+
+    def test_forecast_cash_savings_is_independent_and_exact(self):
+        result = self.forecasts.project({"years": 1, "starting_cash": 100, "monthly_savings": 10, "monthly_investment": 25, "monthly_debt_payment": 5, "annual_return": 0})
+        self.assertEqual(result["series"][0]["cash"], 220.0)
+        self.assertEqual(result["series"][0]["investments"], 300.0)
+        self.assertEqual(result["series"][0]["contributions"], 420.0)
+
+    def test_defaults_derive_cash_investments_and_debt(self):
+        self.db.ex("INSERT INTO accounts(id,name,type,scope,balance,created_at) VALUES(?,?,?,?,?,?)", ("inv", "Brokerage", "investment", "personal", 2500, "2026-01-01"))
+        self.db.ex("INSERT INTO accounts(id,name,type,scope,balance,created_at) VALUES(?,?,?,?,?,?)", ("loan", "Card", "credit", "personal", -700, "2026-01-01"))
+        d = self.forecasts.defaults("personal")
+        self.assertEqual((d["starting_cash"], d["starting_investments"], d["starting_debt"]), (0.0, 2500.0, 700.0))
+
+    def test_custom_cadence_and_account_validation(self):
+        with self.assertRaises(ValueError): self.subscriptions.save({"merchant": "x", "scope": "personal", "account_id": "missing", "amount": 2, "cadence": "monthly"})
+        with self.assertRaises(ValueError): self.subscriptions.save({"merchant": "x", "scope": "personal", "account_id": "a", "amount": 2, "cadence": "custom"})
+        with self.assertRaises(ValueError): self.subscriptions.save({"merchant": "x", "scope": "personal", "account_id": "a", "amount": 2, "cadence": "monthly", "management_url": "http://bad"})
+
+    def test_scan_ignores_pending_future_and_stale_autoactivation(self):
+        self._pending_tx("Netflix", "2026-08-01", 18)
+        self._pending_tx("Netflix", "2026-09-01", 18)
+        self._tx("Old Cloud", "2025-01-01", 20)
+        self._tx("Old Cloud", "2025-02-01", 20)
+        self._tx("Old Cloud", "2025-03-01", 20)
+        self._tx("Future Cloud", "2026-10-01", 20)
+        self._tx("Future Cloud", "2026-11-01", 20)
+        result = self.subscriptions.scan()
+        self.assertEqual([s["merchant"] for s in result["items"]], [])
+        self.assertEqual([s["merchant"] for s in result["candidates"]], ["Old Cloud"])
+
+    def test_known_merchant_single_charge_is_candidate(self):
+        self._tx("Netflix", "2026-09-01", 18)
+        result = self.subscriptions.scan()
+        self.assertEqual(len(result["candidates"]), 1)
+        self.assertIn("posted charge", result["candidates"][0]["reason"])
+
+    def test_scan_persists_calendar_anchor_and_manual_correction(self):
+        self._tx("Anchor Cloud", "2026-01-31", 20)
+        self._tx("Anchor Cloud", "2026-02-28", 20)
+        self._tx("Anchor Cloud", "2026-03-31", 20)
+        sub = self.subscriptions.scan()["candidates"][0]
+        self.assertEqual(sub["billing_day"], 31)
+        self.assertEqual(sub["next_due"], "2026-04-30")
+        corrected = self.subscriptions.save({"id": sub["id"], "cadence": "quarterly", "next_due": "2027-01-31"})
+        self.subscriptions.scan()
+        reread = self.subscriptions.listing()["candidates"][0]
+        self.assertEqual(reread["cadence"], "quarterly")
+        self.assertEqual(reread["next_due"], "2027-01-31")
+        self.assertEqual(corrected["next_due"], "2027-01-31")
+
+    def test_custom_interval_update_is_merged_and_priced(self):
+        sub = self.subscriptions.save({"merchant": "Custom Service", "scope": "personal", "account_id": "a", "amount": 10, "cadence": "custom", "custom_interval_days": 45, "next_due": "2026-09-10"})
+        updated = self.subscriptions.save({"id": sub["id"], "amount": 12})
+        self.assertEqual(updated["custom_interval_days"], 45)
+        self.assertEqual(updated["monthly_cost"], 8.12)
+
+    def test_plan_matches_exact_merchant_once_across_subscriptions(self):
+        self._tx("Cloud Plus", "2026-09-01", 20)
+        self.subscriptions.save({"merchant": "Cloud", "scope": "personal", "account_id": "a", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
+        self.subscriptions.save({"merchant": "Cloud Plus", "scope": "personal", "account_id": "a", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
+        plan = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(len(plan["paid_items"]), 1)
+        self.assertEqual(len(plan["upcoming_items"]), 1)
+
+    def test_save_validates_merged_scope_due_and_https(self):
+        sub = self.subscriptions.save({"merchant": "Managed", "scope": "personal", "account_id": "a", "amount": 5, "cadence": "monthly", "next_due": "2026-09-10", "management_url": "https://example.test/manage"})
+        with self.assertRaises(ValueError): self.subscriptions.save({"id": sub["id"], "scope": "business"})
+        with self.assertRaises(ValueError): self.subscriptions.save({"id": sub["id"], "next_due": "09/10/2026"})
+        with self.assertRaises(ValueError): self.subscriptions.save({"id": sub["id"], "management_url": "https://"})
+
+    def test_projection_debt_is_independent_and_negative_return_stays_real(self):
+        result = self.forecasts.project({"years": 1, "starting_cash": 100, "starting_investments": 100, "starting_debt": 100, "monthly_savings": 10, "monthly_investment": 5, "monthly_debt_payment": 20, "annual_return": -99, "debt_apr": 0})
+        row = result["series"][0]
+        self.assertEqual((row["cash"], row["investments"], row["debt"]), (220.0, 16.53, 0.0))
+        self.assertTrue(all(isinstance(result["summary"][k], (int, float)) for k in ("conservative", "base", "optimistic")))
+
+    def test_defaults_use_account_type_and_negative_balance_as_liability(self):
+        self.db.ex("INSERT INTO accounts(id,name,type,subtype,scope,balance,created_at) VALUES(?,?,?,?,?,?,?)", ("credit-union", "First Credit Union checking", "depository", "checking", "personal", -50, "2026-01-01"))
+        self.db.ex("INSERT INTO accounts(id,name,type,subtype,scope,balance,created_at) VALUES(?,?,?,?,?,?,?)", ("savings", "Credit Savings", "depository", "savings", "personal", 500, "2026-01-01"))
+        d = self.forecasts.defaults("personal")
+        self.assertEqual((d["starting_cash"], d["starting_debt"]), (500.0, 50.0))
+
+    def test_scan_skips_unsupported_multi_year_custom_interval(self):
+        self._tx("Rare Vendor", "2020-01-01", 20)
+        self._tx("Rare Vendor", "2025-01-01", 20)
+        result = self.subscriptions.scan()
+        self.assertEqual(result["candidates"], [])
+        self.assertEqual(self.db.q("SELECT * FROM subscriptions"), [])
+
+    def test_next_due_edit_resets_anchor_unless_explicit(self):
+        sub = self.subscriptions.save({"merchant": "Anchor", "scope": "personal", "account_id": "a", "amount": 5, "cadence": "monthly", "next_due": "2026-01-31"})
+        updated = self.subscriptions.save({"id": sub["id"], "next_due": "2026-02-15"})
+        self.assertEqual(updated["billing_day"], 15)
+
+    def test_plan_excludes_future_posted_transactions_and_sorts_due(self):
+        self._tx("Later", "2026-09-20", 10)
+        self._tx("Soon", "2026-09-01", 10)
+        self.subscriptions.save({"merchant": "Later", "scope": "personal", "account_id": "a", "amount": 10, "cadence": "monthly", "next_due": "2026-09-20", "status": "active"})
+        self.subscriptions.save({"merchant": "Soon", "scope": "personal", "account_id": "a", "amount": 10, "cadence": "monthly", "next_due": "2026-09-10", "status": "active"})
+        plan = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(plan["spent"], 10)
+        self.assertEqual([x["due"] for x in plan["upcoming_items"]], ["2026-09-10", "2026-09-20"])
+
+    def test_manual_no_account_subscription_is_reused_by_account_scan(self):
+        self.subscriptions.save({"merchant": "Shared SaaS", "scope": "personal", "amount": 20, "cadence": "monthly", "next_due": "2026-09-05", "status": "active"})
+        self._tx("Shared SaaS", "2026-08-05", 20)
+        self._tx("Shared SaaS", "2026-09-05", 20)
+        result = self.subscriptions.scan()
+        self.assertEqual(len(self.db.q("SELECT * FROM subscriptions")), 1)
+        self.assertEqual(result["items"][0]["account_id"], None)
+
+    def test_ambiguous_manual_scope_wide_identity_is_not_duplicated(self):
+        self.subscriptions.save({"merchant": "Ambiguous SaaS", "scope": "personal", "amount": 20, "cadence": "monthly", "next_due": "2026-09-05", "status": "active"})
+        self.subscriptions.save({"merchant": "Ambiguous SaaS", "scope": "personal", "amount": 25, "cadence": "monthly", "next_due": "2026-09-05", "status": "active"})
+        self._tx("Ambiguous SaaS", "2026-08-05", 20)
+        self._tx("Ambiguous SaaS", "2026-09-05", 20)
+        self.subscriptions.scan()
+        self.assertEqual(len(self.db.q("SELECT * FROM subscriptions")), 2)
+
+    def test_autoactivation_requires_regular_low_variation_supported_charges(self):
+        for d in ("2026-07-01", "2026-08-01", "2026-09-01"):
+            self._tx("Acme SaaS", d, 20)
+        self._tx("Kroger", "2026-07-03", 83)
+        self._tx("Kroger", "2026-08-04", 91)
+        self._tx("Kroger", "2026-09-02", 77)
+        self._tx("Variable Bill", "2026-07-10", 10)
+        self._tx("Variable Bill", "2026-08-10", 25)
+        self._tx("Variable Bill", "2026-09-10", 10)
+        result = self.subscriptions.scan()
+        self.assertEqual([s["merchant"] for s in result["items"]], ["Acme SaaS"])
+        self.assertEqual({s["merchant"] for s in result["candidates"]}, {"Kroger", "Variable Bill"})
+
+    def test_manual_price_change_surfaces_review_without_overwriting_amount(self):
+        sub = self.subscriptions.save({"merchant": "Pricey SaaS", "scope": "personal", "account_id": "a", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
+        self._tx("Pricey SaaS", "2026-08-01", 30)
+        self._tx("Pricey SaaS", "2026-09-01", 30)
+        result = self.subscriptions.scan()
+        self.assertEqual(result["items"][0]["id"], sub["id"])
+        self.assertEqual(result["items"][0]["amount"], 20)
+        self.assertEqual(result["items"][0]["observed_amount"], 30)
+        self.assertTrue(result["items"][0]["price_review"])
+        self.assertEqual(self.subscriptions.listing()["price_reviews"][0]["id"], sub["id"])
+        accepted = self.subscriptions.review(sub["id"], "accept_price")
+        self.assertEqual((accepted["amount"], accepted["price_review"]), (30, False))
+
+    def test_keep_price_suppresses_repeat_prompt_for_same_observation(self):
+        sub = self.subscriptions.save({"merchant": "Stable SaaS", "scope": "personal", "account_id": "a", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
+        self._tx("Stable SaaS", "2026-08-01", 30)
+        self.subscriptions.scan()
+        kept = self.subscriptions.review(sub["id"], "keep_price")
+        self.assertEqual((kept["amount"], kept["ignored_price"], kept["price_review"]), (20, 30, False))
+        result = self.subscriptions.scan()
+        self.assertEqual(result["items"][0]["id"], sub["id"])
+        self.assertEqual(result["items"][0]["price_review"], False)
+
+    def test_debt_apr_is_nominal_apr_divided_by_twelve(self):
+        row = self.forecasts.project({"years": 1, "starting_debt": 100, "debt_apr": 12})["series"][0]
+        self.assertEqual(row["debt"], 112.68)
+
+    def test_defaults_positive_credit_balance_is_an_asset_and_db_errors_raise(self):
+        self.db.ex("INSERT INTO accounts(id,name,type,subtype,scope,balance,created_at) VALUES(?,?,?,?,?,?,?)", ("credit-refund", "Refund Credit", "credit", "credit card", "personal", 25, "2026-01-01"))
+        d = self.forecasts.defaults("personal")
+        self.assertEqual((d["starting_cash"], d["starting_investments"], d["starting_debt"]), (25.0, 0.0, 0.0))
+        original_q = self.forecasts.db.q
+        try:
+            self.forecasts.db.q = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("database unavailable"))
+            with self.assertRaises(RuntimeError): self.forecasts.defaults("personal")
+        finally:
+            self.forecasts.db.q = original_q
+
+    def test_existing_unconfirmed_autoactive_detection_is_downgraded(self):
+        sub = self.subscriptions.save({"merchant": "Noisy Grocery", "scope": "personal", "account_id": "a", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active", "source": "detected"})
+        for d, amount in (("2026-07-01", 20), ("2026-08-04", 27), ("2026-09-02", 15)):
+            self._tx("Noisy Grocery", d, amount)
+        result = self.subscriptions.scan()
+        self.assertEqual(result["candidates"][0]["id"], sub["id"])
+
+    def test_detected_active_price_change_stays_committed_and_surfaces_review(self):
+        for d, amount in (("2026-07-04", 20), ("2026-08-04", 20), ("2026-09-04", 20)):
+            self._tx("Detected SaaS", d, amount)
+        sub = self.subscriptions.scan()["items"][0]
+        self.db.ex("UPDATE transactions SET amount=-40 WHERE id=?", ("t20260904",))
+
+        result = self.subscriptions.scan()
+        self.assertEqual(result["items"][0]["id"], sub["id"])
+        self.assertEqual(result["items"][0]["status"], "active")
+        self.assertEqual(result["items"][0]["amount"], 20)
+        self.assertEqual(result["items"][0]["observed_amount"], 40)
+        self.assertTrue(result["items"][0]["price_review"])
+        self.assertEqual(self.subscriptions.listing()["monthly_total"], 20)
+        self.subscriptions.review(sub["id"], "accept_price")
+        rescanned = self.subscriptions.scan()
+        self.assertEqual((rescanned["items"][0]["amount"], rescanned["items"][0]["price_review"]), (40, False))
+        self.assertEqual(self.subscriptions.listing()["monthly_total"], 40)
+
+    def test_historical_networth_excludes_future_posted_transactions(self):
+        self.db.ex("UPDATE accounts SET balance=100 WHERE id='a'")
+        self.db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,pending,is_transfer,created_at) VALUES(?,?,?,?,?,?,?,?,?)", ("future", "a", "personal", 50, "2026-09-20", "Future income", 0, 0, "2026-09-04"))
+        from unittest.mock import patch
+        with patch.object(self.analytics, "month_list", return_value=[(2026, 8), (2026, 9)]):
+            series = self.analytics.net_worth_series()
+        self.assertEqual(series[0]["balance"], 100)
+        self.assertEqual(series[1]["balance"], 100)
+
+
+if __name__ == "__main__": unittest.main()
+
 ````````````
 <!-- END_LEDGER_MOBILE_SOURCE -->
 

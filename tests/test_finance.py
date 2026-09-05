@@ -75,6 +75,27 @@ class FinanceTests(unittest.TestCase):
         self.assertEqual(plan["upcoming"], 0)
         self.assertEqual(plan["total_expected"], 20)
 
+    def test_manual_cancel_removes_future_commitment_and_preserves_payments(self):
+        self._tx("Manual Cloud", "2026-09-01", 20)
+        self._pending_tx("Manual Cloud", "2026-09-05", 3)
+        sub = self.subscriptions.save({"merchant":"Manual Cloud", "scope":"personal",
+            "account_id":"a", "amount":20, "cadence":"monthly",
+            "next_due":"2026-09-25", "status":"active"})
+        before = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(before["upcoming"], 20)
+        payments = self.db.q("SELECT * FROM transactions ORDER BY id")
+        self.subscriptions.review(sub["id"], "cancel")
+        self.subscriptions.scan()
+        self.assertEqual(self.db.q1("SELECT status FROM subscriptions WHERE id=?", (sub["id"],))["status"], "canceled")
+        after = self.subscriptions.monthly_plan("personal", "2026-09")
+        self.assertEqual(after["upcoming"], 0)
+        self.assertEqual(after["monthly_subscriptions"], 0)
+        self.assertEqual(after["spent"], before["spent"])
+        self.assertEqual(after["pending_spend"], before["pending_spend"])
+        self.assertEqual(self.db.q("SELECT * FROM transactions ORDER BY id"), payments)
+        self.subscriptions.review(sub["id"], "activate")
+        self.assertEqual(self.subscriptions.monthly_plan("personal", "2026-09")["upcoming"], 20)
+
     def test_forecast_compounds_and_rejects_bad_math(self):
         result = self.forecasts.project({"years": 2, "starting_investments": 1000, "monthly_investment": 100, "annual_return": 12})
         self.assertGreater(result["summary"]["base"], result["summary"]["conservative"])
