@@ -1,0 +1,64 @@
+/* A compact yearly ledger, with detailed tables a step below the overview. */
+.spending-report { --report-bar:#b4855e; --report-total:#9b6038; }
+:root[data-theme=dark] .spending-report { --report-bar:#bc9576; --report-total:#e0b796; }
+.report-filters { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+.report-filters label { display:grid; gap:6px; font-size:11px; color:var(--muted); }
+.report-filters select { min-width:145px; }
+.report-export { margin-left:auto; margin-bottom:2px; }
+.report-totals { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-bottom:20px; }
+.report-totals > div + div { border-left:var(--rule-width,1px) solid var(--border-soft); padding-left:26px; }
+.report-totals .stat-value { font-family:'Lora',Georgia,serif; font-weight:500; font-size:clamp(26px,3.1vw,40px); margin:9px 0 5px; overflow-wrap:anywhere; }
+.report-totals .report-year-total { color:var(--report-total); }
+.report-totals .report-all-time-total { color:var(--text); }
+.report-totals p { margin:0; font-size:11px; }
+.report-month-card { margin-bottom:12px; }
+.spending-months { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); list-style:none; padding:0; margin:24px 0 16px; gap:24px 16px; }
+.spending-month { min-width:0; display:flex; flex-direction:column; gap:7px; }
+.spending-month-label { display:flex; justify-content:space-between; align-items:center; gap:4px; color:var(--muted); font-size:12px; }
+.spending-month-label small { font-size:9px; white-space:nowrap; }
+.spending-month-track { display:flex; align-items:flex-end; height:57px; border-bottom:var(--rule-width,1px) solid var(--border-soft); }
+.spending-month-track > span { display:block; width:100%; max-width:42px; background:var(--report-bar); border-radius:3px 3px 0 0; }
+.spending-month b { font-size:13px; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.spending-month > small { color:var(--muted); font-size:10px; }
+.spending-month.is-future .spending-month-track { border-bottom-style:dashed; }
+.spending-month.is-future b { color:var(--muted); }
+.spending-month.is-current .spending-month-label { color:var(--report-total); font-weight:650; }
+.report-basis { margin:12px 2px 22px; max-width:850px; }
+.report-detail { margin-top:15px; }
+.report-detail > summary { cursor:pointer; font-family:'Lora',Georgia,serif; font-size:16px; color:var(--text); }
+.report-detail > summary > span { font-family:'Avenir Next',system-ui,sans-serif; font-size:11px; color:var(--muted); margin-left:10px; }
+.report-detail[open] > summary { margin-bottom:18px; }
+.report-table-wrap { max-width:100%; }
+.report-matrix { min-width:1450px; }
+.report-matrix th:first-child { position:sticky; left:0; z-index:1; background:var(--panel); min-width:155px; white-space:normal; }
+.report-matrix tbody th { font-size:12px; text-transform:none; letter-spacing:0; font-weight:500; }
+.report-matrix tr > * + * { border-left:var(--rule-width,1px) solid var(--border-soft); }
+.report-matrix .report-category-total > * { background:var(--bg-soft); border-bottom:var(--rule-width,1px) solid var(--border); }
+.report-matrix .report-category-total th { font-weight:650; color:var(--text); }
+.report-patterns > section { min-width:0; }
+.report-patterns .heat-grid { max-width:100%; overflow-x:auto; }
+.report-source { padding:7px 0; gap:15px; align-items:baseline; }
+.report-source > span { min-width:0; }
+.report-source b { white-space:nowrap; }
+.report-source-values { display:grid; text-align:right; gap:2px; flex-shrink:0; }
+.report-source-values small { color:var(--muted); font-size:10px; }
+.report-expense-heading { margin-top:24px; }
+.report-sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@media(min-width:1550px) { .spending-months { grid-template-columns:repeat(12,minmax(0,1fr)); } }
+@media(max-width:700px) {
+  .report-filters { gap:12px; }
+  .report-filters label { flex:1 1 calc(50% - 6px); min-width:0; }
+  .report-filters select { min-width:0; width:100%; }
+  .report-export { margin-left:0; flex:0 0 100%; text-align:center; }
+  .report-totals { gap:17px; }
+  .report-totals > div + div { padding-left:17px; }
+  .report-totals .stat-value { font-size:25px; letter-spacing:-.8px; }
+  .report-totals .stat-label { font-size:11px; }
+  .report-totals p { font-size:10px; }
+  .spending-months { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px 14px; }
+  .spending-month-track { height:37px; }
+  .spending-month b { font-size:12px; }
+  .report-detail > summary { font-size:15px; }
+  .report-patterns { display:block; }
+  .report-patterns > section + section { margin-top:24px; }
+}

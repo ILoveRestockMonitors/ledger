@@ -1,0 +1,42 @@
+services:
+  ledger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    user: "1000:1000"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:mode=1777
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:8907:8907"
+    volumes:
+      - "${LEDGER_DATA_DIR:?Set LEDGER_DATA_DIR to an absolute host path}:/var/lib/ledger:rw"
+    environment:
+      HOME: /var/lib/ledger
+      CODEX_HOME: /var/lib/ledger/.codex
+      LEDGER_DATA_DIR: /var/lib/ledger
+      LEDGER_PORT: "8907"
+      LEDGER_PUBLIC_ORIGIN: "${LEDGER_PUBLIC_ORIGIN:-}"
+      TZ: America/Los_Angeles
+      # server.py validates this container-only bind; Docker publishes it to
+      # the host loopback address above.
+      LEDGER_BIND_HOST: 0.0.0.0
+      LEDGER_CODEX_CLI: /app/node_modules/.bin/codex
+      LEDGER_BROWSER_BRIDGE: /app/scripts/cancellation-browser.mjs
+      LEDGER_PLAYWRIGHT_MCP_CLI: /app/node_modules/@playwright/mcp/cli.js
+      LEDGER_BROWSER_WORKSPACE: /var/lib/ledger/cancellation-workspaces
+      LEDGER_BROWSER_PROFILE: /var/lib/ledger/browser-profile
+      LEDGER_CANCELLATION_WORK_DIR: /var/lib/ledger/cancellation-workspaces
+      LEDGER_BROWSER_HEADLESS: "1"
+      LEDGER_RECEIPT_BRIDGE: /app/scripts/receipt-browser.mjs
+      LEDGER_RECEIPT_WORK_DIR: /var/lib/ledger/receipt-workspaces
+      LEDGER_RECEIPT_HEADLESS: "1"
+      LEDGER_BROWSER_ALLOWED_ORIGINS: "https://rocketmoney.com;https://*.rocketmoney.com;https://copilot.money;https://*.copilot.money;https://inshape.com;https://*.inshape.com;https://google.com;https://*.google.com;https://play.google.com;https://apple.com;https://*.apple.com;https://apps.apple.com;https://claude.ai;https://*.claude.ai;https://anthropic.com;https://*.anthropic.com;https://skool.com;https://*.skool.com;https://gumroad.com;https://*.gumroad.com"
+      LEDGER_BROWSER_ALLOWED_HOSTS: "rocketmoney.com,copilot.money,inshape.com,google.com,play.google.com,apple.com,apps.apple.com,claude.ai,anthropic.com,skool.com,gumroad.com"

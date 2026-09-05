@@ -1,0 +1,2 @@
+# Ledger's Python backend uses only the Python 3 standard library.
+# Keep this file for deployment tooling; do not install packages globally.

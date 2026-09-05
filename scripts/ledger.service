@@ -1,0 +1,30 @@
+[Unit]
+Description=Ledger private finance dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ledger
+Group=ledger
+WorkingDirectory=/opt/ledger
+EnvironmentFile=-/etc/ledger/ledger.env
+Environment=HOME=/var/lib/ledger
+Environment=CODEX_HOME=/var/lib/ledger/.codex
+Environment=LEDGER_BROWSER_PROFILE=/var/lib/ledger/browser-profile
+ExecStart=/usr/bin/python3 /opt/ledger/backend/server.py
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ledger
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+LockPersonality=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

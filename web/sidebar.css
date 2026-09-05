@@ -1,0 +1,76 @@
+/* Desktop sidebar readability and collapse affordance. The mobile drawer keeps
+   its existing behavior from comfort.css. */
+:root { --nav-width: 248px; }
+
+.sidebar-collapse {
+  position: absolute;
+  top: 84px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 4px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  pointer-events: auto;
+}
+#sidebar .sidebar-collapse { z-index: 1000; }
+.sidebar-collapse:hover { color: var(--text); background: var(--soft-accent); }
+.sidebar-collapse-icon { font-size: 17px; line-height: 1; }
+.logo-row { padding-right: 0; }
+.logo-word { position: relative; left: 3px; top: 3px; letter-spacing: .2px; }
+#sidebar .nav-link:not(.active) { color: var(--ink); font-weight: 550; }
+.nav-section { color: var(--muted); }
+#sidebar .more-nav summary { color: var(--ink); }
+.more-nav summary { align-items: center; gap: 8px; }
+.more-nav-label { display: inline-flex; align-items: center; gap: 12px; }
+.more-nav-label .nav-icon { color: var(--muted); }
+.nav-link .nav-label { min-width: 0; }
+.sidebar-foot .btn { display: flex; align-items: center; justify-content: center; gap: 7px; }
+
+@media (min-width: 701px) {
+  #sidebar { overflow-y: auto; overflow-x: hidden; transition: width .18s ease, padding .18s ease; }
+  #main { transition: margin-left .18s ease, width .18s ease; }
+  html.sidebar-collapsed { --nav-width: 78px; }
+  html.sidebar-collapsed #sidebar { padding-left: 10px; padding-right: 10px; }
+  html.sidebar-collapsed .logo-row { justify-content: center; padding-left: 0; padding-right: 0; }
+  html.sidebar-collapsed .logo-name,
+  html.sidebar-collapsed .nav-owner > span:not(.owner-avatar),
+  html.sidebar-collapsed .nav-label,
+  html.sidebar-collapsed .nav-count,
+  html.sidebar-collapsed .nav-section,
+  html.sidebar-collapsed .sidebar-button-label,
+  html.sidebar-collapsed .foot-note,
+  html.sidebar-collapsed .more-nav-text { display: none; }
+  html.sidebar-collapsed .nav-owner { justify-content: center; padding-left: 0; padding-right: 0; }
+  html.sidebar-collapsed .nav-link { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; position: relative; }
+  html.sidebar-collapsed .nav-icon { width: auto; }
+  html.sidebar-collapsed .more-nav { padding-left: 0; padding-right: 0; }
+  html.sidebar-collapsed .more-nav summary { justify-content: center; padding: 8px 0; }
+  html.sidebar-collapsed .more-nav summary > span:last-child { display: none; }
+  html.sidebar-collapsed .more-nav[open] .nav-link { display: none; }
+  html.sidebar-collapsed .sidebar-collapse { right: 9px; width: 29px; justify-content: center; padding-left: 0; padding-right: 0; }
+  html.sidebar-collapsed .sidebar-collapse-label { display: none; }
+  html.sidebar-collapsed .sidebar-collapse-icon { transform: rotate(180deg); }
+  html.sidebar-collapsed .sidebar-foot .btn { padding-left: 7px; padding-right: 7px; }
+
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  :root { --nav-width: 220px; }
+}
+
+@media (max-width: 700px) {
+  .sidebar-collapse { display: none; }
+  .logo-row { padding-right: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sidebar, #main { transition: none; }
+}

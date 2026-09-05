@@ -1,0 +1,13 @@
+{
+  "name": "ledger-cancellation-browser",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@openai/codex": "0.146.0",
+    "@playwright/mcp": "0.0.80"
+  }
+}

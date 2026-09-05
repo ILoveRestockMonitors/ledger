@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-palette="paper" data-font="lora">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#fffaf4"><meta name="description" content="Your personal finance dashboard. Spending, subscriptions, and the life you're planning."><title>Ledger · Your money, together</title><script>try{const savedTheme=localStorage.getItem('ledger-theme');document.documentElement.dataset.theme=savedTheme==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):(savedTheme==='dark'?'dark':'light');if(localStorage.getItem('ledger-sidebar-collapsed')==='1')document.documentElement.classList.add('sidebar-collapsed');}catch{}</script><link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/comfort.css"><link rel="stylesheet" href="/receipt-lookup.css"><link rel="stylesheet" href="/paper.css"><link rel="stylesheet" href="/dark.css"><link rel="stylesheet" href="/sidebar.css"><link rel="stylesheet" href="/reports.css"><link rel="icon" href="/icon.svg"><link rel="manifest" href="/manifest.json"></head>
+<body>
+<a class="skip-link" href="#view">Skip to your finances</a>
+<div id="app">
+<aside id="sidebar" aria-label="Main navigation">
+ <button id="sidebar-collapse" class="sidebar-collapse" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="Collapse sidebar" title="Collapse sidebar"><span class="sidebar-collapse-icon" aria-hidden="true">‹</span><span class="sidebar-collapse-label">Collapse</span></button>
+ <a class="logo-row" href="#overview" aria-label="Ledger home"><span class="ledger-mark" aria-hidden="true"><b class="ledger-glyph">L<span>·</span></b></span><span class="logo-name"><span class="logo-word">ledger.</span><span class="logo-sub">A little more peace of mind.</span></span></a>
+ <div class="nav-owner"><span class="owner-avatar">L</span><span>Your personal space<small id="sidebar-mode">Private by design</small></span></div>
+ <nav id="nav">
+  <a href="#overview" class="nav-link" data-page="overview" data-tooltip="Home" aria-label="Home" title="Home"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-label">Home</span></a>
+  <a href="#transactions" class="nav-link" data-page="transactions" data-tooltip="Transactions" aria-label="Transactions" title="Transactions"><span class="nav-icon" aria-hidden="true">⇄</span><span class="nav-label">Transactions</span></a>
+  <a href="#subscriptions" class="nav-link" data-page="subscriptions" data-tooltip="Subscriptions" aria-label="Subscriptions" title="Subscriptions"><span class="nav-icon" aria-hidden="true">↻</span><span class="nav-label">Subscriptions</span><span id="review-count" class="nav-count" hidden></span></a>
+  <a href="#future" class="nav-link" data-page="future" data-tooltip="Your future" aria-label="Your future" title="Your future"><span class="nav-icon" aria-hidden="true">↗</span><span class="nav-label">Your future</span></a>
+  <div class="nav-section">A closer look</div>
+  <a href="#budgets" class="nav-link" data-page="budgets" data-tooltip="Budgets" aria-label="Budgets" title="Budgets"><span class="nav-icon" aria-hidden="true">◎</span><span class="nav-label">Budgets</span></a>
+  <a href="#goals" class="nav-link" data-page="goals" data-tooltip="Goals" aria-label="Goals" title="Goals"><span class="nav-icon" aria-hidden="true">⚑</span><span class="nav-label">Goals</span></a>
+  <details class="more-nav"><summary data-tooltip="More insights" aria-label="More insights" title="More insights"><span class="more-nav-label"><span class="nav-icon" aria-hidden="true">☷</span><span class="more-nav-text">More insights</span></span><span aria-hidden="true">⌄</span></summary>
+   <a href="#personal" class="nav-link" data-page="personal" data-tooltip="Personal" aria-label="Personal" title="Personal"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-label">Personal</span></a>
+   <a href="#business" class="nav-link" data-page="business" data-tooltip="Business" aria-label="Business" title="Business"><span class="nav-icon" aria-hidden="true">◆</span><span class="nav-label">Business</span></a>
+   <a href="#reports" class="nav-link" data-page="reports" data-tooltip="Reports" aria-label="Reports" title="Reports"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-label">Reports</span></a>
+  </details>
+  <div class="nav-section">Your setup</div>
+  <a href="#accounts" class="nav-link" data-page="accounts" data-tooltip="Accounts" aria-label="Accounts" title="Accounts"><span class="nav-icon" aria-hidden="true">▣</span><span class="nav-label">Accounts</span></a>
+  <a href="#settings" class="nav-link" data-page="settings" data-tooltip="Settings" aria-label="Settings" title="Settings"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-label">Settings</span></a>
+ </nav>
+ <div class="sidebar-foot"><button id="btn-theme" class="btn btn-ghost" aria-label="Toggle appearance"><span class="sidebar-button-icon" aria-hidden="true">☾</span><span class="sidebar-button-label">Appearance</span></button><button id="btn-add-tx" class="btn btn-primary" aria-label="Add a transaction"><span class="sidebar-button-icon" aria-hidden="true">＋</span><span class="sidebar-button-label">Add transaction</span></button><span class="foot-note">Made for your everyday.</span></div>
+</aside>
+<button id="nav-shade" aria-label="Close navigation"></button>
+<main id="main">
+ <header id="topbar"><button id="btn-menu" class="icon-button mobile-only" aria-label="Open navigation">☰</button><span class="topbar-home">Your money <span>/</span></span><h1 id="page-title">Home</h1><span id="scope-pill" class="pill pill-hidden"></span><div class="topbar-spacer"></div><button id="btn-refresh" class="icon-button" title="Sync your banks" aria-label="Sync banks">↻</button><button id="btn-export" class="icon-button desktop-only" title="Export transactions" aria-label="Export transactions">↓</button><button id="btn-link" class="btn btn-ghost desktop-only">Link account</button><button class="owner-avatar" onclick="navigate('settings')" aria-label="Your settings">L</button></header>
+ <div id="demo-banner" class="demo-banner" hidden>Sample data · Explore freely. Bank linking and agents are off in this preview.</div>
+ <div id="view" class="view" tabindex="-1"><div class="empty">Opening your space…</div></div>
+</main></div>
+<button id="mobile-add" class="mobile-add mobile-only" aria-label="Add a transaction">＋</button>
+<div id="modal-root"></div><div id="toast-root" aria-live="polite"></div>
+<script src="/charts.js"></script><script src="/charts2.js"></script><script src="/app.js"></script><script src="/reports.js"></script><script src="/app2.js"></script><script src="/receipt-lookup.js"></script><script src="/comfort.js"></script>
+</body></html>
