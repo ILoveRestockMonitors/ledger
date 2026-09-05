@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Nunito+Sans:wght@400;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #656c48; text-decoration: none; }
+    a:hover { color: #30372f; }
+  </style>
+</helmet>
+<div style="width:1440px; min-height:1100px; background:#fffaf4; display:flex; flex-direction:column; box-sizing:border-box;">
+  <div style="width:100%; max-width:720px; margin:0 auto; padding:40px 0 56px; box-sizing:border-box; display:flex; flex-direction:column; flex:1; min-height:0;">
+
+    <!-- 1. Masthead -->
+    <div style="display:flex; justify-content:space-between; align-items:baseline; padding-bottom:14px; border-bottom:1px solid rgba(113,128,139,.35);">
+      <div style="font-family:'Lora', Georgia, serif; font-size:19px; font-weight:600; letter-spacing:-0.7px; color:#30372f;">ledger.</div>
+      <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#868274;">September 2026</div>
+    </div>
+
+    <div style="height:86px;"></div>
+
+    <!-- 2. The one number -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#737365;">Room in your monthly plan</div>
+      <div style="font-family:'Lora', Georgia, serif; font-size:112px; font-weight:500; letter-spacing:-4.5px; line-height:.92; color:#30372f; font-variant-numeric:tabular-nums;"><span style="font-size:46px; font-weight:400; color:#868274; vertical-align:0.55em; margin-right:6px;">$</span>485.20</div>
+      <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#737365; font-variant-numeric:tabular-nums;">$2,714.80 of your $3,200.00 plan is spent or expected.</div>
+    </div>
+
+    <div style="height:28px;"></div>
+
+    <!-- 3. The rail -->
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="width:100%; height:4px; border-radius:4px; background:#efe6d9; display:flex; overflow:hidden;">
+        <span style="width:71.8%; height:100%; background:#656c48; border-top-left-radius:4px; border-bottom-left-radius:4px;"></span>
+        <span style="width:13.0%; height:100%; background:#b8b294;"></span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:#868274; font-variant-numeric:tabular-nums;">
+        <span>$2,298.33 spent</span>
+        <span>$416.47 expected</span>
+      </div>
+    </div>
+
+    <div style="height:76px;"></div>
+
+    <!-- 4. Two secondary figures -->
+    <div style="display:flex; gap:96px;">
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#868274;">Spent so far</div>
+        <div style="font-family:'Lora', Georgia, serif; font-size:30px; font-weight:500; letter-spacing:-1px; color:#30372f; font-variant-numeric:tabular-nums;">$2,298.33</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12.5px; color:#737365;">$343.26 a month in subscriptions</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#868274;">Your net worth</div>
+        <div style="font-family:'Lora', Georgia, serif; font-size:30px; font-weight:500; letter-spacing:-1px; color:#30372f; font-variant-numeric:tabular-nums;">$48,915.00</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12.5px; color:#737365;">Assets, less what you owe</div>
+      </div>
+    </div>
+
+    <div style="height:68px;"></div>
+
+    <!-- 5. Still to come -->
+    <div style="width:100%; height:1px; background:rgba(113,128,139,.35);"></div>
+
+    <div style="height:20px;"></div>
+
+    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+      <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#373a32;">Still to come</div>
+      <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#737365; font-variant-numeric:tabular-nums;">$330.27 expected</div>
+    </div>
+
+    <div style="height:20px;"></div>
+
+    <div style="display:flex; flex-direction:column;">
+      <div style="display:flex; align-items:center; gap:20px; height:46px; border-bottom:1px solid rgba(113,128,139,.22);">
+        <div style="flex:0 0 62px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#868274; font-variant-numeric:tabular-nums;">Sep 8</div>
+        <div style="flex:1; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#373a32;">iCloud+</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; font-weight:600; color:#373a32; font-variant-numeric:tabular-nums; text-align:right;">$9.99</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:20px; height:46px; border-bottom:1px solid rgba(113,128,139,.22);">
+        <div style="flex:0 0 62px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#868274; font-variant-numeric:tabular-nums;">Sep 12</div>
+        <div style="flex:1; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#373a32;">Verizon Fios</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; font-weight:600; color:#373a32; font-variant-numeric:tabular-nums; text-align:right;">$89.99</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:20px; height:46px; border-bottom:1px solid rgba(113,128,139,.22);">
+        <div style="flex:0 0 62px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#868274; font-variant-numeric:tabular-nums;">Sep 15</div>
+        <div style="flex:1; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#373a32;">Car insurance</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; font-weight:600; color:#373a32; font-variant-numeric:tabular-nums; text-align:right;">$142.30</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:20px; height:46px; border-bottom:1px solid rgba(113,128,139,.22);">
+        <div style="flex:0 0 62px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#868274; font-variant-numeric:tabular-nums;">Sep 17</div>
+        <div style="flex:1; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#373a32;">New York Times</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; font-weight:600; color:#373a32; font-variant-numeric:tabular-nums; text-align:right;">$25.00</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:20px; height:46px; border-bottom:none;">
+        <div style="flex:0 0 62px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:12px; color:#868274; font-variant-numeric:tabular-nums;">Sep 22</div>
+        <div style="flex:1; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; color:#373a32;">Peloton</div>
+        <div style="font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:15px; font-weight:600; color:#373a32; font-variant-numeric:tabular-nums; text-align:right;">$44.00</div>
+      </div>
+    </div>
+
+    <div style="height:44px;"></div>
+
+    <!-- 6. Actions -->
+    <div style="display:flex; gap:30px; align-items:center;">
+      <div style="display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 20px; border-radius:8px; background:#656c48; color:#fffdf9; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:13.5px; font-weight:600; box-sizing:border-box;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+        <span>Add a transaction</span>
+      </div>
+      <a href="#" style="display:inline-flex; align-items:center; gap:4px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:13px; color:#737365; text-decoration:none;">
+        <span style="text-decoration-line:underline; text-decoration-thickness:1px; text-underline-offset:4px;">Recent activity</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
+      <a href="#" style="display:inline-flex; align-items:center; gap:4px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:13px; color:#737365; text-decoration:none;">
+        <span style="text-decoration-line:underline; text-decoration-thickness:1px; text-underline-offset:4px;">Subscriptions</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
+      <a href="#" style="display:inline-flex; align-items:center; gap:4px; font-family:'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:13px; color:#737365; text-decoration:none;">
+        <span style="text-decoration-line:underline; text-decoration-thickness:1px; text-underline-offset:4px;">Your future</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
+    </div>
+
+    <!-- 7. Closing line, pinned to the bottom -->
+    <div style="margin-top:auto; font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-size:11.5px; color:#868274;">A little more peace of mind.</div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

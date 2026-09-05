@@ -32,3 +32,6 @@ __pycache__/
 *.tar
 *.tar.*
 .DS_Store
+
+# design canvas build output
+docs/design/homepage-concepts/ledger-home-ten-ways.html

@@ -1,0 +1,520 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Lora:wght@500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #656c48; text-decoration: none; }
+    a:hover { color: #30372f; }
+  </style>
+</helmet>
+<div style="width:1440px;min-height:1700px;background:#f6f7f4;padding:0;display:flex;flex-direction:column;color:#373a32;font-family:'Manrope',sans-serif;">
+
+  <div style="flex:0 0 64px;background:#ffffff;border-bottom:1px solid #e2e5e0;display:flex;flex-direction:row;align-items:center;padding:0 44px;gap:16px;">
+    <div style="width:30px;height:30px;border:1px solid #2b3b49;border-radius:3px;display:grid;place-items:center;">
+      <span style="display:flex;align-items:center;">
+        <span style="font-family:Georgia,serif;font-size:19px;color:#656c48;">L</span><span style="font-family:Georgia,serif;font-size:19px;color:#c18f68;">&middot;</span>
+      </span>
+    </div>
+    <span style="font-family:'Lora',serif;font-size:21px;font-weight:500;letter-spacing:-.8px;color:#2b3b49;">ledger.</span>
+    <div style="width:1px;height:24px;background:#e2e5e0;"></div>
+    <div style="display:flex;flex-direction:row;align-items:center;gap:26px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <a href="#" style="font-size:13.5px;font-weight:600;color:#2b3b49;">Home</a>
+        <div style="width:32px;height:2px;background:#c18f68;border-radius:1px;"></div>
+      </div>
+      <a href="#" style="font-size:13.5px;color:#737365;">Transactions</a>
+      <a href="#" style="font-size:13.5px;color:#737365;">Subscriptions</a>
+      <a href="#" style="font-size:13.5px;color:#737365;">Your future</a>
+      <a href="#" style="font-size:13.5px;color:#737365;">Budgets</a>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="display:flex;flex-direction:row;align-items:center;height:34px;border:1px solid #d5d9d2;border-radius:8px;background:#ffffff;overflow:hidden;">
+      <button style="width:32px;height:34px;border:none;background:transparent;display:grid;place-items:center;padding:0;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="Previous month"><path d="M15 6l-6 6 6 6" fill="none" stroke="#737365" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div style="font-size:13px;color:#2b3b49;padding:0 14px;border-left:1px solid #d5d9d2;border-right:1px solid #d5d9d2;height:34px;display:flex;align-items:center;white-space:nowrap;font-variant-numeric:tabular-nums;">September 2026</div>
+      <button style="width:32px;height:34px;border:none;background:transparent;display:grid;place-items:center;padding:0;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="Next month"><path d="M9 6l6 6-6 6" fill="none" stroke="#cdd2ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <button style="height:34px;padding:0 16px;border:none;border-radius:8px;background:#656c48;color:#ffffff;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap;">
+      <svg viewBox="0 0 24 24" width="15" height="15" role="img" aria-label="Add"><path d="M12 5v14M5 12h14" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>
+      Add a transaction
+    </button>
+    <div style="width:34px;height:34px;border-radius:50%;background:#f0ece1;color:#656c48;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 34px;">L</div>
+  </div>
+
+  <div style="background:#ffffff;border-bottom:1px solid #e2e5e0;padding:30px 44px 34px;">
+    <div style="display:flex;flex-direction:row;gap:40px;align-items:stretch;">
+
+      <div style="flex:0 0 300px;display:flex;flex-direction:column;justify-content:center;gap:0;">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#737365;">Room in your monthly plan</div>
+        <div style="font-family:'Lora',serif;font-size:56px;font-weight:500;letter-spacing:-2.4px;color:#2b3b49;font-variant-numeric:tabular-nums;margin:10px 0 6px;">$485.20</div>
+        <div style="font-size:13.5px;color:#737365;">with 25 days still to run</div>
+        <div style="margin-top:22px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #e2e5e0;">
+            <span style="font-size:12px;color:#737365;">Spent so far</span>
+            <span style="font-size:12.5px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">$2,298.33</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #e2e5e0;">
+            <span style="font-size:12px;color:#737365;">Pending &amp; expected</span>
+            <span style="font-size:12.5px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">$416.47</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #e2e5e0;border-bottom:1px solid #e2e5e0;">
+            <span style="font-size:12px;color:#737365;">Monthly plan</span>
+            <span style="font-size:12.5px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">$3,200.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+          <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">Your month, so far</div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <svg viewBox="0 0 18 2" width="18" height="2" role="img" aria-label="Posted line style"><line x1="0" y1="1" x2="18" y2="1" stroke="#656c48" stroke-width="2"/></svg>
+              <span style="font-size:11px;color:#737365;">posted</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <svg viewBox="0 0 18 2" width="18" height="2" role="img" aria-label="Expected line style"><line x1="0" y1="1" x2="18" y2="1" stroke="#656c48" stroke-width="2" stroke-dasharray="4 2"/></svg>
+              <span style="font-size:11px;color:#737365;">expected</span>
+            </div>
+          </div>
+        </div>
+        <svg viewBox="0 0 900 300" width="100%" role="img" aria-label="Cumulative spending through September against a $3,200 plan">
+          <line x1="60" y1="191.18" x2="880" y2="191.18" stroke="#eceee9" stroke-width="1"/>
+          <line x1="60" y1="132.35" x2="880" y2="132.35" stroke="#eceee9" stroke-width="1"/>
+          <line x1="60" y1="73.53" x2="880" y2="73.53" stroke="#eceee9" stroke-width="1"/>
+          <line x1="60" y1="250" x2="880" y2="250" stroke="#d5d9d2" stroke-width="1"/>
+          <text x="52" y="253" text-anchor="end" font-size="10" fill="#949a92">$0</text>
+          <text x="52" y="194.18" text-anchor="end" font-size="10" fill="#949a92">$1K</text>
+          <text x="52" y="135.35" text-anchor="end" font-size="10" fill="#949a92">$2K</text>
+          <text x="52" y="76.53" text-anchor="end" font-size="10" fill="#949a92">$3K</text>
+
+          <line x1="60" y1="61.76" x2="880" y2="61.76" stroke="#2b3b49" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="878" y="53" text-anchor="end" font-size="10.5" font-weight="600" fill="#2b3b49" font-variant-numeric="tabular-nums">$3,200.00 plan</text>
+
+          <path d="M60,250 L87.2,214 L114.4,167.59 L141.6,133.18 L168.8,114.8 L168.8,250 Z" fill="rgba(101,108,72,.13)" stroke="none"/>
+          <path d="M60,250 L87.2,214 L114.4,167.59 L141.6,133.18 L168.8,114.8" fill="none" stroke="#656c48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="168.8" cy="114.8" r="4" fill="#656c48"/>
+
+          <path d="M168.8,114.8 L250.4,109.15 L359.2,103.85 L440.8,95.48 L495.2,94.01 L631.2,91.42 L848.8,90.31" fill="none" stroke="#656c48" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+
+          <line x1="250.4" y1="109.15" x2="250.4" y2="250" stroke="#d9c3ad" stroke-width="1"/>
+          <circle cx="250.4" cy="109.15" r="3" fill="#c18f68"/>
+          <line x1="359.2" y1="103.85" x2="359.2" y2="250" stroke="#d9c3ad" stroke-width="1"/>
+          <circle cx="359.2" cy="103.85" r="3" fill="#c18f68"/>
+          <line x1="440.8" y1="95.48" x2="440.8" y2="250" stroke="#d9c3ad" stroke-width="1"/>
+          <circle cx="440.8" cy="95.48" r="3" fill="#c18f68"/>
+          <line x1="495.2" y1="94.01" x2="495.2" y2="250" stroke="#d9c3ad" stroke-width="1"/>
+          <circle cx="495.2" cy="94.01" r="3" fill="#c18f68"/>
+          <line x1="631.2" y1="91.42" x2="631.2" y2="250" stroke="#d9c3ad" stroke-width="1"/>
+          <circle cx="631.2" cy="91.42" r="3" fill="#c18f68"/>
+
+          <circle cx="848.8" cy="90.31" r="4" fill="#ffffff" stroke="#656c48" stroke-width="2"/>
+
+          <line x1="870" y1="61.76" x2="870" y2="90.31" stroke="#2b3b49" stroke-width="1"/>
+          <line x1="867" y1="61.76" x2="873" y2="61.76" stroke="#2b3b49" stroke-width="1"/>
+          <line x1="867" y1="90.31" x2="873" y2="90.31" stroke="#2b3b49" stroke-width="1"/>
+          <rect x="875" y="68" width="92" height="17" fill="#f6f7f4" rx="3"/>
+          <text x="881" y="80" font-size="11" font-weight="600" fill="#2b3b49" font-variant-numeric="tabular-nums">$485.20 room</text>
+
+          <line x1="168.8" y1="50" x2="168.8" y2="250" stroke="#b8b294" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="168.8" y="44" text-anchor="middle" font-size="10" fill="#949a92">today</text>
+
+          <text x="60" y="268" text-anchor="middle" font-size="10" fill="#949a92">1</text>
+          <text x="168.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">5</text>
+          <text x="304.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">10</text>
+          <text x="440.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">15</text>
+          <text x="576.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">20</text>
+          <text x="712.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">25</text>
+          <text x="848.8" y="268" text-anchor="middle" font-size="10" fill="#949a92">30</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:26px 44px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;background:#f6f7f4;">
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#737365;">Spent so far</div>
+      <div style="font-family:'Lora',serif;font-size:27px;font-weight:500;letter-spacing:-1px;color:#2b3b49;font-variant-numeric:tabular-nums;">$2,298.33</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">
+        <svg viewBox="0 0 12 12" width="12" height="12" role="img" aria-label="Decreased"><path d="M6 2v7M3 6l3 3 3-3" fill="none" stroke="#53725e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        22% vs August at this point
+      </div>
+      <svg viewBox="0 0 280 32" width="100%" height="32" role="img" aria-label="Spend so far trend over the last six months, from 3,412 down to 2,298 dollars">
+        <polyline points="4,9.01 58.4,18.01 112.8,4 167.2,13.99 221.6,16.92 276,28" fill="none" stroke="#a35642" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#737365;">Money in</div>
+      <div style="font-family:'Lora',serif;font-size:27px;font-weight:500;letter-spacing:-1px;color:#2b3b49;font-variant-numeric:tabular-nums;">$2,480.00</div>
+      <div style="font-size:11.5px;color:#737365;">1 of 2 September deposits</div>
+      <svg viewBox="0 0 280 32" width="100%" height="32" role="img" aria-label="Money in over the last six months, from 4,960 up to 5,480, then 2,480 so far in September">
+        <polyline points="4,8.16 58.4,8.16 112.8,6.16 167.2,8.16 221.6,4 276,28" fill="none" stroke="#53725e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#737365;">Subscriptions</div>
+      <div style="font-family:'Lora',serif;font-size:27px;font-weight:500;letter-spacing:-1px;color:#2b3b49;font-variant-numeric:tabular-nums;">$343.26</div>
+      <div style="font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">8 active &middot; $4,119.12 a year</div>
+      <div style="display:flex;height:10px;border-radius:3px;overflow:hidden;width:100%;">
+        <div style="flex:0 0 41.454%;background:#656c48;"></div>
+        <div style="flex:0 0 26.219%;background:#717653;"></div>
+        <div style="flex:0 0 12.821%;background:#7d805e;"></div>
+        <div style="flex:0 0 7.284%;background:#898a69;"></div>
+        <div style="flex:0 0 4.662%;background:#949473;"></div>
+        <div style="flex:0 0 3.784%;background:#a09e7e;"></div>
+        <div style="flex:0 0 2.911%;background:#aca889;"></div>
+        <div style="flex:0 0 0.871%;background:#b8b294;"></div>
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#737365;">Net worth</div>
+      <div style="font-family:'Lora',serif;font-size:27px;font-weight:500;letter-spacing:-1px;color:#2b3b49;font-variant-numeric:tabular-nums;">$48,915.00</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">
+        <svg viewBox="0 0 12 12" width="12" height="12" role="img" aria-label="Increased"><path d="M6 10V3M3 6l3-3 3 3" fill="none" stroke="#53725e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        $1,842 in six months
+      </div>
+      <svg viewBox="0 0 280 32" width="100%" height="32" role="img" aria-label="Net worth over the last six months, rising from 47,073 to 48,915 dollars">
+        <polyline points="4,28 58.4,23.61 112.8,16.11 167.2,14.36 221.6,8.05 276,4" fill="none" stroke="#53725e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div style="padding:0 44px 30px;display:grid;grid-template-columns:1.15fr 1fr;gap:20px;">
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:22px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;">
+        <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">Where it went</div>
+        <div style="font-size:11.5px;color:#949a92;">this month</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:500;color:#373a32;">Groceries</span>
+            <span style="font-size:12px;color:#737365;font-variant-numeric:tabular-nums;">$486 of $550</span>
+          </div>
+          <div style="height:12px;border-radius:3px;background:#f1f2ee;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:#656c48;width:88.36%;"></div>
+            <div style="position:absolute;right:0;top:-3px;width:2px;height:18px;background:#2b3b49;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:500;color:#373a32;display:flex;align-items:center;gap:8px;">Dining <span style="display:inline-block;padding:1px 7px;border-radius:999px;background:#f7e3dd;color:#a35642;font-size:10.5px;font-weight:600;">over by $12</span></span>
+            <span style="font-size:12px;color:#737365;font-variant-numeric:tabular-nums;">$312 of $300</span>
+          </div>
+          <div style="height:12px;border-radius:3px;background:#f1f2ee;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:#a35642;width:100%;"></div>
+            <div style="position:absolute;right:0;top:-3px;width:2px;height:18px;background:#2b3b49;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:500;color:#373a32;">Transport</span>
+            <span style="font-size:12px;color:#737365;font-variant-numeric:tabular-nums;">$148 of $200</span>
+          </div>
+          <div style="height:12px;border-radius:3px;background:#f1f2ee;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:#656c48;width:74%;"></div>
+            <div style="position:absolute;right:0;top:-3px;width:2px;height:18px;background:#2b3b49;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:500;color:#373a32;">Subscriptions</span>
+            <span style="font-size:12px;color:#737365;font-variant-numeric:tabular-nums;">$343 of $350</span>
+          </div>
+          <div style="height:12px;border-radius:3px;background:#f1f2ee;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:#656c48;width:98%;"></div>
+            <div style="position:absolute;right:0;top:-3px;width:2px;height:18px;background:#2b3b49;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:500;color:#373a32;">Home</span>
+            <span style="font-size:12px;color:#737365;font-variant-numeric:tabular-nums;">$1,009 of $1,050</span>
+          </div>
+          <div style="height:12px;border-radius:3px;background:#f1f2ee;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:#656c48;width:96.10%;"></div>
+            <div style="position:absolute;right:0;top:-3px;width:2px;height:18px;background:#2b3b49;"></div>
+          </div>
+        </div>
+
+      </div>
+      <div style="font-size:11px;color:#737365;margin-top:16px;">Markers show each budget. Spending is posted only.</div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:22px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;">
+        <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">Money in, money out</div>
+        <div style="font-size:11.5px;color:#949a92;">6 months</div>
+      </div>
+      <svg viewBox="0 0 560 300" width="100%" role="img" aria-label="Income and spending each month from April through September 2026, September in progress">
+        <line x1="20" y1="60.51" x2="540" y2="60.51" stroke="#eceee9" stroke-width="1"/>
+        <line x1="20" y1="115.26" x2="540" y2="115.26" stroke="#eceee9" stroke-width="1"/>
+        <line x1="20" y1="225.32" x2="540" y2="225.32" stroke="#eceee9" stroke-width="1"/>
+        <line x1="20" y1="280.63" x2="540" y2="280.63" stroke="#eceee9" stroke-width="1"/>
+        <line x1="20" y1="170" x2="540" y2="170" stroke="#d5d9d2" stroke-width="1"/>
+        <text x="14" y="173" text-anchor="end" font-size="10" fill="#949a92">$0</text>
+
+        <rect x="51" y="61.39" width="30" height="108.61" fill="#53725e" fill-opacity=".9" rx="2"/>
+        <rect x="51" y="170" width="30" height="75.49" fill="#a35642" fill-opacity=".9" rx="2"/>
+        <text x="66" y="55.39" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">4,960</text>
+        <text x="66" y="286" text-anchor="middle" font-size="10" fill="#949a92">Apr</text>
+
+        <rect x="133" y="61.39" width="30" height="108.61" fill="#53725e" fill-opacity=".9" rx="2"/>
+        <rect x="133" y="170" width="30" height="63.81" fill="#a35642" fill-opacity=".9" rx="2"/>
+        <text x="148" y="55.39" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">4,960</text>
+        <text x="148" y="286" text-anchor="middle" font-size="10" fill="#949a92">May</text>
+
+        <rect x="215" y="55.91" width="30" height="114.09" fill="#53725e" fill-opacity=".9" rx="2"/>
+        <rect x="215" y="170" width="30" height="82" fill="#a35642" fill-opacity=".9" rx="2"/>
+        <text x="230" y="49.91" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">5,210</text>
+        <text x="230" y="286" text-anchor="middle" font-size="10" fill="#949a92">Jun</text>
+
+        <rect x="297" y="61.39" width="30" height="108.61" fill="#53725e" fill-opacity=".9" rx="2"/>
+        <rect x="297" y="170" width="30" height="69.03" fill="#a35642" fill-opacity=".9" rx="2"/>
+        <text x="312" y="55.39" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">4,960</text>
+        <text x="312" y="286" text-anchor="middle" font-size="10" fill="#949a92">Jul</text>
+
+        <rect x="379" y="50" width="30" height="120" fill="#53725e" fill-opacity=".9" rx="2"/>
+        <rect x="379" y="170" width="30" height="65.23" fill="#a35642" fill-opacity=".9" rx="2"/>
+        <text x="394" y="44" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">5,480</text>
+        <text x="394" y="286" text-anchor="middle" font-size="10" fill="#949a92">Aug</text>
+
+        <rect x="461" y="115.69" width="30" height="54.31" fill="#53725e" fill-opacity=".55" rx="2"/>
+        <rect x="461" y="170" width="30" height="50.85" fill="#a35642" fill-opacity=".55" rx="2"/>
+        <text x="476" y="97.69" text-anchor="middle" font-size="10" font-style="italic" fill="#949a92">in progress</text>
+        <text x="476" y="109.69" text-anchor="middle" font-size="10" fill="#737365" font-variant-numeric="tabular-nums">2,480</text>
+        <text x="476" y="286" text-anchor="middle" font-size="10" fill="#949a92">Sep</text>
+      </svg>
+      <div style="font-size:11px;color:#737365;margin-top:12px;">Posted income and spending. Transfers between accounts stay out.</div>
+    </div>
+  </div>
+
+  <div style="padding:0 44px 44px;display:grid;grid-template-columns:1fr 1fr 0.85fr;gap:20px;">
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:22px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;">
+        <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">Recent activity</div>
+        <a href="#" style="font-size:11.5px;color:#656c48;">View all &rarr;</a>
+      </div>
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:32px;height:32px;border-radius:9px;background:#e2f1ec;color:#3a947c;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 32px;">P</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Paycheck</span>
+            <span style="font-size:11px;color:#949a92;">Income &middot; Sep 1</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#53725e;font-variant-numeric:tabular-nums;white-space:nowrap;">+$2,480.00</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:32px;height:32px;border-radius:9px;background:#ece8fc;color:#8a6abb;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 32px;">C</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Con Edison</span>
+            <span style="font-size:11px;color:#949a92;">Utilities &middot; Sep 3 &middot; Pending</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$88.40</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:32px;height:32px;border-radius:9px;background:#fceade;color:#ba7a50;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 32px;">T</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Trader Joe's</span>
+            <span style="font-size:11px;color:#949a92;">Groceries &middot; Sep 4</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$63.18</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:32px;height:32px;border-radius:9px;background:#ece8fc;color:#8a6abb;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 32px;">S</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Spotify</span>
+            <span style="font-size:11px;color:#949a92;">Subscriptions &middot; Sep 4</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$12.99</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;">
+          <div style="width:32px;height:32px;border-radius:9px;background:#fceade;color:#ba7a50;display:grid;place-items:center;font-size:13px;font-weight:600;flex:0 0 32px;">C</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Coffee with a friend</span>
+            <span style="font-size:11px;color:#949a92;">Dining &middot; Sep 4</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$4.75</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:22px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">Still to come</div>
+        <div style="font-size:11.5px;color:#949a92;font-variant-numeric:tabular-nums;">$330.27</div>
+      </div>
+      <svg viewBox="0 0 400 70" width="100%" role="img" aria-label="Thirty-day timeline of September showing today on day 5 and five upcoming payments">
+        <line x1="10" y1="44" x2="390" y2="44" stroke="#e2e5e0" stroke-width="1"/>
+        <line x1="10.00" y1="42" x2="10.00" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="23.10" y1="42" x2="23.10" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="36.21" y1="42" x2="36.21" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="49.31" y1="42" x2="49.31" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="62.41" y1="42" x2="62.41" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="75.52" y1="42" x2="75.52" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="88.62" y1="42" x2="88.62" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="101.72" y1="42" x2="101.72" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="114.83" y1="42" x2="114.83" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="127.93" y1="42" x2="127.93" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="141.03" y1="42" x2="141.03" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="154.14" y1="42" x2="154.14" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="167.24" y1="42" x2="167.24" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="180.34" y1="42" x2="180.34" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="193.45" y1="42" x2="193.45" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="206.55" y1="42" x2="206.55" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="219.66" y1="42" x2="219.66" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="232.76" y1="42" x2="232.76" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="245.86" y1="42" x2="245.86" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="258.97" y1="42" x2="258.97" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="272.07" y1="42" x2="272.07" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="285.17" y1="42" x2="285.17" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="298.28" y1="42" x2="298.28" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="311.38" y1="42" x2="311.38" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="324.48" y1="42" x2="324.48" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="337.59" y1="42" x2="337.59" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="350.69" y1="42" x2="350.69" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="363.79" y1="42" x2="363.79" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="376.90" y1="42" x2="376.90" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <line x1="390.00" y1="42" x2="390.00" y2="46" stroke="#eceee9" stroke-width="1"/>
+        <rect x="10" y="42" width="52.41" height="4" fill="#b8b294" rx="2"/>
+        <rect x="58.91" y="40.5" width="7" height="7" fill="#2b3b49" transform="rotate(45 62.41 44)"/>
+        <text x="62.41" y="58" text-anchor="middle" font-size="9" fill="#949a92">today</text>
+        <circle cx="101.72" cy="44" r="3" fill="#c18f68"/>
+        <text x="101.72" y="15" text-anchor="middle" font-size="9" fill="#737365" font-variant-numeric="tabular-nums">$9.99</text>
+        <circle cx="154.14" cy="44" r="3" fill="#c18f68"/>
+        <text x="154.14" y="27" text-anchor="middle" font-size="9" fill="#737365" font-variant-numeric="tabular-nums">$89.99</text>
+        <circle cx="193.45" cy="44" r="3" fill="#c18f68"/>
+        <text x="193.45" y="15" text-anchor="middle" font-size="9" fill="#737365" font-variant-numeric="tabular-nums">$142.30</text>
+        <circle cx="219.66" cy="44" r="3" fill="#c18f68"/>
+        <text x="219.66" y="27" text-anchor="middle" font-size="9" fill="#737365" font-variant-numeric="tabular-nums">$25.00</text>
+        <circle cx="285.17" cy="44" r="3" fill="#c18f68"/>
+        <text x="285.17" y="15" text-anchor="middle" font-size="9" fill="#737365" font-variant-numeric="tabular-nums">$44.00</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:34px;display:flex;flex-direction:column;align-items:center;flex:0 0 34px;">
+            <span style="font-size:8.5px;color:#949a92;letter-spacing:.05em;text-transform:uppercase;">SEP</span>
+            <span style="font-size:14px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">8</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">iCloud+</span>
+            <span style="font-size:11px;color:#949a92;">monthly</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$9.99</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:34px;display:flex;flex-direction:column;align-items:center;flex:0 0 34px;">
+            <span style="font-size:8.5px;color:#949a92;letter-spacing:.05em;text-transform:uppercase;">SEP</span>
+            <span style="font-size:14px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">12</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Verizon Fios</span>
+            <span style="font-size:11px;color:#949a92;">monthly</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$89.99</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:34px;display:flex;flex-direction:column;align-items:center;flex:0 0 34px;">
+            <span style="font-size:8.5px;color:#949a92;letter-spacing:.05em;text-transform:uppercase;">SEP</span>
+            <span style="font-size:14px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">15</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Car insurance</span>
+            <span style="font-size:11px;color:#949a92;">monthly</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$142.30</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eceee9;">
+          <div style="width:34px;display:flex;flex-direction:column;align-items:center;flex:0 0 34px;">
+            <span style="font-size:8.5px;color:#949a92;letter-spacing:.05em;text-transform:uppercase;">SEP</span>
+            <span style="font-size:14px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">17</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">New York Times</span>
+            <span style="font-size:11px;color:#949a92;">monthly</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$25.00</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;">
+          <div style="width:34px;display:flex;flex-direction:column;align-items:center;flex:0 0 34px;">
+            <span style="font-size:8.5px;color:#949a92;letter-spacing:.05em;text-transform:uppercase;">SEP</span>
+            <span style="font-size:14px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;">22</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Peloton</span>
+            <span style="font-size:11px;color:#949a92;">monthly</span>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#2b3b49;font-variant-numeric:tabular-nums;white-space:nowrap;">$44.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e2e5e0;border-radius:12px;padding:22px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;">
+        <div style="font-size:14.5px;font-weight:600;color:#2b3b49;">A little closer</div>
+        <a href="#" style="font-size:11.5px;color:#656c48;">Your goals &rarr;</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div style="display:flex;gap:14px;align-items:center;">
+          <svg viewBox="0 0 62 62" width="62" height="62" role="img" aria-label="Emergency fund, 68 percent saved">
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f2ee" stroke-width="5"/>
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#656c48" stroke-width="5" stroke-linecap="round" stroke-dasharray="111.08 163.36" transform="rotate(-90 31 31)"/>
+            <text x="31" y="31" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="#2b3b49" font-variant-numeric="tabular-nums">68%</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Emergency fund</span>
+            <span style="font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">$6,800 of $10,000</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <svg viewBox="0 0 62 62" width="62" height="62" role="img" aria-label="Trip to Lisbon, 41 percent saved">
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f2ee" stroke-width="5"/>
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#656c48" stroke-width="5" stroke-linecap="round" stroke-dasharray="66.98 163.36" transform="rotate(-90 31 31)"/>
+            <text x="31" y="31" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="#2b3b49" font-variant-numeric="tabular-nums">41%</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">Trip to Lisbon</span>
+            <span style="font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">$1,230 of $3,000</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <svg viewBox="0 0 62 62" width="62" height="62" role="img" aria-label="New laptop, 22 percent saved">
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f2ee" stroke-width="5"/>
+            <circle cx="31" cy="31" r="26" fill="none" stroke="#656c48" stroke-width="5" stroke-linecap="round" stroke-dasharray="35.94 163.36" transform="rotate(-90 31 31)"/>
+            <text x="31" y="31" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="#2b3b49" font-variant-numeric="tabular-nums">22%</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span style="font-size:13px;font-weight:600;color:#373a32;">New laptop</span>
+            <span style="font-size:11.5px;color:#737365;font-variant-numeric:tabular-nums;">$396 of $1,800</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#737365;">Small, steady progress counts.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
