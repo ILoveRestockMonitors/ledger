@@ -35,6 +35,11 @@ Open <http://127.0.0.1:18907/>. Use a dedicated demo directory; sample data must
 - Reports with a calendar-year selector, all 12 monthly spending totals, yearly and all-time recorded spending, and personal/business filters. Historical reports include archived accounts and exclude pending charges and transfers. Category detail, recent heatmap, and income sources remain available below the overview.
 - Purchase lookup for unclear Amazon, Apple and Google charges, using a separate local Codex receipt worker. Verified items can be allocated across category budgets without duplicating the bank charge. Original bank descriptions and manual choices are retained, with review and undo controls in Transactions. Automatic lookups are off until enabled in Settings after setup.
 - Single-owner login, private deployment, scheduled syncing, and an encrypted backup utility.
+- A phone layout with Home, Spending, Budgets and More navigation, touch-sized forms, accessible navigation drawer, and local home-screen icons. Desktop and phone can use the same private hosted installation.
+
+## Build and reconstruction record
+
+The [complete reconstruction guide](<docs/reconstruction/LEDGER — COMPLETE BUILD AND LIGHT MODE RECONSTRUCTION.md>) documents the design, implementation, mobile update and verification limits. Its embedded source can be restored without GitHub access using the [companion extractor](docs/reconstruction/RESTORE-LEDGER-SOURCE.py). Use `--with-mobile` to include the current phone layout and home-screen assets. See the [reconstruction notes](docs/reconstruction/README.md) for the snapshot boundary.
 
 ## Home lab installation
 
