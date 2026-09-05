@@ -105,6 +105,21 @@ stated set of rejections — the same shape as a `DESIGN.md`.
 All three use the same curated dataset so they can be compared like-for-like, and all three
 are non-functional: no network, no storage, no backend.
 
+## The phone adaptation (`aurora-mobile.html`)
+
+Aurora carried to 390 × 844. What changes, and why:
+
+- **Tap targets** — 44px minimum on every control, 64px list rows (Toss's dense-row figure).
+  The chart therefore defaults to **6M**, not 12M: six columns clear 44px each, twelve do not.
+- **Detail moves to a bottom sheet**, not the desktop inline accordion — Toss's rule that modals on
+  mobile are bottom sheets rather than page-pushed dialogs. Scrim fades 220ms, sheet rises 280ms
+  `ease-out`, dismissed by the scrim, the grab handle, the Close button, or Escape.
+- **Accounts become a snap-scrolling rail** instead of a 4-up grid.
+- **Navigation matches the real app** — Home / Spending / Budgets / More, 70px bar, 56px floating
+  add button, all honouring `env(safe-area-inset-*)`.
+- **The constellation is re-packed**, not merely scaled: seven discs repositioned for a 326pt column.
+- Below 460px the presentation device frame drops away and the app goes full-bleed.
+
 ## Interaction vocabulary (identical logic, three costumes)
 
 Every data element responds to a click, per the brief:
