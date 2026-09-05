@@ -5,6 +5,20 @@ Ledger is a single-owner finance app. The Python backend listens on
 Tailscale Serve. The installer does not read or copy a source checkout's
 `backend/data/` directory, and updates keep the separate data directory.
 
+## Add Ledger to an iPhone Home Screen
+
+1. Connect Tailscale if the private Ledger address requires it, then open the
+   hosted Ledger HTTPS address in Safari and sign in.
+2. Tap **Share**, choose **Add to Home Screen**, then tap **Add**. If the sheet
+   offers **Open as Web App**, leave it enabled.
+3. Open Ledger from the new Home Screen icon whenever you want to use it. The
+   installed app may ask you to sign in again.
+
+Ledger remains a server-backed app: the Home Screen icon is a shortcut to the
+live service. Use the same hosted URL on Windows so both devices see the same
+records; the old local launcher does not sync with this hosted copy. It does
+not cache financial responses or provide offline records.
+
 ## Install or update
 
 Requirements are Ubuntu 24, Python 3, and systemd. The Python runtime has no
