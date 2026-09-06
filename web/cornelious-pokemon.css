@@ -1,0 +1,289 @@
+/* Cornelious only: artwork and interaction effects never style Sarah. */
+:root[data-review-mode=aurora] .cornelious-legend{
+ position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+ background:radial-gradient(ellipse at 87% 43%,rgba(50,163,255,.12),transparent 55%);
+}
+:root[data-review-mode=aurora] .cornelious-legend::before{
+ content:"";position:absolute;right:-4vw;top:8vh;width:min(80vw,1000px);height:88vh;
+ background:url('/zekrom.png') center / contain no-repeat;
+ opacity:.48;filter:brightness(1.65) drop-shadow(0 0 28px rgba(63,173,255,.34));
+}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-legend{
+ background:radial-gradient(ellipse at 87% 43%,rgba(248,156,59,.12),transparent 55%);
+}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-legend::before{
+ background-image:url('/reshiram.png');opacity:.42;
+ filter:drop-shadow(0 0 2px rgba(144,88,36,.5)) drop-shadow(0 0 24px rgba(238,153,50,.22));
+}
+:root[data-review-mode=aurora] .cornelious-element{
+ position:fixed;z-index:10001;pointer-events:none;overflow:visible;color:#8ee8ff;
+ filter:drop-shadow(0 0 3px #25aaff) drop-shadow(0 0 7px #2284e8);
+}
+:root[data-review-mode=aurora] .cornelious-element svg{display:block;width:100%;height:100%;overflow:visible}
+:root[data-review-mode=aurora] .cornelious-electric{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;stroke-dasharray:75 18 12 10;animation:cornelious-charge 1.2s linear infinite}
+:root[data-review-mode=aurora] .cornelious-fire{display:none}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-element{color:#ff9b29;filter:drop-shadow(0 0 3px #ffac38) drop-shadow(0 0 6px #ed6821)}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-electric{display:none}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-fire{display:block;fill:#ffbd53;stroke:#ef7b29;stroke-width:.8;transform-box:fill-box;transform-origin:center bottom;animation:cornelious-flame .85s ease-in-out infinite alternate}
+:root[data-review-mode=aurora] .cornelious-fire:nth-child(even){animation-delay:-.45s;animation-duration:1.1s;fill:#ffe5a1}
+@keyframes cornelious-charge{to{stroke-dashoffset:-115}}
+@keyframes cornelious-flame{from{transform:scaleY(.72);opacity:.65}to{transform:scaleY(1.12);opacity:1}}
+@media(max-width:700px){
+ :root[data-review-mode=aurora] .cornelious-legend::before{right:-30vw;top:16vh;width:120vw;height:70vh;opacity:.3;filter:brightness(1.65)}
+ :root[data-review-mode=aurora][data-theme=light] .cornelious-legend::before{opacity:.32;filter:none}
+}
+:root:not([data-review-mode=aurora]) :is(.cornelious-legend,.cornelious-element),
+:root[data-motion-paused=true] .cornelious-element,
+:root[data-mobile-busy=true] .cornelious-element{display:none}
+@media(prefers-reduced-motion:reduce){:root[data-review-mode=aurora] .cornelious-element{display:none}}
+
+/* Reshiram: deep orange and gold replace the Aurora blue/purple effect channels. */
+:root[data-review-mode=aurora][data-theme=light]{
+ --accent:#b94b0b!important;
+ --accent-rgb:185,75,11!important;
+ --red:#b94b0b!important;
+ --pink:#ce762c!important;
+ --green:#94751f!important;
+ --green-rgb:148,117,31!important;
+ --accent-2:#d9a514!important;
+ --cyan:#9b7100!important;
+ --cyan-rgb:217,165,20!important;
+ --rail:#d9a514!important;
+ --tint:51,35,24!important;
+ --bg:#fffaf2!important;
+ --bg-soft:#fff4e3!important;
+ --border:rgba(75,42,24,.11)!important;
+ --border-soft:rgba(75,42,24,.20)!important;
+ --muted:#6d594f!important;
+ --faint:#897367!important;
+ --shadow:0 10px 30px rgba(75,42,24,.08)!important;
+ --field:
+  radial-gradient(900px 620px at 12% -8%,rgba(var(--accent-rgb),.14),transparent 62%),
+  radial-gradient(760px 520px at 88% 4%,rgba(var(--cyan-rgb),.20),transparent 60%),
+  radial-gradient(900px 700px at 60% 106%,rgba(var(--accent-rgb),.09),transparent 62%),
+  linear-gradient(180deg,#fffcf6 0%,#fff6e5 40%,#fffaf2 100%)!important;
+}
+:root[data-review-mode=aurora][data-theme=light] :is(.btn-primary,#mobile-add){
+ background:linear-gradient(180deg,#c75d16,#9b3d08)!important;
+ color:#fff!important;box-shadow:inset 0 1px 0 #e9bb51,0 8px 26px rgba(217,165,20,.28)!important;
+}
+:root[data-review-mode=aurora][data-theme=light] .forecast-layout>.card:first-child{border-top-color:#d9a514}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-element{color:#e7b526;filter:drop-shadow(0 0 3px #edc64e) drop-shadow(0 0 6px #e87513)}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-fire{fill:#e8b62a;stroke:#e87513}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-fire:nth-child(even){fill:#ffe399;stroke:#bd5100}
+
+/* Match the control's destination instead of the currently active appearance. */
+:root[data-review-mode=aurora] .cornelious-element[data-element=light]{color:#e7b526;filter:drop-shadow(0 0 3px #edc64e) drop-shadow(0 0 6px #e87513)}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-electric{display:none}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-fire{display:block;fill:#e8b62a;stroke:#e87513;stroke-width:.8;transform-box:fill-box;transform-origin:center bottom;animation:cornelious-flame .85s ease-in-out infinite alternate}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-fire:nth-child(even){fill:#ffe399;stroke:#bd5100;animation-delay:-.45s;animation-duration:1.1s}
+:root[data-review-mode=aurora] .cornelious-element[data-element=dark]{color:#8ee8ff;filter:drop-shadow(0 0 3px #25aaff) drop-shadow(0 0 7px #2284e8)}
+:root[data-review-mode=aurora] .cornelious-element[data-element=dark] .cornelious-electric{display:block}
+:root[data-review-mode=aurora] .cornelious-element[data-element=dark] .cornelious-fire{display:none}
+
+/* Sidebar words inherit the active element: ice-blue charge or orange embers. */
+:root[data-review-mode=aurora][data-theme=dark]{--sidebar-element-text:#8ee8ff;--sidebar-word-animation:cornelious-word-charge}
+:root[data-review-mode=aurora][data-theme=light]{--sidebar-element-text:#b94b00;--sidebar-word-animation:cornelious-word-flame}
+:root[data-review-mode=aurora] #sidebar :is(.nav-link,summary,button):focus-visible :is(.nav-label,.more-nav-text,.sidebar-button-label,.sidebar-collapse-label){color:var(--sidebar-element-text)!important;animation:var(--sidebar-word-animation) 1.4s ease-in-out infinite alternate}
+@media(hover:hover) and (pointer:fine){
+:root[data-review-mode=aurora] #sidebar :is(.nav-link,summary,button):hover :is(.nav-label,.more-nav-text,.sidebar-button-label,.sidebar-collapse-label){color:var(--sidebar-element-text)!important;animation:var(--sidebar-word-animation) 1.4s ease-in-out infinite alternate}
+}
+@keyframes cornelious-word-charge{
+ from{text-shadow:0 0 2px #8ee8ff55,2px 0 9px #258aff44}
+ to{text-shadow:0 0 5px #8ee8ff88,-2px 0 12px #258aff88}
+}
+@keyframes cornelious-word-flame{
+ from{text-shadow:0 -1px 3px #e8b62a66,0 -3px 8px #e8751322}
+ to{text-shadow:0 -2px 5px #e8b62a99,1px -5px 10px #e8751355}
+}
+:root[data-review-mode=aurora][data-motion-paused=true] #sidebar :is(.nav-label,.more-nav-text,.sidebar-button-label,.sidebar-collapse-label){animation:none!important;text-shadow:none!important}
+@media(prefers-reduced-motion:reduce){
+ :root[data-review-mode=aurora] #sidebar :is(.nav-label,.more-nav-text,.sidebar-button-label,.sidebar-collapse-label){animation:none!important;text-shadow:none!important}
+}
+
+/* Orange graph bars for Cornelious' light appearance. */
+:root[data-review-mode=aurora][data-theme=light] .ar-column{
+ background:linear-gradient(180deg,#ed861f,rgba(237,134,31,.24));
+}
+:root[data-review-mode=aurora][data-theme=light] .ar-bar[aria-pressed=true] .ar-column{
+ background:linear-gradient(180deg,#ffad45,#cf650c);
+ box-shadow:0 0 24px rgba(237,134,31,.3);
+}
+
+/* Solid central flames fade toward the outer edges and nearby values. */
+:root[data-review-mode=aurora] .cornelious-element[data-element=light]{
+ opacity:1;
+ -webkit-mask-image:radial-gradient(ellipse at 50% 80%,#000 0%,#000 25%,rgba(0,0,0,.55) 55%,rgba(0,0,0,.12) 85%,transparent 100%);
+ mask-image:radial-gradient(ellipse at 50% 80%,#000 0%,#000 25%,rgba(0,0,0,.55) 55%,rgba(0,0,0,.12) 85%,transparent 100%);
+}
+
+
+/* All actionable words share the active Cornelious hover color. */
+:root[data-review-mode=aurora][data-theme=dark]{--clickable-word-hover:#8ee8ff}
+:root[data-review-mode=aurora][data-theme=light]{--clickable-word-hover:#b94b00}
+@media(hover:hover) and (pointer:fine){
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action],label[for],input[type="button"],input[type="submit"],input[type="reset"]):not(:disabled):not([aria-disabled="true"]):hover,
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action],label[for],input[type="button"],input[type="submit"],input[type="reset"]):not(:disabled):not([aria-disabled="true"]):hover :is(span,b,strong,small,em,i,p,h2,h3,h4){color:var(--clickable-word-hover)!important}
+}
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action],label[for],input[type="button"],input[type="submit"],input[type="reset"]):not(:disabled):not([aria-disabled="true"]):focus-visible,
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action],label[for],input[type="button"],input[type="submit"],input[type="reset"]):not(:disabled):not([aria-disabled="true"]):focus-visible :is(span,b,strong,small,em,i,p,h2,h3,h4){color:var(--clickable-word-hover)!important}
+
+/* Cornelious hover feedback uses color and elemental shapes without shadows. */
+:root[data-review-mode=aurora] .cornelious-element{filter:none!important}
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action],.motion-bubble):is(:hover,:focus-visible){
+ box-shadow:none!important;filter:none!important;text-shadow:none!important;
+}
+:root[data-review-mode=aurora] :is(body,#sidebar,#main) :is(a[href],button,summary,[role="button"],[role="link"],[role="tab"],[role="menuitem"],[data-action]):is(:hover,:focus-visible) :is(span,b,strong,small,em,i,p,h2,h3,h4){text-shadow:none!important}
+:root[data-review-mode=aurora] .ar-row:hover{background:transparent!important}
+:root[data-review-mode=aurora] .ar-row:hover .ar-avatar,
+:root[data-review-mode=aurora] .subscription-row:has(button:hover) .merchant-avatar{filter:none!important;box-shadow:none!important}
+
+/* White labels stay readable on Cornelious' filled red buttons. */
+:root[data-review-mode=aurora][data-theme=light] :is(body,#sidebar,#main) :is(.btn-primary,#mobile-add):is(:hover,:focus-visible),
+:root[data-review-mode=aurora][data-theme=light] :is(body,#sidebar,#main) :is(.btn-primary,#mobile-add):is(:hover,:focus-visible) :is(span,b,strong,small,em,i,p,h2,h3,h4){color:#fff!important}
+
+/* The shared hover rule reads this local value, so it cannot turn the income label orange. */
+:root[data-review-mode=aurora] button.ar-delta{--clickable-word-hover:#fff}
+
+
+/* Pointed, two-tone flame sprites ignite and fade independently. */
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-fire{
+ animation:cornelious-flame-appear var(--flame-duration,2s) ease-in-out var(--flame-delay,0s) infinite;
+ stroke:none;
+}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-flame-outer{fill:#f08a18;stroke:none}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] .cornelious-flame-core{fill:#ffe39a;stroke:none}
+@keyframes cornelious-flame-appear{
+ 0%,12%{opacity:0;transform:translateY(2px)}
+ 35%,48%{opacity:1;transform:translateY(0)}
+ 76%,100%{opacity:0;transform:translateY(-4px)}
+}
+
+/* Generated Zekrom scene preview, Cornelious dark mode only. */
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-legend{
+ background:linear-gradient(rgba(3,8,16,.12),rgba(3,8,16,.12)),url('/zekrom-storm-background-v1.png') center right / cover no-repeat;
+}
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-legend::before{content:none}
+
+/* Branching page-wide lightning replaces the old dark-mode button outline. */
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-storm{position:fixed;inset:0;width:100%;height:100%;z-index:9998;pointer-events:none}
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-element[data-element=dark]{display:none}
+:root:not([data-review-mode=aurora]) .cornelious-storm,
+:root:not([data-theme=dark]) .cornelious-storm{display:none}
+@media(prefers-reduced-motion:reduce){.cornelious-storm{display:none!important}}
+
+/* Match desktop glass on phones and center the dragon within the portrait crop. */
+@media(max-width:700px){
+ :root[data-review-mode=aurora][data-theme=dark] .cornelious-legend{background-position:72% center}
+ :root[data-review-mode=aurora] #app #view :is(.card,.hero-card,.review-strip,.subscription-row){
+  background:var(--panel)!important;
+  backdrop-filter:blur(22px) saturate(140%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
+ }
+}
+
+/* Seedance ambient clip; still background remains beneath it as a fallback. */
+.cornelious-video-layer{display:none;position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 450ms ease}
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-video-layer{display:block}
+:root[data-review-mode=aurora][data-theme=dark] .cornelious-video-layer.playing{opacity:1}
+.cornelious-video-layer video{display:block;width:100%;height:100%;object-fit:cover;object-position:right center}
+.cornelious-video-layer::after{content:'';position:absolute;inset:0;background:rgba(3,8,16,.12)}
+@media(max-width:700px){.cornelious-video-layer video{object-position:72% center}}
+@media(prefers-reduced-motion:reduce){.cornelious-video-layer{display:none!important;transition:none}}
+
+/* White hover labels on purple primary controls in Cornelious dark mode. */
+:root[data-review-mode=aurora][data-theme=dark] :is(.btn-primary,#mobile-add){
+ --clickable-word-hover:#fff;
+ --sidebar-element-text:#fff;
+}
+
+/* Cornelious desktop rows fill all twelve columns without empty grid slots. */
+@media(min-width:701px){
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=recent],
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=upcoming],
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=cashflow]{grid-column:span 6}
+}
+@media(min-width:1101px){
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=recent]{grid-column:span 8}
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=upcoming]{grid-column:span 4}
+ :root[data-review-mode=aurora] .ar-grid>.card[data-ar-card=cashflow]{grid-column:span 8}
+}
+
+/* Hold-to-drag handles and saved order are exclusive to Cornelious. */
+.corn-drag-handle,.corn-reset-layout{display:none!important}
+:root[data-review-mode=aurora] .ar-grid>.card[data-corn-card]{position:relative;order:var(--corn-order,0)}
+:root[data-review-mode=aurora] .ar-grid>.card[data-corn-card]>.ar-head{padding-right:24px}
+:root[data-review-mode=aurora] .corn-drag-handle{display:grid!important;place-items:center;position:absolute;right:5px;top:7px;width:32px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:22px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2}
+:root[data-review-mode=aurora] .corn-drag-handle:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+:root[data-review-mode=aurora] .corn-reset-layout:not([hidden]){display:inline-flex!important}
+:root[data-review-mode=aurora] .corn-drag-source{opacity:.35}
+:root[data-review-mode=aurora] .corn-drop-target{outline:2px dashed var(--cyan);outline-offset:-3px}
+.corn-drag-preview{position:fixed;z-index:20000;pointer-events:none;padding:14px 18px;border:1px solid var(--cyan);border-radius:12px;background:var(--bg-soft);color:var(--text);font:600 14px var(--font);box-sizing:border-box}
+.corn-layout-dragging,.corn-layout-dragging *{cursor:grabbing!important;user-select:none!important}
+.corn-layout-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* Generated Reshiram scene, Cornelious light mode only. */
+:root[data-review-mode=aurora][data-theme=light] .cornelious-legend{
+ background:url('/reshiram-sunfire-background-v3.png') center right / cover no-repeat;
+}
+:root[data-review-mode=aurora][data-theme=light] .cornelious-legend::before{content:none}
+@media(max-width:700px){
+ :root[data-review-mode=aurora][data-theme=light] .cornelious-legend{background-position:42% center}
+}
+
+/* Give Reshiram's face more room beside the desktop dashboard. */
+@media(min-width:701px){
+ :root[data-review-mode=aurora][data-theme=light] .cornelious-legend{
+  background-color:#fff4df;
+  background-position:calc(100% + 9vw) center;
+ }
+}
+
+/* Soft fire ribbons replace the repeated icon sprites. Preserve the edge mask. */
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] > svg{display:none}
+.cornelious-real-fire{display:none;width:100%;height:100%;pointer-events:none}
+:root[data-review-mode=aurora] .cornelious-element[data-element=light] > .cornelious-real-fire{display:block}
+
+/* User-provided Reshiram video, Cornelious light mode only. */
+.reshiram-video-layer{display:none;position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 450ms ease}
+:root[data-review-mode=aurora][data-theme=light] .reshiram-video-layer{display:block}
+:root[data-review-mode=aurora][data-theme=light] .reshiram-video-layer.playing{opacity:1}
+.reshiram-video-layer video{display:block;width:100%;height:100%;object-fit:cover;object-position:calc(100% + 9vw) center}
+@media(max-width:700px){.reshiram-video-layer video{object-position:42% center}}
+@media(prefers-reduced-motion:reduce){.reshiram-video-layer{display:none!important;transition:none}}
+
+/* Opaque account headings and bank controls remain readable over either video. */
+:root[data-review-mode=aurora]{--corn-account-solid:#172333}
+:root[data-review-mode=aurora][data-theme=light]{--corn-account-solid:#fff4e3}
+:root[data-review-mode=aurora] #app #view .page-intro:has(+ .account-manual-bar)>div:first-child,
+:root[data-review-mode=aurora] #app #view .account-manual-bar{
+ background:var(--panel)!important;
+ border:1px solid var(--border-soft);border-radius:18px;padding:18px 20px;
+}
+:root[data-review-mode=aurora] #app #view .account-manual-bar .btn{
+ background:var(--panel)!important;
+}
+
+/* Opaque spending-report heading and controls over the ambient background. */
+:root[data-review-mode=aurora] #app #view .spending-report > :is(.page-intro,.report-filters){
+ background:var(--panel)!important;
+ border:1px solid var(--border-soft);border-radius:18px;padding:18px 20px;
+}
+:root[data-review-mode=aurora] #app #view .report-filters :is(.input,.report-export){
+ background:var(--panel)!important;
+}
+
+/* Match the standard card glass on account and spending headers. */
+:root[data-review-mode=aurora] #app #view .page-intro:has(+ .account-manual-bar)>div:first-child,
+:root[data-review-mode=aurora] #app #view .account-manual-bar,
+:root[data-review-mode=aurora] #app #view .spending-report > :is(.page-intro,.report-filters){
+ backdrop-filter:blur(22px) saturate(140%)!important;
+ -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
+}
+:root[data-review-mode=aurora] #app #view .account-manual-bar .btn,
+:root[data-review-mode=aurora] #app #view .report-filters :is(.input,.report-export){
+ background:rgba(var(--tint),.035)!important;
+}
+
+/* Black hover text for the light-mode net-income bubble. */
+:root[data-review-mode=aurora][data-theme=light] button.ar-delta{--clickable-word-hover:#000}

@@ -94,7 +94,7 @@ addEventListener('message',event=>{
   const fonts={manrope:"'Manrope',system-ui,sans-serif",lora:"'Lora',Georgia,serif",nunito:"'Nunito Sans',system-ui,sans-serif",'nunito-sans':"'Nunito Sans',system-ui,sans-serif"};
   root.style.setProperty('--font',fonts[c.font_family]||fonts.manrope,'important');
   const accents={sage:['#558779','85,135,121'],plum:['#8f78a0','143,120,160'],clay:['#aa7967','170,121,103']};
-  if(root.dataset.reviewMode!=='custom'&&accents[c.accent]){root.style.setProperty('--accent',accents[c.accent][0],'important');root.style.setProperty('--accent-rgb',accents[c.accent][1],'important');}
+  if(root.dataset.reviewMode!=='custom'&&root.dataset.theme!=='light'&&accents[c.accent]){root.style.setProperty('--accent',accents[c.accent][0],'important');root.style.setProperty('--accent-rgb',accents[c.accent][1],'important');}
   else{root.style.removeProperty('--accent');root.style.removeProperty('--accent-rgb');}
   if(oldField){
    const fade=oldField.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-out',fill:'forwards'});
