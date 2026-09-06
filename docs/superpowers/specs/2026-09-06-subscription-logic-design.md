@@ -61,9 +61,28 @@ python3 -m unittest discover -s tests
 ```
 
 This change targets the maintained `ledger-v2-release` source. Historical ZIPs
-and reconstruction snapshots are unchanged. Hosted deployment and release
-publication are separate from this local implementation.
+and reconstruction snapshots are unchanged. Hosted deployment is recorded below. Downloadable release packages remain separate from the hosted mobile update.
 
 Final local validation: all 136 backend tests passed, including 20 new detector
 and API regressions. `git diff --check` passed for all changed application and
 test files. The test runtime emitted non-failing SQLite resource warnings.
+
+
+## Hosted deployment — September 6, 2026
+
+Implementation commit `1a814b1` is pushed to GitHub main. Both existing hosted
+Ledger services now use images ending in `20260906-subscriptions-mobile`.
+The deployment includes the pending mobile date-field, spending-bubble and
+fixed-header corrections. All six deployed application files match the source;
+both HTTPS routes return healthy responses and serve matching frontend assets.
+Anonymous account requests still return 401.
+
+SQLite and compose backups were taken before service replacement. Financial
+table hashes, manually controlled subscription billing fields and remembered
+review decisions match their pre-deployment values. Older inferred false
+suggestions are re-evaluated by the startup scan. Prior image tags ending in
+`20260905-v2-cornelious` remain available for rollback.
+
+Verification: 136 backend tests, 40 bubble layouts, 16 mobile header layouts
+and 16 date-field layouts passed. Native iPhone Safari remains unmeasured.
+Reloading the hosted app fetches the update; responses use Cache-Control no-store.
