@@ -1,0 +1,36 @@
+#mobile-pull-status { display: none; }
+@media (max-width: 700px) {
+  /* The browser's outer rubber-band canvas must not expose the forest. */
+  html { background: #f7f3ec !important; overscroll-behavior-y: none; }
+  body { overscroll-behavior-y: none; }
+  #mobile-pull-status {
+    position: fixed;
+    top: var(--mobile-pull-top, calc(60px + env(safe-area-inset-top)));
+    left: 0; right: 0;
+    height: var(--mobile-pull-distance, 0px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+    background: #f7f3ec;
+    color: #525b50;
+    font: 500 12px var(--font, sans-serif);
+    pointer-events: none;
+    z-index: 29;
+    visibility: hidden;
+  }
+  [data-pull-active] #mobile-pull-status,
+  [data-pull-settling] #mobile-pull-status { visibility: visible; }
+  [data-pull-active] #view,
+  [data-pull-settling] #view { transform: translateY(var(--mobile-pull-distance, 0px)); }
+  [data-pull-settling] #view { transition: transform 200ms ease-out; }
+  [data-pull-settling] #mobile-pull-status { transition: height 200ms ease-out; }
+  [data-pull-loading] #mobile-pull-status > :first-child { animation: mobilePullSpin 800ms linear infinite; }
+  @keyframes mobilePullSpin { to { transform: rotate(360deg); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-pull-settling] #view,
+  [data-pull-settling] #mobile-pull-status { transition: none; }
+  [data-pull-loading] #mobile-pull-status > :first-child { animation: none; }
+}

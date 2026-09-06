@@ -1,0 +1,20 @@
+.ar-rent-free{display:none!important}
+:root[data-review-mode=custom] .ar-rent-free{display:flex!important}
+.ar-rent-free-total{display:block;width:100%;padding:12px 0;text-align:left;color:var(--text);background:transparent;border:0;cursor:pointer}
+.ar-rent-free-total strong{display:block;font:500 clamp(30px,3vw,48px) var(--font);letter-spacing:-.04em;line-height:1.2;overflow-wrap:anywhere}
+.ar-rent-free-total small{display:block;margin-top:8px;color:var(--muted);font:12px var(--font)}
+.ar-rent-free .ar-meta{gap:12px;margin-top:18px}
+.ar-rent-free .ar-note{line-height:1.5}
+@media(min-width:1101px){
+ :root[data-review-mode=custom] .ar-grid>.ar-hero,
+ :root[data-review-mode=custom] .ar-grid>.ar-month-budget,
+ :root[data-review-mode=custom] .ar-grid>.ar-rent-free{grid-column:span 4}
+ :root[data-review-mode=custom] .ar-hero .ar-figure{font-size:clamp(28px,3.1vw,56px)}
+ :root[data-review-mode=custom] .ar-hero .ar-meta{flex-wrap:wrap;gap:12px}
+ :root[data-review-mode=custom] .ar-hero .ar-figure :is(.currency,.cents){font-size:.45em;transform:translateY(-.25em)}
+ :root[data-review-mode=custom] .ar-month-budget .ar-ring-row{flex-wrap:nowrap;gap:12px}
+ :root[data-review-mode=custom] .ar-month-budget .ar-ring{width:96px;height:96px;flex:0 0 96px}
+ :root[data-review-mode=custom] .ar-month-budget .ar-ring-stats{min-width:0;flex:1}
+ :root[data-review-mode=custom] .ar-month-budget .ar-ring-stats strong{font-size:18px}
+}
+@media(min-width:701px) and (max-width:1100px){.ar-grid>.ar-rent-free{grid-column:span 12}}

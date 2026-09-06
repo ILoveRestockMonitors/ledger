@@ -1,0 +1,40 @@
+/* A content-sized, opaque phone drawer. Desktop navigation stays unchanged. */
+@media (max-width: 700px) {
+  html:root #sidebar {
+    width: max-content !important;
+    min-width: 0;
+    max-width: calc(100vw - 48px);
+    height: fit-content !important;
+    max-height: 100dvh;
+    flex-basis: auto;
+    bottom: auto;
+    background: var(--bg-soft) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1;
+    border-radius: 0 14px 24px 0;
+  }
+
+  /* An opaque base keeps the blush/forest palette without revealing the page. */
+  html:root[data-review-mode="custom"][data-theme="light"] #sidebar {
+    background: linear-gradient(160deg, rgba(var(--blush-rgb), .13), rgba(var(--blush-rgb), .04)), #fffaef !important;
+    border-radius: 34px 8px 34px 8px;
+  }
+  html:root[data-review-mode="custom"][data-theme="dark"] #sidebar {
+    background: linear-gradient(160deg, rgba(var(--blush-rgb), .09), transparent), #16221b !important;
+    border-radius: 34px 8px 34px 8px;
+  }
+
+  #sidebar .nav-label,
+  #sidebar .more-nav-text,
+  #sidebar .sidebar-button-label {
+    white-space: nowrap;
+  }
+  #sidebar .sidebar-foot {
+    margin-top: 12px;
+  }
+  /* Decorations must not determine the intrinsic drawer width or height. */
+  #sidebar > .motion-tint {
+    contain: strict;
+  }
+}
