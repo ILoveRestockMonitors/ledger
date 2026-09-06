@@ -23,5 +23,7 @@
   if(!queued){queued=true;requestAnimationFrame(enhance);}
  });
  observer.observe(document.getElementById('view'),{childList:true,subtree:true});
- observer.observe(document.getElementById('modal-root'),{childList:true,subtree:true});enhance();
+ observer.observe(document.getElementById('modal-root'),{childList:true,subtree:true});
+ // Sign-in is mounted directly on body after the asynchronous auth check.
+ observer.observe(document.body,{childList:true});enhance();
 })();

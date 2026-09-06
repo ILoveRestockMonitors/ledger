@@ -15,3 +15,6 @@ Detailed browser results are retained in the local QA artifacts. Browser mobile 
 Final browser results: 308 Chromium layout cases passed across seven viewport sizes, both palettes, both themes and eleven routes. No horizontal overflow, page errors, or visible mobile inputs below 16px were found. Small-phone dialog scrolling, invalid amount validation, Escape/reopening, drawer navigation, browser Back, palette persistence, focus restoration, replacement-dialog focus and simulated API error recovery passed.
 
 WebKit validation remains unavailable: the temporary WebKit runtime timed out even on a blank data-URL page and then reported a missing web frame. This is a test-runtime failure, not a passing Safari result. Physical Safari/iPhone verification remains outstanding.
+
+## Sign-in animation follow-up
+The sign-in screen mounts directly under `body` after its asynchronous authentication check. Motion enhancement previously observed only route and dialog containers, so the sign-in button could miss its hover/tap animation. Direct body insertions are now observed as well. A signed-out browser regression confirms the login button receives motion and honors reduced-motion preferences.
