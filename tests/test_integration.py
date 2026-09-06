@@ -173,4 +173,19 @@ class IntegratedLedger(unittest.TestCase):
             with self.assertRaises(plaid_client.PlaidError):plaid_client.refresh_item('bank')
         self.assertEqual(db.q1('SELECT cursor FROM items')['cursor'],'last')
 
+    def test_subscription_api_removes_old_food_questions_and_keeps_real_renewals(self):
+        subscriptions.save({'merchant':'Taco Bell','scope':'personal','account_id':'cash',
+                            'amount':12,'status':'candidate','source':'detected'})
+        for name in ('Taco Bell', 'Shell', 'New Cloud'):
+            for when in ('2026-08-01', '2026-09-01'):
+                db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                      (name+when, 'cash', 'personal', -12, when, name, name, when))
+        db.ex("UPDATE transactions SET category_id='cat-subscriptions' WHERE merchant='New Cloud'")
+        scanned = self.request('/api/subscriptions/scan', {})
+        self.assertEqual(scanned['code'], 200)
+        listed = self.request('/api/subscriptions')
+        self.assertEqual(listed['code'], 200)
+        self.assertEqual([x['merchant'] for x in listed['body']['candidates']], ['New Cloud'])
+        self.assertEqual(listed['body']['items'], [])
+
 if __name__=='__main__':unittest.main()

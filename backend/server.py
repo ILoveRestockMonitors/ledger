@@ -624,6 +624,9 @@ def main():
         seed_demo()
         subscriptions.scan()
     else:
+        # Re-evaluate persisted suggestions with current rules before serving
+        # them, including false positives created by an older detector.
+        _scan_safely()
         scheduler.start()
         def worker_loop():
             import time

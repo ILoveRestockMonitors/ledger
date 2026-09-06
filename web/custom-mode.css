@@ -180,7 +180,10 @@ html :is(.ar-money,.money-number,.amt-pos,.amt-neg,.ar-bubble small,.ar-row .ar-
  .transaction-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
  .transaction-filters>.input{grid-column:1/-1}
  .transaction-filters .input{width:100%!important;min-width:0!important;font-size:16px!important}
- .transaction-date input{box-sizing:border-box;max-width:100%}
+ /* Native iPhone date controls need a full row and explicit intrinsic sizing. */
+ .transaction-filters>.transaction-date{grid-column:1/-1;width:100%;min-width:0}
+ .transaction-date input[type=date]{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-inline-size:0;-webkit-appearance:none;appearance:none}
+ .transaction-date input[type=date]::-webkit-date-and-time-value{min-width:0;text-align:left}
  /* Colored glass remains; avoid repeatedly filtering video behind every surface. */
  html :is(#sidebar,#topbar,#mobile-nav,.card,.subscription-row,.review-strip,.ar-welcome,.modal-backdrop){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
  html .motion-bubble{transition:transform 150ms ease-out!important}

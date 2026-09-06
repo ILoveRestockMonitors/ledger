@@ -216,3 +216,25 @@ button.owner-avatar:active,button.icon-button:active,
  #topbar .topbar-spacer{display:none}
  #topbar>.icon-button,#topbar>.owner-avatar{flex-shrink:0}
 }
+
+/* Keep readable labels inside circular targets, including low-spend categories.
+   Flow layout reserves space for every bubble at narrow widths. */
+.ar-constellation{
+  display:flex;flex-wrap:wrap;justify-content:space-evenly;align-items:center;
+  align-content:center;gap:20px 16px;height:auto;min-height:290px;padding:12px 4px;
+}
+.ar-constellation .ar-bubble{
+  position:relative;left:auto;top:auto;translate:none;flex:0 0 auto;
+  width:var(--size);height:var(--size);min-width:112px;min-height:112px;
+  padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;aspect-ratio:1;
+}
+:root[data-review-mode] .ar-constellation .ar-bubble b{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  width:80%;max-width:80%;min-width:0;max-height:2.5em;overflow:hidden;white-space:normal;
+  font:600 11px/1.25 var(--font);word-break:normal;overflow-wrap:normal;
+}
+.ar-constellation .ar-bubble small{
+  display:block;width:80%;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:10px/1.3 ui-monospace,monospace;color:var(--muted);
+}

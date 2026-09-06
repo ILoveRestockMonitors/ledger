@@ -41,6 +41,92 @@ KNOWN_RECURRING_MERCHANTS = {
 }
 
 
+# Merchant evidence is bounded by words: Shell must not match Shellshock,
+# and BP must not match an unrelated name containing those letters.
+EVERYDAY_MERCHANTS = {
+    "mcdonalds", "mcdonald s", "burger king", "wendys", "wendy s", "taco bell",
+    "chick fil a", "chickfila", "chipotle", "subway", "in n out", "jack in the box",
+    "popeyes", "kfc", "panda express", "sonic", "arbys", "arby s", "five guys",
+    "dominos", "domino s", "pizza hut", "little caesars", "dunkin", "starbucks",
+    "panera", "doordash", "uber eats", "grubhub", "postmates",
+    "shell", "chevron", "exxon", "mobil", "exxonmobil", "bp", "arco", "texaco",
+    "76", "phillips 66", "valero", "sunoco", "marathon", "speedway", "circle k",
+    "7 eleven", "wawa", "sheetz", "quiktrip", "race trac", "racetrac",
+    "kroger", "safeway", "whole foods", "trader joes", "trader joe s", "aldi",
+    "costco", "sams club", "sam s club", "walmart", "target",
+    "latemodel re", "latemodel restoration", "late model restoration",
+}
+EVERYDAY_CATEGORIES = {
+    "fast food", "food and drink", "food drink", "food and dining", "dining", "restaurant", "restaurants",
+    "coffee", "groceries", "grocery", "supermarket", "fuel", "gas", "gasoline",
+    "shopping", "auto parts", "automotive parts", "hardware equipment", "office supplies",
+}
+# These are identifiable products, not a blanket exception for words such as
+# 'subscription' in a restaurant's bank description. Gas utilities are bills.
+RECURRING_PRODUCTS = {
+    "dashpass", "uber one", "grubhub plus", "walmart plus", "costco membership",
+    "sams club membership", "sam s club membership", "panera sip club",
+}
+
+
+def _contains_phrase(text, phrases):
+    return any(" " + phrase + " " in " " + text + " " for phrase in phrases)
+
+
+def _everyday_purchase(merchant, categories=()):
+    name = _norm(merchant)
+    if name in KNOWN_RECURRING_MERCHANTS or _contains_phrase(name, RECURRING_PRODUCTS):
+        return False
+    if _contains_phrase(name, {"natural gas", "gas company", "gas utility", "gas utilities", "gas service"}):
+        return False
+    if _contains_phrase(name, EVERYDAY_MERCHANTS):
+        return True
+    return any(_contains_phrase(_norm(value), EVERYDAY_CATEGORIES)
+               for value in (merchant, *categories))
+
+
+def _service_evidence(ts, known_merchant):
+    """Repeat orders alone never establish that a merchant sells subscriptions."""
+    if known_merchant:
+        return True
+    recurring_categories = {"subscriptions", "utilities", "internet phone", "insurance", "rent mortgage"}
+    billing_terms = {"subscription", "membership", "monthly plan", "annual plan", "yearly plan", "recurring payment"}
+    return any(_norm(item["category_name"]) in recurring_categories or
+               _contains_phrase(_norm(item.get("name")), billing_terms)
+               for item in ts)
+
+
+def _billing_pattern(ts, cadence, custom_days):
+    """Require each gap to support renewal; averages alone hide erratic shopping."""
+    intervals = [(b["day"] - a["day"]).days for a, b in zip(ts, ts[1:])]
+    if not intervals:
+        return True  # Single-charge eligibility is checked separately.
+    if max(intervals) > 372:
+        return False  # At most annual, allowing a week of posting drift.
+    if cadence == "custom":
+        # Two arbitrary purchases do not establish an unusual billing cycle.
+        if len(intervals) < 2 or not custom_days or custom_days < 7:
+            return False
+        expected = custom_days
+    else:
+        expected = CADENCES[cadence]
+    tolerance = max(2, min(7, expected * .10))
+    if cadence in ("monthly", "quarterly", "semiannual", "annual"):
+        # Missing imported cycles are reviewable when at least one normal
+        # interval establishes the cadence. Do not infer monthly from only
+        # two charges 60 days apart.
+        return (any(abs(gap - expected) <= tolerance for gap in intervals) and
+                all(any(abs(gap - expected * multiple) <= tolerance for multiple in (1, 2, 3)) for gap in intervals))
+    return all(abs(gap - expected) <= tolerance for gap in intervals)
+
+
+def _suppress_detection(old, reason):
+    # Suppression is reversible inference, not a fabricated user dismissal.
+    if old and old["status"] in ("candidate", "active"):
+        db.ex("UPDATE subscriptions SET status='dismissed', price_review=0, observed_amount=NULL, reason=?, updated_at=? WHERE id=?",
+              (reason, _now(), old["id"]))
+
+
 def init_schema():
     """Create subscription tables and indexes; safe to call on every boot."""
     c = db._conn()
@@ -119,7 +205,7 @@ def _cadence(days):
         return "custom"
     choices = sorted(CADENCES.items(), key=lambda kv: abs(days - kv[1]))
     name, expected = choices[0]
-    tolerance = max(3.0, expected * 0.22)
+    tolerance = max(2.0, min(7.0, expected * 0.10))
     return name if abs(days - expected) <= tolerance else "custom"
 
 
@@ -301,13 +387,24 @@ def _infer(ts):
         cadence = "custom"
         custom_days = round(sorted(intervals)[len(intervals) // 2])
         expected = custom_days
+    missed_cycle = False
+    if cadence == "custom" and len(intervals) >= 2:
+        for name in ("monthly", "quarterly", "semiannual", "annual"):
+            if _billing_pattern(ts, name, None):
+                cadence, custom_days, expected = name, None, CADENCES[name]
+                missed_cycle = True
+                break
     interval_fit = max(0.0, 1.0 - (sum(abs(v - expected) for v in intervals) / len(intervals)) / max(expected, 1)) if intervals else 0
     amounts = [x["amount"] for x in ts]
     avg = sum(amounts) / len(amounts)
     variation = (max(amounts) - min(amounts)) / avg if avg else 1
     confidence = min(0.99, max(0.25, 0.42 + min(len(ts), 6) * 0.07 + interval_fit * 0.3 - min(variation, 1) * 0.2))
+    if missed_cycle:
+        confidence = min(confidence, .79)
     next_due = _add_due(ts[-1]["day"], cadence, anchor_day=ts[0]["day"].day, custom_interval_days=custom_days)
     reason = f"{len(ts)} charges; approximately {round(typical)} days apart"
+    if missed_cycle:
+        reason += "; possible missing billing cycle, review recurrence"
     if variation > 0.12:
         reason += "; amount varies or recently changed"
     return cadence, custom_days, round(amounts[-1], 2), round(confidence, 3), reason, next_due, variation
@@ -330,7 +427,7 @@ def scan():
             continue
         merchant = r.get("merchant") or r.get("name") or "Unknown merchant"
         key = _norm(merchant) + "|" + r["scope"] + "|" + str(r.get("account_id") or "")
-        groups[key].append({"day": day, "amount": abs(float(r["amount"])), "tx_id": r["id"], "pending": bool(r.get("pending")), "merchant": merchant, "scope": r["scope"], "account_id": r.get("account_id"), "category_name": r.get("category_name", "")})
+        groups[key].append({"day": day, "amount": abs(float(r["amount"])), "tx_id": r["id"], "pending": bool(r.get("pending")), "merchant": merchant, "scope": r["scope"], "account_id": r.get("account_id"), "category_name": r.get("category_name", ""), "name": r.get("name", "")})
     existing = {r["normalized_key"]: r for r in db.q("SELECT * FROM subscriptions")}
     found = []
     for key, ts in groups.items():
@@ -351,25 +448,46 @@ def scan():
                 # third detected commitment in their place.
                 continue
             old = manual_matches[0] if len(manual_matches) == 1 else None
-        known_single = _norm(ts[-1]["merchant"]) in KNOWN_RECURRING_MERCHANTS or old is not None
+        learning = db.q1("SELECT decision FROM subscription_learning WHERE normalized_key=?", (key,))
+        if learning and learning["decision"] == "dismiss":
+            continue
+        explicitly_confirmed = bool(learning and learning["decision"] == "confirm")
+        protected = bool(old and (old.get("source") == "manual" or
+                         old["status"] in ("cancel_requested", "canceled") or explicitly_confirmed))
+        forbidden_merchant = _everyday_purchase(ts[-1]["merchant"], [x["category_name"] for x in ts])
+        if forbidden_merchant and not protected:
+            _suppress_detection(old, "Everyday purchase; not subscription evidence")
+            continue
+        known_merchant = (_norm(ts[-1]["merchant"]) in KNOWN_RECURRING_MERCHANTS or
+                          _contains_phrase(_norm(ts[-1]["merchant"]), RECURRING_PRODUCTS))
+        if not protected and not _service_evidence(ts, known_merchant):
+            _suppress_detection(old, "No subscription-service evidence; repeated purchases alone do not qualify")
+            continue
+        known_single = known_merchant or protected
         if len(ts) < 2 and not known_single:
             continue
         if any((b["day"] - a["day"]).days <= 0 for a, b in zip(ts, ts[1:])):
             continue
         cadence, custom_days, amount, confidence, reason, next_due, variation = _infer(ts)
         if len(ts) == 1:
-            cadence, custom_days = "monthly", None
+            annual_description = _contains_phrase(_norm(ts[-1].get("name")), {"annual", "yearly"})
+            cadence, custom_days = ("annual" if annual_description else "monthly"), None
             next_due = _add_due(ts[-1]["day"], cadence, anchor_day=ts[-1]["day"].day)
             confidence = 0.25
             reason = "1 posted charge from a commonly recurring merchant; confirm whether it repeats"
         elif cadence == "custom" and (not custom_days or not 1 <= custom_days <= 366):
-            # An unsupported interval is not evidence of a subscription we
-            # can safely schedule; leave it out of this scan rather than
-            # allowing a malformed custom record to abort all detection.
+            # Also retire a saved candidate from the older broad annual window.
+            if not protected:
+                _suppress_detection(old, "Charges fall outside supported billing intervals (at most annual)")
             continue
-        # A single skipped month should still be reviewable; huge gaps are custom.
-        learning = db.q1("SELECT decision FROM subscription_learning WHERE normalized_key=?", (key,))
-        if learning and learning["decision"] == "dismiss":
+        plausible = _billing_pattern(ts, cadence, custom_days)
+        # Stable timing can accommodate a price increase, but wildly varying
+        # shopping totals are not renewal evidence for an unfamiliar merchant.
+        bill_category = any(_contains_phrase(_norm(x["category_name"]), {"utilities", "insurance", "rent", "mortgage"}) for x in ts)
+        price_change = bool(old and old["status"] == "active" and plausible)
+        stable_amount = variation <= .35 or known_merchant or bill_category or price_change
+        if not protected and (not plausible or not stable_amount):
+            _suppress_detection(old, "Charges do not establish a consistent billing pattern")
             continue
         recent_enough = (date.today() - ts[-1]["day"]).days <= max(60, round(CADENCES.get(cadence, custom_days or 30) * 2.5))
         cycle_keys = set()
@@ -379,10 +497,7 @@ def scan():
             elif cadence == "semiannual": cycle_keys.add((item["day"].year, (item["day"].month - 1) // 6))
             elif cadence == "annual": cycle_keys.add(item["day"].year)
             else: cycle_keys.add(item["day"])
-        forbidden_text = " ".join([_norm(ts[-1]["merchant"])] + [_norm(x.get("category_name")) for x in ts])
-        forbidden_merchant = any(word in forbidden_text.split() for word in {"grocery", "groceries", "supermarket", "fuel", "gas", "dining", "restaurant", "coffee"}) or any(name in forbidden_text for name in ("kroger", "safeway", "whole foods", "costco", "walmart", "target", "starbucks", "shell", "chevron"))
         regular = (cadence != "custom" and len(ts) >= 3 and len(cycle_keys) >= 3 and confidence >= 0.82 and variation <= 0.10 and recent_enough and not forbidden_merchant)
-        explicitly_confirmed = bool(learning and learning["decision"] == "confirm")
         if old and old.get("source") == "manual":
             status = old["status"]
         elif old and old["status"] in ("cancel_requested", "canceled"):

@@ -38,3 +38,24 @@
     contain: strict;
   }
 }
+
+/* Cover the status-bar inset and toolbar with one opaque, fixed surface. */
+@media (max-width: 700px) {
+  html:root {
+    --mobile-header-height: calc(60px + env(safe-area-inset-top, 0px));
+    scroll-padding-top: calc(var(--mobile-header-height) + 12px);
+  }
+  html:root #main { padding-top: var(--mobile-header-height); }
+  html:root[data-review-mode] #topbar {
+    position: fixed !important;
+    inset: 0 0 auto !important;
+    width: 100%;
+    height: var(--mobile-header-height) !important;
+    padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px)) !important;
+    background: var(--bg) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    z-index: 48;
+    isolation: isolate;
+  }
+}
