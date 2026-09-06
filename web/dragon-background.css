@@ -1,0 +1,141 @@
+/* Twin-dragon backdrop.
+   Light theme is the ivory dragon of truth: cloud sea, white-gold fire, drifting embers.
+   Dark theme is the obsidian dragon of ideals: storm sky, cyan lightning, electric motes.
+   Everything sits at z-index -1 so it paints over the opaque --field gradient on body::before
+   while staying beneath the app chrome and the film grain on body::after. */
+
+.dragon-bg{
+ position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+ contain:strict;
+ opacity:0;transition:opacity 700ms ease;
+ --d-shift-x:0px;--d-shift-y:0px;
+}
+.dragon-bg.ready{opacity:1}
+
+/* ---- theme palettes ---- */
+:root[data-theme=light]{
+ --d-sky:linear-gradient(158deg,#fffcf5 0%,#fff2dc 20%,#fdd9ab 44%,#f6b781 66%,#e79157 86%,#cf7440 100%);
+ --d-cloud-near:linear-gradient(200deg,rgba(255,255,255,.98),rgba(255,236,206,.78) 55%,rgba(246,178,120,.45));
+ --d-cloud-far:linear-gradient(200deg,rgba(255,252,244,.82),rgba(252,206,158,.5));
+ --d-haze:radial-gradient(46% 42% at 80% 8%,rgba(186,96,34,.36),transparent 68%),radial-gradient(58% 62% at 86% 72%,rgba(176,80,26,.34),transparent 68%),radial-gradient(46% 44% at 88% 92%,rgba(255,150,54,.44),transparent 66%);
+ --d-aura:radial-gradient(closest-side,rgba(255,232,186,.78),rgba(255,158,66,.4) 42%,transparent 76%);
+ --d-scale-a:#fffffd;--d-scale-b:#fff7ea;--d-scale-c:#f0cda4;
+ --d-rim:#b4551a;--d-rim-soft:rgba(180,85,26,.26);--d-rim-line:.5;
+ --d-eye:#ffd98a;
+ --d-ring-hot:#fffdf2;--d-ring-mid:#ffc46a;--d-ring-out:#f2762a;
+ --d-ember:232,118,28;
+ --d-bolt:255,206,132;
+ --d-fx-comp:source-over;--d-fx-alpha:.95;
+ --d-vignette:rgba(150,88,44,.34);
+ --d-card-veil:rgba(255,251,243,.5);
+ --d-scrim:linear-gradient(96deg,rgba(255,250,241,.72) 0%,rgba(255,246,234,.5) 32%,rgba(255,240,224,.24) 60%,rgba(255,232,210,.04) 100%);
+ --d-fig-opacity:.92;
+}
+:root[data-theme=dark]{
+ --d-sky:linear-gradient(178deg,#05060b 0%,#080b16 30%,#0c1026 58%,#120f2c 80%,#0a0a18 100%);
+ --d-cloud-near:linear-gradient(200deg,rgba(70,86,150,.5),rgba(38,44,92,.34) 55%,rgba(14,16,38,.2));
+ --d-cloud-far:linear-gradient(200deg,rgba(96,120,200,.26),rgba(30,34,74,.16));
+ --d-haze:radial-gradient(120% 90% at 82% 18%,rgba(79,216,245,.2),transparent 60%);
+ --d-aura:radial-gradient(closest-side,rgba(110,214,255,.42),rgba(110,124,255,.2) 45%,transparent 78%);
+ --d-scale-a:#0c1020;--d-scale-b:#05070f;--d-scale-c:#010206;
+ --d-rim:#6ce6ff;--d-rim-soft:rgba(108,230,255,.34);--d-rim-line:.92;
+ --d-eye:#8ff0ff;
+ --d-ring-hot:#f2fdff;--d-ring-mid:#5fe0ff;--d-ring-out:#6a5ae0;
+ --d-ember:120,214,255;
+ --d-bolt:170,236,255;
+ --d-fx-comp:lighter;--d-fx-alpha:.72;
+ --d-vignette:rgba(2,3,8,.72);
+ --d-card-veil:rgba(5,7,13,.5);
+ --d-scrim:linear-gradient(96deg,rgba(6,7,12,.74) 0%,rgba(7,9,16,.52) 32%,rgba(8,10,20,.24) 60%,rgba(10,12,26,.04) 100%);
+ --d-fig-opacity:1;
+}
+
+/* ---- layers ---- */
+.dragon-layer{position:absolute;inset:0}
+.dragon-sky{background:var(--d-sky)}
+.dragon-haze{background:var(--d-haze)}
+
+/* Cloud banks: one fractal-noise mask, painted through a themed gradient so the same
+   texture reads as sunlit cumulus in light and as thunderhead in dark. */
+.dragon-cloud{
+ --tex:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='900'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0038 0.0105' numOctaves='5' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1.5 1.04'/%3E%3C/filter%3E%3Crect width='1400' height='900' filter='url(%23c)'/%3E%3C/svg%3E");
+ inset:-14% -30%;
+ -webkit-mask-image:var(--tex);mask-image:var(--tex);
+ -webkit-mask-size:cover;mask-size:cover;
+ will-change:transform;
+}
+.dragon-cloud-far{background-image:var(--d-cloud-far);opacity:.62;animation:dragonDriftFar 128s linear infinite}
+.dragon-cloud-near{
+ background-image:var(--d-cloud-near);opacity:.5;
+ --tex:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='900'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0021 0.0062' numOctaves='4' seed='29'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1.35 1.0'/%3E%3C/filter%3E%3Crect width='1400' height='900' filter='url(%23c)'/%3E%3C/svg%3E");
+ animation:dragonDriftNear 86s linear infinite;
+}
+
+/* Glow behind the creature, breathing with the fire in its tail. */
+.dragon-aura{
+ position:absolute;right:-12vw;bottom:-18vh;width:74vw;height:86vh;
+ background:var(--d-aura);
+ animation:dragonBreathe 9s ease-in-out infinite alternate;
+ will-change:opacity,transform;
+}
+
+.dragon-figure{
+ position:absolute;right:-1vw;bottom:-11vh;height:min(115vh,1180px);width:auto;
+ opacity:var(--d-fig-opacity);
+ transform:translate3d(var(--d-shift-x),var(--d-shift-y),0);
+ will-change:transform;
+}
+.dragon-fx{position:absolute;inset:0;width:100%;height:100%}
+/* Shafts of light raking down from the fire, only warm enough to read in the light theme. */
+.dragon-rays{
+ background:repeating-linear-gradient(102deg,transparent 0 38px,rgba(255,236,206,.5) 38px 74px,transparent 74px 132px);
+ -webkit-mask-image:radial-gradient(90% 80% at 88% 8%,rgba(0,0,0,.9),transparent 68%);
+ mask-image:radial-gradient(90% 80% at 88% 8%,rgba(0,0,0,.9),transparent 68%);
+ opacity:var(--d-ray-opacity,0);filter:blur(9px);
+}
+:root[data-theme=light]{--d-ray-opacity:.5}
+
+/* Readability wash. Heaviest on the left, where the hero figure and headings live,
+   thinning toward the creature so the art keeps its drama. */
+.dragon-scrim{
+ background:var(--d-scrim),radial-gradient(140% 110% at 50% 50%,transparent 42%,var(--d-vignette) 100%);
+}
+
+@keyframes dragonDriftFar{from{transform:translate3d(0,0,0)}to{transform:translate3d(-16%,-2%,0)}}
+@keyframes dragonDriftNear{from{transform:translate3d(0,0,0)}to{transform:translate3d(-22%,3%,0)}}
+@keyframes dragonBreathe{from{opacity:.72;transform:scale(.96)}to{opacity:1;transform:scale(1.05)}}
+
+/* A busier backdrop needs a little more body behind the glass, or the fire ring bleeds
+   through card interiors and takes secondary text below contrast. The veil sits under the
+   existing panel tint, so the cards keep their translucency. */
+:root[data-dragon-bg=on] :is(.card,.hero-card,.subscription-row,.review-strip){
+ background:linear-gradient(var(--d-card-veil),var(--d-card-veil)),var(--panel)!important;
+}
+
+/* The twin-dragon backdrop supersedes the Sarah forest loop; video-background.js
+   stands down while it is on. Clear data-dragon-bg to bring the forest back. */
+:root[data-dragon-bg=on] .sarah-video-layer{display:none}
+
+/* Optional Seedance render, dropped in through dragon-background.json.
+   It replaces the procedural sky and creature; the effects canvas stays on top. */
+.dragon-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 900ms ease}
+.dragon-video.playing{opacity:1}
+.dragon-bg.video-playing :is(.dragon-cloud,.dragon-aura,.dragon-figure,.dragon-rays,.dragon-haze){opacity:0;transition:opacity 900ms ease}
+
+@media(max-width:700px){
+ /* On a phone the creature is atmosphere behind scrolling content, never a shape over it. */
+ .dragon-figure{height:56vh;right:-24vw;bottom:-9vh}
+ :root[data-theme=light]{--d-fig-opacity:.6;--d-rim-line:.34}
+ :root[data-theme=dark]{--d-fig-opacity:.58;--d-rim-line:.6}
+ .dragon-aura{width:120vw;height:56vh;right:-24vw}
+ :root[data-theme=light]{--d-scrim:linear-gradient(168deg,rgba(255,251,244,.9),rgba(255,246,235,.76) 60%,rgba(255,240,226,.6))}
+ :root[data-theme=dark]{--d-scrim:linear-gradient(168deg,rgba(6,7,12,.88),rgba(7,9,16,.76) 60%,rgba(9,11,22,.6))}
+}
+
+/* Stillness settings keep the full composition and drop only the motion. */
+html[data-motion-paused=true] .dragon-bg :is(.dragon-cloud,.dragon-aura){animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){
+ .dragon-bg{transition:none}
+ .dragon-bg :is(.dragon-cloud,.dragon-aura){animation:none!important}
+ .dragon-video{display:none}
+}
