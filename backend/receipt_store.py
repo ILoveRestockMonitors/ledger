@@ -755,7 +755,7 @@ def manual_update(transaction_id, patch):
     update escape hatch.
     """
     _ensure()
-    allowed = {"category_id", "name", "note", "scope", "recurring", "is_transfer"}
+    allowed = {"category_id", "name", "note", "scope", "recurring", "is_transfer", "amount", "posted"}
     if not isinstance(patch, dict) or any(k not in allowed for k in patch):
         raise ValueError("unsupported transaction edit")
     if "name" in patch and (not isinstance(patch["name"], str) or len(patch["name"]) > 300):
@@ -765,7 +765,10 @@ def manual_update(transaction_id, patch):
     c = db._conn()
     try:
         c.execute("BEGIN IMMEDIATE")
-        _tx(c, transaction_id)
+        transaction = _tx(c, transaction_id)
+        financial_fields = {"amount", "posted"}.intersection(patch)
+        if financial_fields and (transaction.get("account_id") is not None or transaction.get("plaid_transaction_id")):
+            raise ValueError("Only cash / manual transaction amounts and dates can be changed.")
         fields, args = [], []
         for key, value in patch.items():
             if key == "category_id" and value:
@@ -773,6 +776,18 @@ def manual_update(transaction_id, patch):
                     raise ValueError("category not found")
             if key == "scope" and value not in ("personal", "business"):
                 raise ValueError("scope must be personal or business")
+            if key == "amount":
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value == 0:
+                    raise ValueError("amount must be a non-zero number")
+            if key == "posted":
+                if not isinstance(value, str):
+                    raise ValueError("posted must be a date")
+                try:
+                    posted = date.fromisoformat(value)
+                except ValueError:
+                    raise ValueError("posted must be a date")
+                if posted > date.today():
+                    raise ValueError("transaction date cannot be in the future")
             if key in ("recurring", "is_transfer"):
                 if isinstance(value, bool):
                     value = int(value)
@@ -795,7 +810,7 @@ def manual_update(transaction_id, patch):
             if "category_id" in patch:
                 c.execute("UPDATE receipt_allocations SET active=0,updated_at=? WHERE transaction_id=?", (_now(), transaction_id))
                 c.execute("UPDATE receipt_jobs SET status='dismissed',receipt_order_id=NULL,message=?,updated_at=? WHERE transaction_id=? AND status='applied'", ("Receipt itemization superseded by a manual category.", _now(), transaction_id))
-            if any(key in patch for key in ("scope", "is_transfer")):
+            if any(key in patch for key in ("scope", "is_transfer", "amount", "posted")):
                 invalidate_transaction(transaction_id, conn=c)
         c.commit()
         return db.q1("SELECT * FROM transactions WHERE id=?", (transaction_id,))

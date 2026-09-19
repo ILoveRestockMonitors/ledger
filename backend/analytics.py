@@ -76,11 +76,13 @@ def overview(scope=None):
 
 def net_worth_series(months=12, scope=None):
     """End-of-month balance per account type, reconstructed from current
-    balances minus transaction flows since each month end."""
+    balances minus later flows, preserving history across archive transitions."""
     rows = q("SELECT id, balance FROM accounts WHERE archived=0" + (" AND scope=?" if scope else ""), (scope,) if scope else ())
     total_bal = sum(r["balance"] for r in rows)
+    # Account-free cash entries affect spending, but intentionally do not move
+    # a tracked balance and therefore must not reshape balance history.
     tx = q(
-        "SELECT posted, SUM(amount) a FROM transactions WHERE pending=0 AND is_transfer=0 AND posted<=date('now','localtime') "
+        "SELECT posted, SUM(amount) a FROM transactions WHERE account_id IS NOT NULL AND pending=0 AND is_transfer=0 AND posted<=date('now','localtime') "
         + ("AND scope=?" if scope else "")
         + " GROUP BY posted",
         (scope,) if scope else (),
@@ -88,11 +90,19 @@ def net_worth_series(months=12, scope=None):
     by_day = defaultdict(float)
     for t in tx:
         by_day[t["posted"]] += t["a"]
+    archive_events = q(
+        "SELECT occurred_on,SUM(balance_cents) balance_cents FROM account_archive_events"
+        + (" WHERE scope=?" if scope else "") + " GROUP BY occurred_on",
+        (scope,) if scope else (),
+    )
     out = []
     for y, m in month_list(months):
         eom = date(y + (m == 12), (m % 12) + 1, 1).isoformat()  # first of next month
         future_flow = sum(a for d, a in by_day.items() if d >= eom)
-        out.append({"month": f"{y}-{m:02d}", "balance": round(total_bal - future_flow, 2)})
+        # Archiving changes today's included balance, not an earlier month's
+        # estimate. Restoring records the opposite adjustment at its own date.
+        archive_adjustment = sum(event["balance_cents"] for event in archive_events if event["occurred_on"] >= eom) / 100
+        out.append({"month": f"{y}-{m:02d}", "balance": round(total_bal - future_flow + archive_adjustment, 2)})
     out[-1]["balance"] = round(total_bal, 2)
     return out
 
@@ -143,8 +153,9 @@ def category_breakdown(scope=None, days=90, kind="expense"):
 
 # ---------------- budgets ----------------
 
-def budget_status():
-    s, e = month_bounds()
+def budget_status(month=None):
+    import budget_overview
+    s, e = budget_overview.month_bounds(month)
     budgets = q("""SELECT b.*, c.name cat_name, c.icon cat_icon
                    FROM budgets b LEFT JOIN categories c ON b.category_id=c.id""")
     out = []

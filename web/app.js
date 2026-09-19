@@ -9,11 +9,14 @@ const state = {
 };
 
 async function api(path, opts = {}) {
+  if (LedgerDemo.active && path === '/config' && (opts.method || 'GET').toUpperCase() === 'POST') {
+    return LedgerDemo.savePreferences(opts.body);
+  }
   const { body, ...rest } = opts;
   const payload = body === undefined || body === null ? undefined
     : typeof body === "string" ? body            // already serialized
     : JSON.stringify(body);                      // plain object
-  const res = await fetch("/api" + path, {
+  const res = await fetch(LedgerDemo.url(path), {
     headers: { "Content-Type": "application/json", "X-Ledger-Request": "1" },
     ...rest,
     body: payload,
@@ -21,7 +24,7 @@ async function api(path, opts = {}) {
   const ct = res.headers.get("content-type") || "";
   const data = ct.includes("json") ? await res.json() : await res.text();
   if (!res.ok) throw new Error((data && data.error) || `HTTP ${res.status}`);
-  return data;
+  return path === "/config" ? LedgerDemo.config(data) : data;
 }
 
 function fmtDate(iso) {

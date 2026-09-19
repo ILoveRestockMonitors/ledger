@@ -78,7 +78,8 @@ def _snapshot():
     with _state_lock:
         current = dict(_state)
     try:
-        current["items"] = db.q("SELECT * FROM sync_state ORDER BY item_id")
+        active_ids = {row["id"] for row in _items()}
+        current["items"] = [row for row in db.q("SELECT * FROM sync_state ORDER BY item_id") if row["item_id"] in active_ids]
     except Exception:
         current["items"] = []
     current["interval_minutes"] = _interval_minutes()
@@ -115,7 +116,11 @@ def _set_item(item_id, status, started=None, finished=None, added=0, error=None)
 def _items():
     # Selecting only rows with access tokens ensures demo/manual records never
     # invoke a network client.  Token values are not copied into result data.
-    return db.q("SELECT id FROM items WHERE access_token IS NOT NULL AND access_token <> '' ORDER BY id")
+    return db.q("""SELECT i.id FROM items i
+        WHERE i.access_token IS NOT NULL AND i.access_token <> ''
+          AND (EXISTS(SELECT 1 FROM accounts a WHERE a.item_id=i.id AND a.archived=0)
+               OR NOT EXISTS(SELECT 1 FROM accounts a WHERE a.item_id=i.id))
+        ORDER BY i.id""")
 
 
 def sync_all():

@@ -59,3 +59,39 @@
     isolation: isolate;
   }
 }
+
+/* An independently composited header and solid inset guard for iOS scrolling. */
+@media (max-width: 700px) {
+  html:root[data-review-mode] body > #topbar {
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  html:root[data-review-mode] body > #topbar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--bg);
+    pointer-events: none;
+  }
+}
+
+/* Clip page scrolling to the space between the two viewport-mounted bars. */
+@media (max-width: 700px) {
+  html:root body { height: 100dvh; overflow: hidden; }
+  html:root #app { height: 100dvh; min-height: 0; }
+  html:root #main {
+    position: fixed;
+    top: var(--mobile-header-height);
+    bottom: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom-gap));
+    left: 0; right: 0;
+    min-height: 0;
+    padding-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    scroll-padding-top: 12px;
+  }
+  html:root #view { flex-shrink: 0; }
+}

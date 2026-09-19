@@ -7,6 +7,20 @@
   const add = document.getElementById('mobile-add');
   if (!sidebar || !main || !menu || !add) return;
 
+  // Like bottom navigation, keep the phone header outside scrolling app content.
+  const topbar = document.getElementById('topbar');
+  const headerHome = document.createComment('desktop header position');
+  topbar?.before(headerHome);
+  function placeHeader() {
+    if (!topbar) return;
+    if (media.matches) document.body.append(topbar);
+    else headerHome.after(topbar);
+  }
+  placeHeader();
+  const pageView = document.getElementById('view');
+  if (pageView) new MutationObserver(() => { if (media.matches) main.scrollTop = 0; }).observe(pageView, {childList:true});
+  media.addEventListener('change', placeHeader);
+
   const closeButton = document.createElement('button');
   closeButton.type = 'button';
   closeButton.className = 'mobile-drawer-close';
@@ -40,6 +54,7 @@
     more.setAttribute('aria-expanded', String(active));
     sidebar.inert = media.matches && !active;
     main.inert = active;
+    if (topbar) topbar.inert = active || modalOpen();
     add.inert = active || modalOpen();
     bottom.inert = active || modalOpen();
     if (media.matches) sidebar.setAttribute('aria-hidden', String(!active));
@@ -82,6 +97,7 @@
     }
   });
   function updateRoute() {
+    if (media.matches) main.scrollTop = 0;
     const page = location.hash.slice(1) || 'overview';
     bottom.querySelectorAll('[data-mobile-page]').forEach(link => {
       if (link.dataset.mobilePage === page) link.setAttribute('aria-current', 'page');
@@ -95,6 +111,7 @@
     toggleClass('modal-active', modal);
     if (drawerOpen && (auth || modal || !document.body.classList.contains('nav-open'))) setDrawer(false, !modal);
     bottom.inert = drawerOpen || modal || auth;
+    if (topbar) topbar.inert = drawerOpen || modal || auth;
   }
   new MutationObserver(reconcile).observe(document.body, {childList: true, subtree: true});
   new MutationObserver(reconcile).observe(document.body, {attributes: true, attributeFilter: ['class']});

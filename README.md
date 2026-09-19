@@ -2,6 +2,8 @@ Sarah’s non-rent spending card and mobile navigation polish: [details](docs/SA
 
 Latest mobile polish: [V2.0.2](docs/MOBILE-V2.0.2.md).
 
+Account-free cash/manual transactions: [usage and validation](docs/CASH-TRANSACTIONS.md).
+
 # Ledger V2
 
 V2.0.1 includes verified web/mobile QA corrections. See [QA details](docs/QA-V2.md).
@@ -24,7 +26,9 @@ python3 backend/server.py
 
 Open <http://127.0.0.1:8907/> and create your owner password. Your data stays in `backend/data/` unless `LEDGER_DATA_DIR` points elsewhere. Keep data outside the source directory for a permanent installation.
 
-For a separate preview with synthetic data and bank/cancellation actions disabled:
+Use **Demo version** in the sidebar (or **More** on a phone) to show curated fictional finances in the same app. It keeps your records separate, stays active on reload, and includes a **Return to my Ledger** control. See [demo usage and validation](docs/DEMO-VERSION.md).
+
+For the older standalone preview server with synthetic data and bank/cancellation actions disabled:
 
 ```bash
 LEDGER_DATA_DIR=/tmp/ledger-demo LEDGER_DEMO=1 LEDGER_PORT=18907 python3 backend/server.py
@@ -35,7 +39,7 @@ Open <http://127.0.0.1:18907/>. Use a dedicated demo directory; sample data must
 ## What is included
 
 - A home dashboard with monthly spending, pending and expected charges, net worth, recent activity, upcoming payments, and quick transaction entry.
-- Manual accounts and transactions; account balances update when manual transactions are entered or deleted. Transfers stay out of income and spending totals.
+- Manual accounts and account-free cash transactions. Account-backed entries update their selected manual account; cash/manual entries appear in budgets, reports, cash flow, category rules and exports without changing an account balance or net-worth history. Transfers stay out of income and spending totals.
 - Plaid Link in Sandbox or Production, bank reconnection, incremental transaction syncing, and background sync status. Plaid credentials are saved on the server and redacted from API responses.
 - Persistent subscriptions with cadence, next payment, billing channel, management links, notes, and cancellation state. Recurring charges become review candidates when uncertain; known subscription price changes get a separate review.
 - Monthly subscription reconciliation that counts actual payments and remaining expected commitments without counting both for the same due payment.

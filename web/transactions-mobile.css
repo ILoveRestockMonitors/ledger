@@ -1,0 +1,49 @@
+/* Transaction-specific phone layout; the desktop table stays intact. */
+.tx-filter-toggle,.tx-note-mobile,.tx-edit-label{display:none}
+.tx-advanced-filters{display:contents}
+@media(max-width:700px){
+  html:root #view .transaction-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  html:root #view .transaction-filters #tx-search{flex:1 1 0;min-width:0;width:0;font-size:16px;margin:0}
+  html:root #view .tx-filter-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:44px}
+  html:root #view .tx-advanced-filters{display:none;width:100%;min-width:0}
+  html:root #view .tx-filters-expanded .tx-advanced-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  html:root #view .tx-advanced-filters .input{width:100%;min-width:0;max-width:100%;margin:0;font-size:16px}
+  html:root #view .tx-advanced-filters .transaction-date{display:grid;gap:5px;min-width:0;font-size:11px;color:var(--muted)}
+  html:root #view .tx-result-count{width:100%;font-size:12px;letter-spacing:.02em;padding:0 2px}
+  html:root #view .tx-list-card{padding:0!important;overflow:hidden}
+  html:root #view .tx-list-card>.table-wrap{overflow:visible;width:100%;max-width:100%}
+  html:root #view table.tx-table{display:block;width:100%;min-width:0!important;max-width:100%;table-layout:auto}
+  html:root #view .tx-table thead{display:none}
+  html:root #view .tx-table tbody{display:block;width:100%}
+  html:root #view .tx-table .tx-row{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:'name amount' 'date date' 'account account' 'category category' 'scope actions';
+    gap:5px 12px;padding:18px 16px;border-bottom:1px solid var(--border-soft);
+  }
+  html:root #view .tx-table .tx-row:last-child{border-bottom:0}
+  html:root #view .tx-table .tx-row>td{
+    display:block;min-width:0;width:auto;max-width:none;padding:0!important;border:0!important;
+    background:transparent!important;word-break:normal;overflow-wrap:break-word;white-space:normal;
+  }
+  html:root #view .tx-table .tx-name{grid-area:name;font-size:15px;line-height:1.45;color:var(--text)}
+  html:root #view .tx-table .tx-name>b{font-weight:650;word-break:normal;overflow-wrap:anywhere}
+  html:root #view .tx-table .tx-amount{grid-area:amount;align-self:start;white-space:nowrap;font-size:15px;line-height:1.45;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  html:root #view .tx-table .tx-date{grid-area:date;font-size:11px;line-height:1.4;margin-top:1px}
+  html:root #view .tx-table .tx-account{grid-area:account;font-size:12px;line-height:1.5}
+  html:root #view .tx-table .tx-category{grid-area:category;margin-top:4px;font-size:12px;line-height:1.5}
+  html:root #view .tx-category .cat-chip{white-space:normal;display:inline-block;max-width:100%;padding:4px 8px;border-radius:7px;background:var(--soft-accent);font-size:12px}
+  html:root #view .tx-table .tx-scope{grid-area:scope;align-self:end;margin-top:6px}
+  html:root #view .tx-scope .cat-select{min-height:44px;max-width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid var(--border-soft);background:var(--bg-soft);color:var(--text)}
+  html:root #view .tx-table .tx-actions{grid-area:actions;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;margin-top:6px;max-width:170px}
+  html:root #view .tx-actions .btn{min-height:44px;padding:8px 12px;font-size:12px;white-space:normal;line-height:1.35}
+  html:root #view .tx-edit-icon,.tx-note-desktop{display:none}
+  html:root #view .tx-edit-label{display:inline}
+  html:root #view .tx-note-mobile{display:block;font-size:12px;margin-top:5px;color:var(--muted)}
+  html:root #view .tx-note-mobile summary{cursor:pointer;min-height:32px;padding:6px 0}
+  html:root #view .tx-note-mobile p{margin:3px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+  html:root #view .tx-name .receipt-original{font-size:11px;line-height:1.45;margin-top:4px}
+  html:root #view .tx-name .tag{font-size:10px;display:inline-block;margin:6px 4px 0 0}
+  html:root #view .tx-pagination{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;margin-top:0;border-top:1px solid var(--border-soft)}
+  html:root #view .tx-pagination>span{font-size:11px}
+  html:root #view .tx-empty,html:root #view .tx-empty>td{display:block;width:100%}
+}

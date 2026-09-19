@@ -46,7 +46,7 @@
     return false;
   }
   main.addEventListener('touchstart', event => {
-    if (blocked() || event.touches.length !== 1 || window.scrollY > 1 ||
+    if (blocked() || event.touches.length !== 1 || Math.max(window.scrollY, main.scrollTop) > 1 ||
         !(event.target instanceof Element) || event.target.closest(ignored) || nestedScroller(event.target)) return;
     clearTimeout(settleTimer);
     root.removeAttribute('data-pull-settling');
@@ -60,7 +60,7 @@
     const dx = event.touches[0].clientX - gesture.x;
     const dy = event.touches[0].clientY - gesture.y;
     if (!gesture.claimed) {
-      if (Math.abs(dx) > Math.abs(dy) || dy < 0 || window.scrollY > 1) { gesture = null; return; }
+      if (Math.abs(dx) > Math.abs(dy) || dy < 0 || Math.max(window.scrollY, main.scrollTop) > 1) { gesture = null; return; }
       if (dy < 3) return;
       gesture.claimed = true;
       root.setAttribute('data-pull-active', '');

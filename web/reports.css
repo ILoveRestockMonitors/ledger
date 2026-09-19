@@ -29,8 +29,8 @@
 .report-detail > summary > span { font-family:'Avenir Next',system-ui,sans-serif; font-size:11px; color:var(--muted); margin-left:10px; }
 .report-detail[open] > summary { margin-bottom:18px; }
 .report-table-wrap { max-width:100%; }
-.report-matrix { min-width:1450px; }
-.report-matrix th:first-child { position:sticky; left:0; z-index:1; background:var(--panel); min-width:155px; white-space:normal; }
+.report-matrix { min-width:1450px; border-collapse:separate; border-spacing:0; }
+.report-matrix th:first-child { position:sticky; left:0; z-index:1; background:var(--bg-soft); width:155px; min-width:155px; max-width:155px; white-space:normal; overflow-wrap:anywhere; box-shadow:1px 0 var(--border); }
 .report-matrix tbody th { font-size:12px; text-transform:none; letter-spacing:0; font-weight:500; }
 .report-matrix tr > * + * { border-left:var(--rule-width,1px) solid var(--border-soft); }
 .report-matrix .report-category-total > * { background:var(--bg-soft); border-bottom:var(--rule-width,1px) solid var(--border); }

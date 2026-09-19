@@ -28,6 +28,9 @@ import receipt_store
 import receipt_service
 import cancellations
 import scheduler
+import demo_preview
+import category_rules
+import category_picker
 from db import q, q1, ex
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -141,6 +144,8 @@ class Handler(BaseHTTPRequestHandler):
             if not path.startswith("/api/"):
                 if method == "GET": return self._static(path)
                 raise ApiError(404, "Not found.")
+            if path.startswith("/api/preview/"):
+                return self._preview(method, path[len("/api/preview"):])
             if method == "GET": return self._api(method, path)
             if method == "POST": return self._api_post(path, self._body())
             if method == "DELETE": return self._api_delete(path)
@@ -157,6 +162,30 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self): self._dispatch("GET")
     def do_POST(self): self._dispatch("POST")
     def do_DELETE(self): self._dispatch("DELETE")
+
+    def _preview(self, method, route):
+        # Explicit allowlist: new API features cannot silently reach live data,
+        # credentials, workers or writes through the demo surface.
+        if not ((method == "GET" and route in demo_preview.READ_PATHS)
+                or (method == "POST" and route == "/projections")):
+            raise ApiError(403, "Demo version is read-only. Financial changes, bank syncing and assistants are off.")
+        body = self._body() if method == "POST" else None
+        with demo_preview.dataset():
+            if route == "/config":
+                return self._json(200, {**db.public_config(), "demo": True})
+            if route == "/sync/status":
+                return self._json(200, {"enabled": False, "items": [], "message": "Fictional accounts · bank syncing is off in demo."})
+            if route == "/cancellations": return self._json(200, [])
+            if route == "/cancellations/status":
+                return self._json(200, {"ready": False, "message": "Cancellation assistants are off in demo."})
+            if route == "/receipts":
+                return self._json(200, receipt_service.listing(demo=True))
+            if route == "/receipts/transaction":
+                detail = receipt_store.detail(self._query_params().get("id"))
+                detail["transaction"] = receipt_store.decorate_transactions([detail["transaction"]])[0]
+                return self._json(200, {**detail, "demo": True, "worker": receipt_service.status(demo=True)})
+            if method == "POST": return self._json(200, forecasts.project(body))
+            return self._api("GET", "/api" + route)
 
     # ---------------- GET API ----------------
     def _api(self, method, path):
@@ -196,6 +225,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/items":
             rows = q("""SELECT i.*, COUNT(a.id) n_accounts,
+                               SUM(CASE WHEN a.archived=0 THEN 1 ELSE 0 END) n_active_accounts,
                                COALESCE(SUM(CASE WHEN a.archived=0 THEN a.balance END),0) balance
                         FROM items i LEFT JOIN accounts a ON a.item_id=i.id
                         GROUP BY i.id ORDER BY i.created_at""")
@@ -216,7 +246,8 @@ class Handler(BaseHTTPRequestHandler):
             if qs.get("scope"):
                 where.append("t.scope=?"); args.append(qs["scope"])
             if qs.get("account_id"):
-                where.append("account_id=?"); args.append(qs["account_id"])
+                if qs["account_id"] == "__cash__": where.append("t.account_id IS NULL")
+                else: where.append("t.account_id=?"); args.append(qs["account_id"])
             if qs.get("category_id"):
                 receipt_store.init_schema()
                 where.append("(t.category_id=? OR EXISTS (SELECT 1 FROM receipt_allocations ra WHERE ra.transaction_id=t.id AND ra.category_id=? AND ra.active=1))")
@@ -283,7 +314,18 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(400, str(e))
 
         if path == "/api/budgets":
-            return self._json(200, analytics.budget_status())
+            try:
+                return self._json(200, analytics.budget_status(self._query_params().get("month")))
+            except ValueError as e:
+                raise ApiError(400, str(e))
+
+        if path == "/api/budgets/overview":
+            import budget_overview
+            qs = self._query_params()
+            try:
+                return self._json(200, budget_overview.overview(qs.get("month"), qs.get("scope") or None))
+            except ValueError as e:
+                raise ApiError(400, str(e))
 
         if path == "/api/subscriptions":
             return self._json(200, subscriptions.listing(self._query_params().get("scope")))
@@ -295,7 +337,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, analytics.business_summary())
 
         if path == "/api/export/transactions.csv":
-            rows = q("""SELECT t.id, t.posted, t.scope, a.name account, COALESCE(c.name,'') category,
+            rows = q("""SELECT t.id, t.posted, t.scope, COALESCE(a.name,'Cash / manual') account, COALESCE(c.name,'') category,
                                t.name, t.merchant, t.amount, t.recurring, t.note
                         FROM transactions t LEFT JOIN accounts a ON t.account_id=a.id
                         LEFT JOIN categories c ON t.category_id=c.id ORDER BY t.posted""")
@@ -450,8 +492,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/accounts/archive":
             aid = b.get("id")
-            changed, _ = ex("UPDATE accounts SET archived=? WHERE id=?", (0 if b.get("restore") else 1, aid))
-            if not changed: raise ApiError(404, "Account not found.")
+            if not q1("SELECT 1 FROM accounts WHERE id=?", (aid,)): raise ApiError(404, "Account not found.")
+            plaid_client.archive_account(aid, restore=bool(b.get("restore")))
             return self._json(200, {"ok": True})
 
         if path == "/api/demo/seed":
@@ -486,9 +528,13 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/transactions":
             tx = b.get("transaction") or {}
-            acct = q1("SELECT * FROM accounts WHERE id=? AND archived=0", (tx.get("account_id"),))
-            if not acct: raise ValueError("Choose an active account.")
-            tx["scope"] = acct["scope"]
+            account_id = tx.get("account_id")
+            acct = q1("SELECT * FROM accounts WHERE id=? AND archived=0", (account_id,)) if account_id else None
+            if account_id and not acct: raise ValueError("Choose an active account.")
+            if acct:
+                tx["scope"] = acct["scope"]
+            elif tx.get("scope") not in ("personal", "business"):
+                raise ValueError("Choose personal or business for a cash transaction.")
             tx["amount"] = number(tx.get("amount"),-1e12,1e12)
             if not tx["amount"]: raise ValueError("Enter a non-zero amount.")
             posted = tx.get("posted") or date.today().isoformat()
@@ -497,24 +543,44 @@ class Handler(BaseHTTPRequestHandler):
             tx["name"] = str(tx.get("name") or "Manual entry")[:200]
             tx["merchant"] = str(tx.get("merchant") or tx["name"])[:200]
             tx["note"] = str(tx.get("note") or "")[:2000]
+            explicit_category = bool(tx.get("category_id"))
+            tx["category_override"] = int(explicit_category)
+            if not explicit_category:
+                suggestion = category_rules.match(tx) or category_picker.choose(tx)
+                if suggestion: tx["category_id"] = suggestion["category_id"]
             tid = f"tx_{uuid.uuid4().hex[:16]}"
             now = datetime.now().isoformat(timespec="seconds")
             c = db._conn()
             try:
                 with c:
                     c.execute("""INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,category_id,pending,recurring,note,plaid_transaction_id,created_at,is_transfer,category_override)
-                      VALUES(?,?,?,?,?,?,?,?,0,0,?,NULL,?,?,?)""", (tid,acct["id"],acct["scope"],tx["amount"],posted,tx["name"],tx["merchant"],tx.get("category_id"),tx["note"],now,int(bool(tx.get("is_transfer"))),int(bool(tx.get("category_id")))))
-                    if not acct.get("item_id"): c.execute("UPDATE accounts SET balance=balance+? WHERE id=?",(tx["amount"],acct["id"]))
+                      VALUES(?,?,?,?,?,?,?,?,0,0,?,NULL,?,?,?)""", (tid,acct["id"] if acct else None,tx["scope"],tx["amount"],posted,tx["name"],tx["merchant"],tx.get("category_id"),tx["note"],now,int(bool(tx.get("is_transfer"))),int(explicit_category)))
+                    if acct and not acct.get("item_id"): c.execute("UPDATE accounts SET balance=balance+? WHERE id=?",(tx["amount"],acct["id"]))
             finally: c.close()
             _scan_safely()
             return self._json(200, {"ok": True, "id": tid})
+
+        if path == "/api/transactions/category-preview":
+            return self._json(200, category_rules.preview(b.get("id"), b.get("category_id")))
+        if path == "/api/transactions/category-apply":
+            return self._json(200, category_rules.apply(b.get("preview_id"), b.get("remember", False)))
+        if path == "/api/transactions/category-undo":
+            return self._json(200, category_rules.undo(b.get("batch_id")))
 
         if path == "/api/transactions/update":
             tid = b.get("id")
             if not tid or not q1("SELECT 1 FROM transactions WHERE id=?", (tid,)):
                 raise ApiError(404, "transaction not found")
-            fields = ("category_id", "name", "note", "scope", "recurring", "is_transfer")
-            receipt_store.manual_update(tid, {key: b[key] for key in fields if key in b})
+            fields = ("category_id", "name", "note", "scope", "recurring", "is_transfer", "amount", "posted")
+            patch = {key: b[key] for key in fields if key in b}
+            if "amount" in patch:
+                patch["amount"] = number(patch["amount"], -1e12, 1e12)
+                if not patch["amount"]: raise ValueError("Enter a non-zero amount.")
+            if "posted" in patch:
+                posted = date.fromisoformat(str(patch["posted"]))
+                if posted > date.today(): raise ValueError("Transactions need today or an earlier date.")
+                patch["posted"] = posted.isoformat()
+            receipt_store.manual_update(tid, patch)
             return self._json(200, {"ok": True})
 
         if path == "/api/budgets":
@@ -617,6 +683,7 @@ def main():
     subscriptions.init_schema()
     cancellations.init_schema()
     receipt_store.init_schema()
+    category_rules.init_schema()
     scheduler.init_schema()
     if DEMO:
         if q1("SELECT 1 FROM items WHERE access_token IS NOT NULL"): raise RuntimeError("Use a separate empty data directory for demo mode.")

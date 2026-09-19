@@ -1,0 +1,22 @@
+/* The approved Ledger mark is shared across every personal theme. */
+html body .ledger-mark {
+  display: inline-block !important;
+  width: 36px !important;
+  height: 36px !important;
+  flex: 0 0 36px !important;
+  background: url('/ledger-logo-20260914-quiet-l-aurora.png') center / contain no-repeat !important;
+  border: 0 !important;
+  border-radius: 22% !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  overflow: hidden;
+  vertical-align: middle;
+}
+html body .ledger-mark > * { display: none !important; }
+html body .auth-card .ledger-mark {
+  width: 64px !important;
+  height: 64px !important;
+  flex-basis: 64px !important;
+}

@@ -9,11 +9,31 @@ import os
 import sqlite3
 import tempfile
 import threading
+import uuid
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 
 DATA_DIR = os.path.abspath(os.environ.get("LEDGER_DATA_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")))
 DB_PATH = os.path.join(DATA_DIR, "ledger.db")
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
+
+# Request-local storage selection. Background workers retain the live defaults.
+_data_context = ContextVar("ledger_data_context", default=None)
+
+
+@contextmanager
+def isolated_data(directory):
+    token = _data_context.set((directory, os.path.join(directory, "ledger.db"), os.path.join(directory, "config.json")))
+    try:
+        yield
+    finally:
+        _data_context.reset(token)
+
+
+def _paths():
+    return _data_context.get() or (DATA_DIR, DB_PATH, CONFIG_PATH)
 
 DEFAULT_CONFIG = {
     "plaid_client_id": "",
@@ -39,10 +59,11 @@ DEFAULT_CONFIG = {
 
 
 def _conn():
-    os.makedirs(DATA_DIR, mode=0o700, exist_ok=True)
-    os.chmod(DATA_DIR, 0o700)
-    c = sqlite3.connect(DB_PATH, timeout=30)
-    os.chmod(DB_PATH, 0o600)
+    directory, database, _ = _paths()
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    os.chmod(directory, 0o700)
+    c = sqlite3.connect(database, timeout=30)
+    os.chmod(database, 0o600)
     c.row_factory = sqlite3.Row
     c.execute("PRAGMA journal_mode=WAL")
     c.execute("PRAGMA foreign_keys=ON")
@@ -51,9 +72,10 @@ def _conn():
 
 def get_config():
     cfg = dict(DEFAULT_CONFIG)
-    if os.path.exists(CONFIG_PATH):
+    config_path = _paths()[2]
+    if os.path.exists(config_path):
         try:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 cfg.update(json.load(f))
         except Exception:
             pass
@@ -73,18 +95,19 @@ def public_config():
 
 def save_config(patch):
     with _config_lock:
-        os.makedirs(DATA_DIR, mode=0o700, exist_ok=True)
+        directory, _, config_path = _paths()
+        os.makedirs(directory, mode=0o700, exist_ok=True)
         cfg = get_config()
         clean = {k: v for k, v in patch.items() if k in DEFAULT_CONFIG}
         for key in ("plaid_client_id", "plaid_secret"):
             if not clean.get(key): clean.pop(key, None)
         cfg.update(clean)
-        fd, tmp = tempfile.mkstemp(dir=DATA_DIR, prefix="config-")
+        fd, tmp = tempfile.mkstemp(dir=directory, prefix="config-")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 json.dump(cfg, f, indent=2)
                 f.flush(); os.fsync(f.fileno())
-            os.replace(tmp, CONFIG_PATH)
+            os.replace(tmp, config_path)
         finally:
             if os.path.exists(tmp): os.unlink(tmp)
         return public_config()
@@ -116,6 +139,15 @@ CREATE TABLE IF NOT EXISTS accounts (
   archived       INTEGER NOT NULL DEFAULT 0,
   created_at     TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS account_archive_events (
+  id            TEXT PRIMARY KEY,
+  account_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  scope         TEXT NOT NULL CHECK(scope IN ('business','personal')),
+  occurred_on   TEXT NOT NULL,
+  balance_cents INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_account_archive_events_date ON account_archive_events(occurred_on,scope);
 
 CREATE TABLE IF NOT EXISTS categories (
   id    TEXT PRIMARY KEY,
@@ -223,6 +255,27 @@ def seed_categories(c):
 
 # ---------- query helpers ----------
 
+def set_account_archived(conn, account_id, archived):
+    """Record an archive transition without changing earlier net-worth points.
+
+    The caller owns the transaction and bank-sync lock. Existing archived
+    accounts get no inferred event, and repeated requests remain no-ops.
+    """
+    account = conn.execute("SELECT archived,balance,scope FROM accounts WHERE id=?", (account_id,)).fetchone()
+    if account is None:
+        return False
+    target = int(bool(archived))
+    if account["archived"] == target:
+        return True
+    balance_cents = int(Decimal(str(account["balance"])).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) * 100)
+    conn.execute("""INSERT INTO account_archive_events(id,account_id,scope,occurred_on,balance_cents)
+                    VALUES(?,?,?,?,?)""",
+                 ("archive_" + uuid.uuid4().hex, account_id, account["scope"], date.today().isoformat(),
+                  balance_cents if target else -balance_cents))
+    conn.execute("UPDATE accounts SET archived=? WHERE id=?", (target, account_id))
+    return True
+
+
 def q(sql, args=()):
     c = _conn()
     try: return [dict(x) for x in c.execute(sql, args).fetchall()]
@@ -254,7 +307,7 @@ def reset_all():
     """Wipe transactions/accounts/items/budgets/goals (keep config+categories)."""
     c = _conn()
     tables = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type=\'table\'")}
-    for t in ("receipt_allocations", "receipt_jobs", "cancellation_events", "cancellation_jobs", "subscription_events", "subscription_matches", "subscription_learning", "subscriptions", "sync_state", "transactions", "budgets", "goals", "accounts", "items"):
+    for t in ("transaction_category_rules", "category_edit_previews", "category_edit_batches", "category_picker_audit", "subscription_quarantine", "subscription_repair_runs", "transaction_account_aliases", "transaction_quarantine", "transaction_repair_runs", "receipt_allocations", "receipt_jobs", "cancellation_events", "cancellation_jobs", "subscription_events", "subscription_matches", "subscription_learning", "subscriptions", "sync_state", "transactions", "budgets", "goals", "account_archive_events", "accounts", "items"):
         if t not in tables: continue
         c.execute(f"DELETE FROM {t}")
     c.commit()
