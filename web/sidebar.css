@@ -42,12 +42,12 @@
   html.sidebar-collapsed .logo-row { justify-content: center; padding-left: 0; padding-right: 0; }
   html.sidebar-collapsed .logo-name,
   html.sidebar-collapsed .nav-owner > span:not(.owner-avatar),
-  html.sidebar-collapsed .nav-label,
+  html.sidebar-collapsed #sidebar .nav-label,
   html.sidebar-collapsed .nav-count,
   html.sidebar-collapsed .nav-section,
-  html.sidebar-collapsed .sidebar-button-label,
+  html.sidebar-collapsed #sidebar .sidebar-button-label,
   html.sidebar-collapsed .foot-note,
-  html.sidebar-collapsed .more-nav-text { display: none; }
+  html.sidebar-collapsed #sidebar .more-nav-text { display: none; }
   html.sidebar-collapsed .nav-owner { justify-content: center; padding-left: 0; padding-right: 0; }
   html.sidebar-collapsed .nav-link { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; position: relative; }
   html.sidebar-collapsed .nav-icon { width: auto; }
