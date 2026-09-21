@@ -58,7 +58,12 @@
   html.sidebar-collapsed .sidebar-collapse { right: 9px; width: 29px; justify-content: center; padding-left: 0; padding-right: 0; }
   html.sidebar-collapsed .sidebar-collapse-label { display: none; }
   html.sidebar-collapsed .sidebar-collapse-icon { transform: rotate(180deg); }
-  html.sidebar-collapsed .sidebar-foot .btn { padding-left: 7px; padding-right: 7px; }
+  html.sidebar-collapsed .sidebar-foot .btn {
+    width: calc(100% - 8px);
+    justify-self: center;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
 
 }
 
