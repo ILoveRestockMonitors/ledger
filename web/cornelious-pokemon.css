@@ -237,6 +237,9 @@
   background-color:#fff4df;
   background-position:calc(100% + 9vw) center;
  }
+ :root.sidebar-collapsed[data-review-mode=aurora][data-theme=light] .cornelious-legend{
+  background-position:right center;
+ }
 }
 
 /* Soft fire ribbons replace the repeated icon sprites. Preserve the edge mask. */
