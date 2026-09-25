@@ -1,7 +1,9 @@
 .rd-home [data-home-tile][hidden],.rd-home .rd-grid[hidden]{display:none!important}
 .rd-home .home-tiles-reflow{grid-template-columns:repeat(var(--home-visible-columns),minmax(0,1fr))}
-.home-tile-controls{display:flex;justify-content:flex-end;grid-column:1/-1;margin-bottom:2px}
-.home-tile-hide{min-height:32px;padding:4px 8px;font-size:12px}
+/* Fit Hide into the existing top padding instead of adding a layout row. */
+.rd-home [data-home-tile]{position:relative}
+.home-tile-controls{position:absolute;top:0;right:12px;z-index:1;display:flex;margin:0}
+.rd-home .home-tile-hide{min-height:24px;line-height:16px;padding:4px 8px;font-size:11px}
 /* Separate home actions, with tile management to the left of Add transaction. */
 .rd-home .rd-welcome{position:relative;z-index:10;align-items:center}
 .home-tile-actions{position:relative;flex:none;display:flex;align-items:center;gap:10px}
@@ -15,6 +17,6 @@
 .home-tile-options label{display:flex;align-items:center;gap:10px;min-height:36px;color:var(--text);font-size:13px;cursor:pointer}
 .home-tile-options input{width:18px;height:18px;accent-color:var(--accent)}
 .home-tile-options>.btn{justify-self:start;grid-column:1/-1}
-@media(max-width:700px){.rd-home .home-tiles-reflow{grid-template-columns:minmax(0,1fr)}.home-tile-hide{min-height:44px}.home-tile-options label{min-height:44px}}
+@media(max-width:700px){.rd-home .home-tiles-reflow{grid-template-columns:minmax(0,1fr)}.rd-home [data-home-tile]{padding-top:24px!important}.home-tile-options label{min-height:44px}}
 
 @media(max-width:700px){.rd-home .rd-welcome{flex-wrap:wrap}.home-tile-actions{margin-left:auto;gap:8px}.home-tile-manager summary{padding:10px 12px}}
