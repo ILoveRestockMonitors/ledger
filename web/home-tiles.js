@@ -32,6 +32,7 @@
       manager.className = 'home-tile-manager';
       const summary = document.createElement('summary');
       summary.textContent = 'Manage tiles';
+      summary.className = 'btn';
       manager.append(summary);
       const options = document.createElement('div');
       options.className = 'home-tile-options';
@@ -53,7 +54,7 @@
       const actions = document.createElement('div');
       actions.className = 'home-tile-actions';
       add.before(actions);
-      actions.append(add, manager);
+      actions.append(manager, add);
     }
     for (const card of cards) {
       const id = card.dataset.homeTile;

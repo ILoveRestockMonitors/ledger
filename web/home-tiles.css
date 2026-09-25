@@ -2,12 +2,11 @@
 .rd-home .home-tiles-reflow{grid-template-columns:repeat(var(--home-visible-columns),minmax(0,1fr))}
 .home-tile-controls{display:flex;justify-content:flex-end;grid-column:1/-1;margin-bottom:2px}
 .home-tile-hide{min-height:32px;padding:4px 8px;font-size:12px}
-/* Compact split control: the secondary action sits inside the purple pill. */
-.rd-home .rd-welcome{position:relative;z-index:10;align-items:flex-start}
-.home-tile-actions{position:relative;flex:none;display:flex;flex-direction:column;min-width:156px;border-radius:24px;background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 8px 26px rgba(var(--accent-rgb),.25);color:var(--on-accent)}
-#view .home-tile-actions>.btn-primary{width:100%;min-height:44px;padding:10px 20px 8px;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:24px 24px 0 0!important}
-.home-tile-manager{margin:0 12px;border-top:1px solid color-mix(in srgb,var(--on-accent) 22%,transparent)}
-.home-tile-manager summary{cursor:pointer;list-style:none;text-align:center;min-height:30px;line-height:30px;padding:0 6px 4px;font-size:11px;font-weight:600;color:inherit}
+/* Separate home actions, with tile management to the left of Add transaction. */
+.rd-home .rd-welcome{position:relative;z-index:10;align-items:center}
+.home-tile-actions{position:relative;flex:none;display:flex;align-items:center;gap:10px}
+.home-tile-manager{margin:0}
+.home-tile-manager summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:center;gap:5px;box-sizing:border-box;min-height:44px;padding:10px 16px;font-size:12px;font-weight:600;white-space:nowrap}
 .home-tile-manager summary::-webkit-details-marker{display:none}
 .home-tile-manager summary::after{content:' ▾';font-size:10px}
 .home-tile-manager[open] summary::after{content:' ▴'}
@@ -18,4 +17,4 @@
 .home-tile-options>.btn{justify-self:start;grid-column:1/-1}
 @media(max-width:700px){.rd-home .home-tiles-reflow{grid-template-columns:minmax(0,1fr)}.home-tile-hide{min-height:44px}.home-tile-options label{min-height:44px}}
 
-@media(max-width:700px){.home-tile-manager summary{min-height:40px;line-height:36px}.home-tile-actions{min-width:140px}}
+@media(max-width:700px){.rd-home .rd-welcome{flex-wrap:wrap}.home-tile-actions{margin-left:auto;gap:8px}.home-tile-manager summary{padding:10px 12px}}
