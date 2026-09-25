@@ -208,6 +208,8 @@ def init_db():
     for name, definition in (("is_transfer", "INTEGER NOT NULL DEFAULT 0"), ("pending_transaction_id", "TEXT"), ("is_transfer_override", "INTEGER"), ("scope_override", "TEXT"), ("category_override", "INTEGER"), ("name_override", "INTEGER")):
         if name not in cols: c.execute(f"ALTER TABLE transactions ADD COLUMN {name} {definition}")
     seed_categories(c)
+    from category_consolidation import consolidate
+    consolidate(c)
     c.commit()
     c.close()
 

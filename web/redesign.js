@@ -237,25 +237,25 @@
       const reviews = [...subs.candidates.slice(0, 2).map(s => `<div class="rd-rev"><div><b>${esc(s.merchant)} looks recurring</b><small>${cash(s.amount)} · ${esc(s.cadence)} · ${esc(LABEL[s.scope] || s.scope)}</small></div><div class="rd-row-btns"><button type="button" class="btn btn-sm" data-action="dismiss-sub" data-id="${esc(s.id)}">Not recurring</button><button type="button" class="btn btn-sm btn-primary" data-action="confirm-sub" data-id="${esc(s.id)}">Track it</button></div></div>`),
         ...(subs.price_reviews || []).slice(0, 2).map(s => `<div class="rd-rev"><div><b>${esc(s.merchant)} changed price</b><small>Planned ${cash(s.amount)} · latest ${cash(s.observed_amount)}</small></div><div class="rd-row-btns"><button type="button" class="btn btn-sm" data-action="keep-price" data-id="${esc(s.id)}">Keep ${cash(s.amount)}</button><button type="button" class="btn btn-sm btn-primary" data-action="accept-price" data-id="${esc(s.id)}">Use ${cash(s.observed_amount)}</button></div></div>`)].slice(0, 2);
       insights = `
-        <section class="card rd-card">${head('Where this month’s spending went', 'Posted purchases · transfers excluded')}
+        <section class="card rd-card" data-home-tile="spending-split">${head('Where this month’s spending went', 'Posted purchases · transfers excluded')}
           <div class="rd-split" role="group" aria-label="Spending split"><button type="button" data-rd-scope="personal" data-s="personal" style="width:${(p / t * 100).toFixed(2)}%" aria-label="Personal ${cash(p)}. Show personal"></button><button type="button" data-rd-scope="business" data-s="business" style="width:${(b / t * 100).toFixed(2)}%" aria-label="Business ${cash(b)}. Show business"></button></div>
           <div class="rd-srow" data-s="personal"><i></i><span>Personal</span><b>${cash(p)}</b><small>${pct(p / t * 100)}</small><button type="button" class="link-button" data-rd-scope="personal">View</button></div>
           <div class="rd-srow" data-s="business"><i></i><span>Business</span><b>${cash(b)}</b><small>${pct(b / t * 100)}</small><button type="button" class="link-button" data-rd-scope="business">View</button></div></section>
-        <section class="card rd-card">${head('Money in, money out', 'This month, both sides together')}
+        <section class="card rd-card" data-home-tile="cashflow">${head('Money in, money out', 'This month, both sides together')}
           <div class="rd-kv"><div><small>Income</small><b class="rd-pos">${cash(ov.income_this_month)}</b></div><div><small>Spending</small><b>${cash(ov.spend_this_month)}</b></div><div><small>Saved</small><b>${cash(ov.net_this_month)}</b></div><div><small>Savings rate</small><b>${ov.savings_rate == null ? '—' : (ov.savings_rate * 100).toFixed(1) + '%'}</b></div></div></section>
-        <section class="card rd-card">${head('Needs a look', reviewCount ? reviewCount + ' to review' : 'All caught up', reviewCount > 2 ? '<button type="button" class="link-button" data-rd-page="subscriptions">All →</button>' : '')}
+        <section class="card rd-card" data-home-tile="review">${head('Needs a look', reviewCount ? reviewCount + ' to review' : 'All caught up', reviewCount > 2 ? '<button type="button" class="link-button" data-rd-page="subscriptions">All →</button>' : '')}
           ${reviews.join('') || '<p class="rd-note">Your recurring payments match your plan.</p>'}</section>`;
     } else if (scope === 'personal') {
       const rentFree = LedgerSarahBudget.totals(cats), d = ov.net_this_month - ov.prev_net;
       insights = `
-        <section class="card rd-card">${head(esc(month) + ' without rent', 'Posted spending outside Rent / Mortgage')}
+        <section class="card rd-card" data-home-tile="without-rent">${head(esc(month) + ' without rent', 'Posted spending outside Rent / Mortgage')}
           <button type="button" class="rd-big rd-plain" data-rd-rentfree>${cash(rentFree.spent)}</button>
           <div class="rd-track"><i style="width:${rentFree.share.toFixed(1)}%"></i></div>
           <div class="rd-line"><span>Rent excluded</span><b>${cash(rentFree.rent)}</b></div><div class="rd-line"><span>Other categories</span><b>${rentFree.categories.length}</b></div></section>
-        <section class="card rd-card">${head('Runway', 'How long personal balances cover this month’s pace')}
+        <section class="card rd-card" data-home-tile="runway">${head('Runway', 'How long personal balances cover this month’s pace')}
           <div class="rd-big">${ov.runway_months == null ? '—' : ov.runway_months}<span class="rd-unit">months</span></div>
           <div class="rd-line"><span>Personal balances</span><b>${cash(ov.net_worth)}</b></div><div class="rd-line"><span>Spent this month</span><b>${cash(ov.spend_this_month)}</b></div></section>
-        <section class="card rd-card">${head('Saved this month', 'Personal income less personal spending')}
+        <section class="card rd-card" data-home-tile="saved">${head('Saved this month', 'Personal income less personal spending')}
           <div class="rd-big">${cash(ov.net_this_month)}</div>
           <span class="rd-delta">${d >= 0 ? icon.up : icon.down}${cash(Math.abs(d))} vs last month</span>
           <div class="rd-line"><span>Savings rate</span><b>${ov.savings_rate == null ? '—' : (ov.savings_rate * 100).toFixed(1) + '%'}</b></div></section>`;
@@ -263,13 +263,13 @@
       const rate = Number(c.tax_rate_business) || 0, profit = ov.net_this_month;
       const ded = (biz.expense_categories_12mo || []).filter(x => x.td);
       insights = `
-        <section class="card rd-card">${head('Set aside for taxes', `At your ${(rate * 100).toFixed(1).replace(/\.0$/, '')}% rate on this month’s profit`)}
+        <section class="card rd-card" data-home-tile="taxes">${head('Set aside for taxes', `At your ${(rate * 100).toFixed(1).replace(/\.0$/, '')}% rate on this month’s profit`)}
           <div class="rd-big">${cash(Math.max(0, profit) * rate)}</div>
           <div class="rd-line"><span>Profit this month</span><b>${cash(profit)}</b></div><div class="rd-line"><span>Last 12 months</span><b>${cash(biz.estimated_tax_setaside)}</b></div></section>
-        <section class="card rd-card">${head('Deductible spend', '12 months')}
+        <section class="card rd-card" data-home-tile="deductible">${head('Deductible spend', '12 months')}
           <div class="rd-big rd-big-s">${cash(biz.deductible_12mo)}</div>
           ${ded.slice(0, 4).map(x => `<div class="rd-line"><span>${esc(x.name)}</span><b>${cash(x.amt)}</b></div>`).join('') || '<p class="rd-note">No deductible spending yet.</p>'}</section>
-        <section class="card rd-card">${head('Clients', '12 months')}
+        <section class="card rd-card" data-home-tile="clients">${head('Clients', '12 months')}
           ${(biz.top_clients || []).slice(0, 3).map(x => `<div class="rd-client"><span class="rd-av" data-s="business">${esc(initials(x.name))}</span><span><b>${esc(x.name)}</b><small>${x.n} payments</small></span><b class="rd-pos">${cash(x.amt)}</b></div>`).join('') || '<p class="rd-note">No business income recorded yet.</p>'}
           <div class="rd-line rd-line-top"><span>Profit, 12 months</span><b>${cash(biz.profit_ttm)}</b></div></section>`;
     }
@@ -289,9 +289,9 @@
     const goalRows = goals.filter(g => inScope(g.scope)).slice(0, 3);
     const top = cats.slice(0, 7), max = top[0]?.amt || 1;
 
-    return `<div class="rd rd-home">
+    return `<div class="rd rd-home" data-home-scope="${scope}">
       <div class="rd-welcome"><div><h2>${greeting}</h2><p>${new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${accounts.length} accounts</p></div>${action('add-tx', 'Add transaction', '', 'btn btn-primary')}</div>
-      <section class="card rd-card rd-hero">
+      <section class="card rd-card rd-hero" data-home-tile="net-worth">
         <div class="rd-hero-main">
           <div class="rd-eyebrow">${{ everything: 'Total net worth', personal: 'Personal net worth', business: 'Business net position' }[scope]}</div>
           <div class="rd-figure">${whole}<span>${cents}</span></div>
@@ -304,28 +304,28 @@
       </section>
       <div class="rd-grid rd-3">${insights}</div>
       <div class="rd-grid rd-5-7">
-        <section class="card rd-card">${head(ring.title, `${new Date().getDate()} days in · ${daysLeft()} to go`, '<button type="button" class="link-button" data-action="spending-plan">Edit plan</button>')}
+        <section class="card rd-card" data-home-tile="plan">${head(ring.title, `${new Date().getDate()} days in · ${daysLeft()} to go`, '<button type="button" class="link-button" data-action="spending-plan">Edit plan</button>')}
           <div class="rd-ring-row"><button type="button" class="rd-ring rd-plain" data-rd-ring aria-label="Inspect monthly plan"><svg viewBox="0 0 120 120"><circle class="rd-ring-bg" cx="60" cy="60" r="50"/><circle class="rd-ring-fg" cx="60" cy="60" r="50" style="stroke-dashoffset:${(314.159 * (1 - Math.min(ring.pct || 0, 100) / 100)).toFixed(2)}"/></svg><span><b>${ring.pct == null ? '—' : ring.pct + '%'}</b><small>${ring.cap}</small></span></button>
             <div class="rd-ring-stats">${ring.rows.map(([k, v]) => `<div class="rd-line"><span>${k}</span><b>${v}</b></div>`).join('')}</div></div>
           <div class="rd-watch">${watch.map(b => `<button type="button" class="rd-plain rd-watch-row" data-rd-budget="${esc(b.category_id)}" data-scope-of="${esc(b.scope)}"><span class="rd-line"><span>${esc(b.cat_icon || '')} ${esc(b.cat_name)} ${scope === 'everything' ? chip(b.scope) : ''}</span><b class="${b.pct >= 100 ? 'rd-neg' : b.pct >= 80 ? 'rd-warn' : ''}">${Math.round(b.pct)}%</b></span><span class="rd-track"><i class="${b.pct >= 100 ? 'over' : b.pct >= 80 ? 'warn' : ''}" style="width:${Math.min(100, b.pct)}%"></i></span></button>`).join('')}</div>
         </section>
-        <section class="card rd-card">${head('Monthly ' + (home.metric === 'spend' ? 'spending' : 'income'), 'Select a month to inspect', `<div class="rd-segs"><div class="rd-seg-group" role="group" aria-label="Measure">${[['spend', 'Spending'], ['income', 'Income']].map(([k, l]) => `<button type="button" data-rd-metric="${k}" aria-pressed="${home.metric === k}">${l}</button>`).join('')}</div><div class="rd-seg-group" role="group" aria-label="Chart range">${[12, 6, 3].map(n => `<button type="button" data-rd-range="${n}" aria-pressed="${home.range === n}">${n}M</button>`).join('')}</div></div>`)}
+        <section class="card rd-card" data-home-tile="monthly-chart">${head('Monthly ' + (home.metric === 'spend' ? 'spending' : 'income'), 'Select a month to inspect', `<div class="rd-segs"><div class="rd-seg-group" role="group" aria-label="Measure">${[['spend', 'Spending'], ['income', 'Income']].map(([k, l]) => `<button type="button" data-rd-metric="${k}" aria-pressed="${home.metric === k}">${l}</button>`).join('')}</div><div class="rd-seg-group" role="group" aria-label="Chart range">${[12, 6, 3].map(n => `<button type="button" data-rd-range="${n}" aria-pressed="${home.range === n}">${n}M</button>`).join('')}</div></div>`)}
           <div id="rd-bars">${barsMarkup()}</div></section>
       </div>
       <div class="rd-grid rd-7-5">
-        <section class="card rd-card">${head('Spend constellation', `${scope === 'everything' ? 'All' : LABEL[scope]} categories this month · tap to inspect`, cats.length > 7 ? `<button type="button" class="link-button" data-rd-page="budgets">All ${cats.length} →</button>` : '')}
+        <section class="card rd-card" data-home-tile="categories">${head('Spend constellation', `${scope === 'everything' ? 'All' : LABEL[scope]} categories this month · tap to inspect`, cats.length > 7 ? `<button type="button" class="link-button" data-rd-page="budgets">All ${cats.length} →</button>` : '')}
           <div class="rd-cloud">${top.map((cat, i) => `<button type="button" class="rd-bub" data-rd-cat="${i}" aria-pressed="${i === home.cat}" style="--size:${Math.round(84 + Math.sqrt(cat.amt / max) * 84)}px;--delay:${(-i * 1.7).toFixed(1)}s;--dur:${(6 + (i % 3) * 1.4).toFixed(1)}s" aria-label="${esc(cat.name)} ${cash(cat.amt)}"><b>${esc(cat.name)}</b><small>${cash(cat.amt)}</small></button>`).join('') || '<p class="rd-note">Your spending will appear here.</p>'}</div></section>
-        <section class="card rd-card" id="rd-cat-detail">${catDetail()}</section>
+        <section class="card rd-card" data-home-tile="category-detail" id="rd-cat-detail">${catDetail()}</section>
       </div>
       <div class="rd-grid rd-2">
-        <section class="card rd-card">${head('Recent activity', 'Tap the scope to move a purchase', '<button type="button" class="link-button" data-rd-page="transactions">View all</button>')}
+        <section class="card rd-card" data-home-tile="recent">${head('Recent activity', 'Tap the scope to move a purchase', '<button type="button" class="link-button" data-rd-page="transactions">View all</button>')}
           ${recent.rows.map(t => { const name = receiptDisplayName(t), to = t.scope === 'personal' ? 'business' : 'personal'; return `<div class="rd-tx" data-s="${esc(t.scope)}"><button type="button" class="rd-plain rd-tx-main" data-rd-tx="${esc(t.id)}"><span class="rd-av">${esc(initials(name))}</span><span><b>${esc(name)}</b><small>${esc(t.is_transfer ? 'Transfer' : (t.allocations?.length > 1 ? 'Split purchase' : t.cat_name || 'Uncategorized'))} · ${fmtDate(t.posted)}${t.pending ? ' · Pending' : ''}</small></span></button><b class="rd-amt ${t.amount > 0 && !t.is_transfer ? 'rd-pos' : ''}">${signed(t.amount)}</b><button type="button" class="rd-flip" data-rd-flip="${esc(t.id)}" data-from="${esc(t.scope)}" data-name="${esc(name)}" aria-label="Move ${esc(name)} to ${LABEL[to]}" title="Move to ${LABEL[to]}">${chip(t.scope)}${icon.swap}</button></div>`; }).join('') || '<p class="rd-note">No recent activity.</p>'}
         </section>
-        <section class="card rd-card">${head('Coming up', upcoming.length ? cash(upcoming.reduce((s, x) => s + (x.amount || 0), 0)) + ' expected' : 'Tracked subscriptions', '<button type="button" class="link-button" data-rd-page="subscriptions">Subscriptions</button>')}
+        <section class="card rd-card" data-home-tile="upcoming">${head('Coming up', upcoming.length ? cash(upcoming.reduce((s, x) => s + (x.amount || 0), 0)) + ' expected' : 'Tracked subscriptions', '<button type="button" class="link-button" data-rd-page="subscriptions">Subscriptions</button>')}
           ${upcoming.map(s => { const d = new Date(s.next_due + 'T12:00:00'); return `<button type="button" class="rd-plain rd-tx rd-up" data-action="edit-sub" data-id="${esc(s.id)}" data-s="${esc(s.scope)}"><span class="rd-day"><b>${d.getDate()}</b><small>${d.toLocaleDateString('en-US', { month: 'short' })}</small></span><span class="rd-tx-name"><b>${esc(s.merchant)}</b><small>${esc(s.cadence)}${s.status === 'cancel_requested' ? ' · cancellation in progress' : ''}</small></span><b class="rd-amt">${cash(s.amount)}</b>${chip(s.scope)}</button>`; }).join('') || '<p class="rd-note">No tracked payments coming up. Add subscriptions to see them here.</p>'}
         </section>
       </div>
-      <section class="card rd-card">${head('Savings goals', '', '<button type="button" class="link-button" data-rd-page="goals">Manage goals</button>')}
+      <section class="card rd-card" data-home-tile="goals">${head('Savings goals', '', '<button type="button" class="link-button" data-rd-page="goals">Manage goals</button>')}
         <div class="rd-goals">${goalRows.map(g => `<button type="button" class="rd-plain rd-goal" data-rd-goal="${esc(g.id)}" data-s="${esc(g.scope)}"><span class="rd-line"><b>${esc(g.name)}</b>${chip(g.scope)}</span><span class="rd-goal-fig"><b>${Math.round(g.pct)}%</b><small>${cash(g.saved)} of ${cash(g.target)}</small></span><span class="rd-track"><i style="width:${Math.min(100, g.pct)}%"></i></span><small>${g.monthly_plan ? cash(g.monthly_plan) + ' a month · ' : ''}${g.target_date ? 'by ' + fmtDate(g.target_date) : ''}</small></button>`).join('')}${goalRows.length < 3 ? `<button type="button" class="rd-plain rd-goal rd-goal-add" data-rd-page="goals">＋ Add a${scope === 'business' ? ' business' : ''} goal</button>` : ''}</div>
       </section>
     </div>`;
