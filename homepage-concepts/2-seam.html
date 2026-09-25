@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger Seam</title>
+<meta name="description" content="Ledger home concept 2: Personal and Business side by side, and the line between them is the switch.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="shared/scrollcraft.css">
+<style>
+  @property --s { syntax: '<number>'; inherits: true; initial-value: 50; }
+  :root {
+    --s: 50;
+    --per: #17332C; --per-2: #1F4038; --per-ink: #EFE9DA; --per-soft: #B9C6B6; --per-line: #EFE9DA24;
+    --biz: #DCE3E8; --biz-2: #CDD6DD; --biz-ink: #13212D; --biz-soft: #475866; --biz-line: #13212D1F;
+    --amber: #F0A93B; --amber-dark: #7A4C04;
+    --sc-canvas: var(--biz);
+    --sc-ink: var(--biz-ink);
+    --sc-ink-soft: var(--biz-soft);
+    --sc-accent: var(--amber);
+    --sc-accent-ink: #1B1405;
+    --sc-font-display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+    --sc-font-text: "Figtree", system-ui, sans-serif;
+    --sc-font-mono: "Figtree", system-ui, sans-serif;
+    color-scheme: light;
+    transition: --s 460ms var(--sc-ease-out);
+  }
+  :root.dragging { transition: none; }
+  body { background: var(--biz); overflow-x: clip; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* the two grounds, held for the whole page */
+  .ground { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .ground--per { background: var(--per); clip-path: inset(0 calc(100% - var(--s) * 1%) 0 0); }
+  .ground--biz { background: var(--biz); clip-path: inset(0 0 0 calc(var(--s) * 1%)); }
+
+  /* rows: both halves slide with the seam */
+  main { position: relative; z-index: 2; }
+  .row { position: relative; overflow: clip; }
+  .track { display: flex; width: 100vw; transform: translateX(calc((var(--s) - 50) * 1vw)); }
+  .half { flex: 0 0 50vw; min-width: 0; padding: clamp(3.5rem, 8vw, 7rem) clamp(1.1rem, 4.5vw, 4.5rem) clamp(3rem, 7vw, 6rem); }
+  .half.per { color: var(--per-ink); --soft: var(--per-soft); --line: var(--per-line); --acc: var(--amber); padding-right: clamp(1.4rem, 4vw, 4rem); }
+  .half.biz { color: var(--biz-ink); --soft: var(--biz-soft); --line: var(--biz-line); --acc: var(--amber-dark); padding-left: clamp(1.4rem, 4vw, 4rem); }
+  .inner { max-width: 34rem; }
+  .per .inner { margin-left: auto; }
+  body.solo-per .track, body.solo-biz .track { transform: none; }
+  body.solo-per .half.per, body.solo-biz .half.biz { flex-basis: 100vw; }
+  body.solo-per .half.biz, body.solo-biz .half.per { display: none; }
+  body.solo-per .inner, body.solo-biz .inner { max-width: 46rem; margin-inline: auto; animation: settle 300ms var(--sc-ease-out); }
+  @keyframes settle { from { opacity: 0; transform: translateY(6px); } }
+
+  .who { font: 600 13px/1 var(--sc-font-text); letter-spacing: 0.06em; text-transform: uppercase; color: var(--soft); display: flex; align-items: center; gap: 8px; margin: 0 0 18px; }
+  .who i { width: 9px; height: 9px; border-radius: 50%; background: var(--acc); }
+  h1, h2 { font-family: var(--sc-font-display); margin: 0; text-wrap: balance; }
+  .hero-row .half { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; }
+  .hero-row .inner { margin-inline: auto; width: min(100%, 26rem); }
+  .hero-fig { margin: 0; font-family: var(--sc-font-display); font-size: clamp(2.2rem, 1rem + 5vw, 5.4rem); font-weight: 700; font-variation-settings: "wdth" 80, "opsz" 96; letter-spacing: -0.04em; line-height: 0.95; }
+  .hero-fig small { display: block; font-family: var(--sc-font-text); font-size: clamp(1rem, 0.8rem + 0.8vw, 1.35rem); font-weight: 500; letter-spacing: -0.01em; margin-top: 12px; color: inherit; }
+  .io { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 22px 0 0; font-size: 15px; color: var(--soft); }
+  .io b { color: inherit; font-weight: 600; }
+  .per .io b { color: var(--per-ink); } .biz .io b { color: var(--biz-ink); }
+  h2 { font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.3rem); font-weight: 650; font-variation-settings: "wdth" 88, "opsz" 48; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 8px; }
+  .lede { margin: 0 0 26px; color: var(--soft); font-size: 15.5px; max-width: 44ch; }
+  .lede b { color: inherit; font-weight: 600; }
+  .per .lede b { color: var(--per-ink); } .biz .lede b { color: var(--biz-ink); }
+
+  .bars { display: grid; gap: 16px; }
+  .bar-row .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 15px; }
+  .bar-row .top b { font-weight: 600; }
+  .bar-row .top span { color: var(--soft); font-size: 14px; }
+  .bar { position: relative; height: 12px; border-radius: 6px; background: var(--line); margin-top: 7px; overflow: hidden; }
+  .bar i { position: absolute; inset: 0; background: var(--acc); transform-origin: 0 50%; border-radius: 6px; }
+  .per .bar i.needs { background: #EFE9DA; } .per .bar i.savings { background: #8FD1A8; }
+  .biz .bar i { background: var(--biz-ink); }
+
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  .list li:first-child { border-top: 0; }
+  .list li span:first-child { min-width: 0; }
+  .list small { display: block; color: var(--soft); font-size: 13px; }
+  .list .amt { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+  .list .amt.in { color: var(--acc); }
+  .per .list .amt.in { color: #8FD1A8; }
+
+  .sort { display: inline-flex; border: 1px solid var(--line); border-radius: 99px; padding: 2px; margin-top: 6px; }
+  .sort button { border: 0; background: none; color: var(--soft); border-radius: 99px; padding: 3px 10px; font: 500 12.5px var(--sc-font-text); cursor: pointer; transition: background-color 150ms var(--sc-ease-out), color 150ms var(--sc-ease-out); }
+  .sort button:hover { color: var(--per-ink); }
+  .sort button[aria-pressed="true"] { background: var(--per-ink); color: var(--per); }
+
+  .goal { padding: 14px 0; border-top: 1px solid var(--line); }
+  .goal:first-child { border-top: 0; padding-top: 0; }
+  .goal .top { display: flex; justify-content: space-between; gap: 10px; font-size: 16px; }
+  .goal .top b { font-weight: 600; }
+  .goal small { color: var(--soft); font-size: 13.5px; }
+  .setaside { margin-top: 26px; padding: 18px 20px; border-radius: 14px; background: var(--biz-2); }
+  .setaside b { display: block; font: 700 clamp(1.6rem, 1.2rem + 1.2vw, 2.4rem)/1 var(--sc-font-display); font-variation-settings: "wdth" 80; letter-spacing: -0.03em; margin: 6px 0; }
+  .setaside small { color: var(--biz-soft); font-size: 13.5px; }
+
+  /* the seam: the only chrome on the page */
+  .seam { position: fixed; top: 0; bottom: 0; left: 0; width: 0; z-index: 50; transform: translateX(clamp(30px, calc(var(--s) * 1vw), calc(100vw - 30px))); pointer-events: none; }
+  .seam-line { position: fixed; top: 0; bottom: 0; left: -1px; width: 2px; z-index: 49; background: var(--amber); transform: translateX(calc(var(--s) * 1vw)); pointer-events: none; }
+  .seam .ticks { position: absolute; top: 50%; left: 0; translate: -50% calc(-50% - 96px); display: grid; gap: 10px; }
+  .seam .ticks i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--per); border: 2px solid var(--amber); transition: background-color 200ms var(--sc-ease-out); }
+  .seam .ticks i.on { background: var(--amber); }
+  .handle {
+    position: absolute; top: 50%; left: 0; translate: -50% -50%; pointer-events: auto; touch-action: none;
+    width: 50px; height: 50px; border-radius: 50%; border: 0; cursor: ew-resize;
+    background: var(--amber); color: #1B1405; display: grid; place-items: center;
+    box-shadow: 0 2px 4px #0B1A1633, 0 10px 24px -6px #0B1A1666, inset 0 1px 0 #ffffff55;
+    transition: transform 140ms var(--sc-ease-out);
+  }
+  .handle:hover { transform: scale(1.06); }
+  .handle:active { transform: scale(0.97); }
+  .handle:focus-visible { outline: 3px solid var(--per-ink); outline-offset: 3px; border-radius: 50%; }
+  .tip {
+    position: absolute; top: 50%; left: 0; translate: calc(var(--s) * -1%) 38px; white-space: nowrap; pointer-events: auto;
+    background: #1B1405; color: #FBEBD0; border-radius: 10px; padding: 7px 11px; text-align: center;
+    font: 500 12.5px/1.3 var(--sc-font-text); box-shadow: 0 6px 16px -6px #0006;
+  }
+  .tip b { display: block; font: 700 16px/1.1 var(--sc-font-display); font-variation-settings: "wdth" 85; color: var(--amber); }
+  .labels { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 0; display: flex; gap: 14px; translate: calc(var(--s) * -1%) 0; pointer-events: auto; }
+  .labels button { border: 0; border-radius: 99px; padding: 6px 12px; font: 600 12.5px var(--sc-font-text); cursor: pointer; white-space: nowrap; }
+  .labels .to-per { background: var(--per-2); color: var(--per-ink); }
+  .labels .to-biz { background: var(--biz-2); color: var(--biz-ink); }
+  .labels button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--amber); }
+  .mark { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); left: 0; translate: calc(var(--s) * -1%) 0; pointer-events: auto; background: #1B1405; color: #FBEBD0; border-radius: 99px; padding: 5px 12px; font: 600 12px var(--sc-font-text); white-space: nowrap; text-decoration: none; }
+  .mark span { color: var(--amber); }
+
+  /* close: the collapse. Each side is a full-width layer clipped at the seam. */
+  .layer { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; }
+  .layer--per { background: var(--per); color: var(--per-ink); --soft: var(--per-soft); --line: var(--per-line); --acc: var(--amber); clip-path: inset(0 calc(100% - var(--s) * 1%) 0 0); }
+  .layer--biz { background: var(--biz); color: var(--biz-ink); --soft: var(--biz-soft); --line: var(--biz-line); --acc: var(--amber-dark); clip-path: inset(0 0 0 calc(var(--s) * 1%)); }
+  .cell { padding: 0 clamp(1.3rem, 4.5vw, 4.5rem); min-width: 0; }
+  .cell .inner { margin: 0; }
+  .verdict { font: 700 clamp(2.1rem, 1rem + 4.2vw, 4.8rem)/0.96 var(--sc-font-display); font-variation-settings: "wdth" 78, "opsz" 96; letter-spacing: -0.04em; margin: 0 0 18px; text-wrap: balance; }
+  .verdict + p { font-size: 17px; color: var(--soft); margin: 0; max-width: 34ch; }
+  .rev { padding: 16px 0; border-top: 1px solid var(--line); }
+  .rev:first-of-type { border-top: 0; }
+  .rev p { margin: 0; font-weight: 600; font-size: 16px; }
+  .rev small { display: block; color: var(--soft); font-size: 14px; margin: 3px 0 12px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { border-radius: 10px; padding: 9px 14px; font: 600 14px var(--sc-font-text); cursor: pointer; border: 1px solid currentColor; background: transparent; color: inherit; transition: background-color 150ms var(--sc-ease-out), transform 120ms var(--sc-ease-out); }
+  .btn:active { transform: scale(0.97); }
+  .btn.solid { background: var(--biz-ink); color: var(--biz); border-color: var(--biz-ink); }
+  .layer--per .btn.solid { background: var(--per-ink); color: var(--per); border-color: var(--per-ink); }
+  .btn:hover { background: color-mix(in oklab, currentColor 10%, transparent); }
+  .btn.solid:hover { background: #26394A; }
+  .fine { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 54px); left: 0; right: 0; text-align: center; font-size: 12.5px; color: var(--soft); z-index: 3; }
+  .fine a { color: inherit; }
+
+  @media (max-width: 760px) {
+    .half { padding: 4.2rem 14px 3rem; }
+    .half.per { padding-right: 18px; } .half.biz { padding-left: 18px; }
+    .who { font-size: 11px; letter-spacing: 0.04em; margin-bottom: 12px; }
+    .hero-row .half { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; }
+  .hero-row .inner { margin-inline: auto; width: min(100%, 26rem); }
+  .hero-fig { margin: 0; font-family: var(--sc-font-display); font-size: 1.85rem; }
+    .hero-fig small { font-size: 0.95rem; }
+    .io { display: grid; gap: 2px; font-size: 13px; }
+    h2 { font-size: 1.3rem; }
+    .lede { font-size: 13.5px; margin-bottom: 18px; }
+    .list li { flex-direction: column; gap: 2px; font-size: 13.5px; padding: 9px 0; }
+    .bar-row .top { flex-direction: column; gap: 0; font-size: 14px; }
+    .bar-row .top span { font-size: 12.5px; }
+    .goal .top { flex-direction: column; font-size: 14.5px; gap: 0; }
+    .goal small { font-size: 12.5px; }
+    .setaside { padding: 12px; }
+    .sort button { padding: 3px 7px; font-size: 11.5px; }
+    .tip, .ticks, .mark { display: none !important; }
+    .handle { width: 46px; height: 46px; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); translate: -50% 0; }
+    .labels button { padding: 5px 9px; font-size: 11.5px; }
+    .layer { padding-block: 56px 96px; }
+    .cell { padding: 0 14px; }
+    .verdict { font-size: 1.55rem; }
+    .verdict + p { font-size: 13.5px; }
+    .rev { padding: 12px 0; }
+    .rev p { font-size: 14px; }
+    .rev small { font-size: 12.5px; margin-bottom: 8px; }
+    .btn { padding: 7px 10px; font-size: 12.5px; }
+    .fine { bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); padding: 0 14px; font-size: 11.5px; }
+    body.solo-per .half, body.solo-biz .half { padding-inline: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="ground ground--per" aria-hidden="true"></div>
+<div class="ground ground--biz" aria-hidden="true"></div>
+
+<!-- The seam: labels for both sides, progress of the page, and the switch itself -->
+<span class="seam-line" aria-hidden="true"></span>
+<div class="seam">
+  <div class="labels" role="group" aria-label="Show">
+    <button type="button" class="to-per" data-go="100">Personal</button>
+    <button type="button" class="to-biz" data-go="0">Business</button>
+  </div>
+  <div class="ticks" aria-hidden="true" id="ticks"></div>
+  <button class="handle" id="handle" type="button" role="slider" aria-label="Personal and Business balance" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+    <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M7 1 1 7l6 6M15 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="tip" id="tip" aria-live="polite"></div>
+  <a class="mark" href="index.html">Ledger <span>·</span> all concepts</a>
+</div>
+
+<main>
+  <!-- HERO: the split at 50/50, both headlines at once -->
+  <section class="row hero-row" data-row="In September" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner">
+        <p class="who"><i></i>Personal · Alex</p>
+        <h1 class="hero-fig num" id="perNet"></h1>
+        <p class="io" id="perIO"></p>
+      </div></div>
+      <div class="half biz"><div class="inner">
+        <p class="who"><i></i>Business · Juniper Studio</p>
+        <p class="hero-fig num" id="bizNet" role="heading" aria-level="1"></p>
+        <p class="io" id="bizIO"></p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="row" data-row="Where it went" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner" data-sc-reveal="left" data-sc-reveal-at="0 0.13">
+        <h2>Needs, wants, savings</h2>
+        <p class="lede" id="perSplitLede"></p>
+        <div class="bars" id="perSplit"></div>
+      </div></div>
+      <div class="half biz"><div class="inner" data-sc-reveal="right" data-sc-reveal-at="0 0.13">
+        <h2>What the studio spent</h2>
+        <p class="lede" id="bizCostLede"></p>
+        <ul class="list" id="bizCosts"></ul>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="row" data-row="Budgets" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner" data-sc-reveal="left" data-sc-reveal-at="0 0.13">
+        <h2>Personal budgets</h2>
+        <p class="lede" id="perBudLede"></p>
+        <div class="bars" id="perBud"></div>
+      </div></div>
+      <div class="half biz"><div class="inner" data-sc-reveal="right" data-sc-reveal-at="0 0.13">
+        <h2>Studio budgets</h2>
+        <p class="lede" id="bizBudLede"></p>
+        <div class="bars" id="bizBud"></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="row" data-row="Coming up" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner" data-sc-reveal="left" data-sc-reveal-at="0 0.13">
+        <h2>Next 30 days</h2>
+        <p class="lede" id="perUpLede"></p>
+        <ul class="list" id="perUp"></ul>
+      </div></div>
+      <div class="half biz"><div class="inner" data-sc-reveal="right" data-sc-reveal-at="0 0.13">
+        <h2>Next 30 days</h2>
+        <p class="lede" id="bizUpLede"></p>
+        <ul class="list" id="bizUp"></ul>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="row" data-row="Building" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner" data-sc-reveal="left" data-sc-reveal-at="0 0.13">
+        <h2>What you're building</h2>
+        <p class="lede">At the monthly amounts you set.</p>
+        <div id="perGoals"></div>
+      </div></div>
+      <div class="half biz"><div class="inner" data-sc-reveal="right" data-sc-reveal-at="0 0.13">
+        <h2>What the studio is building</h2>
+        <p class="lede">A goal, and the tax you owe on this month's profit.</p>
+        <div id="bizGoals"></div>
+        <div class="setaside" id="setaside"></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="row" data-row="This week" data-sc-act="flow">
+    <div class="track">
+      <div class="half per"><div class="inner" data-sc-reveal="left" data-sc-reveal-at="0 0.13">
+        <h2>This week, sorted</h2>
+        <p class="lede">Sorted for you. Tap to change where something counts.</p>
+        <ul class="list" id="perWeek"></ul>
+      </div></div>
+      <div class="half biz"><div class="inner" data-sc-reveal="right" data-sc-reveal-at="0 0.13">
+        <h2>This week at the studio</h2>
+        <p class="lede" id="bizWeekLede"></p>
+        <ul class="list" id="bizWeek"></ul>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- CLOSE (pin): the seam travels to the side that needs you, and that side takes the page -->
+  <section data-sc-act="pin" data-sc-span="2" id="closeAct" data-row="Your turn">
+    <div data-sc-stage class="close-stage">
+      <div class="layer layer--per">
+        <div class="cell" id="perHome"></div>
+        <div class="cell" id="perVerdict"></div>
+      </div>
+      <div class="layer layer--biz">
+        <div class="cell" id="bizVerdict"></div>
+        <div class="cell" id="bizHome"></div>
+      </div>
+      <p class="fine">Concept 2 of 5 · sample data for Alex and Juniper Studio, September 24, 2026 · <a href="index.html">compare all five</a></p>
+    </div>
+  </section>
+</main>
+
+<script src="shared/ledger-sample.js"></script>
+<script src="shared/scrollcraft.js"></script>
+<script>
+(function () {
+  var L = LedgerSample, D = L.create(), money = L.money, root = document.documentElement;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var store = { get: function (k) { try { return localStorage.getItem('ledger-c2-' + k); } catch (e) { return null; } },
+                set: function (k, v) { try { localStorage.setItem('ledger-c2-' + k, v); } catch (e) {} } };
+
+  /* ---------- content ---------- */
+  function bars(list, cls) {
+    return list.map(function (r) {
+      return '<div class="bar-row"><div class="top"><b>' + esc(r.name) + '</b><span class="num">' + r.text + '</span></div>' +
+        '<div class="bar" role="img" aria-label="' + esc(r.name) + ' ' + r.pct + '%"><i class="' + (r.cls || '') + '" style="transform:scaleX(' + Math.min(1, r.pct / 100).toFixed(3) + ')"></i></div></div>';
+    }).join('');
+  }
+  function upList(list) {
+    return list.map(function (u) {
+      return '<li><span>' + esc(u.name) + '<small>' + L.day(u.d) + (u.income ? ' · expected' : '') + '</small></span><span class="amt' + (u.income ? ' in' : '') + '">' + (u.income ? '+' : '') + money(u.amt) + '</span></li>';
+    }).join('');
+  }
+  function renderRows() {
+    var fp = D.flows('personal'), fb = D.flows('business');
+    $('perNet').innerHTML = money(fp.net) + '<small>saved in September so far</small>';
+    $('perIO').innerHTML = '<span>In <b class="num">' + money(fp.inc) + '</b></span><span>Out <b class="num">' + money(fp.out) + '</b></span>';
+    $('bizNet').innerHTML = money(fb.net) + '<small>profit in September so far</small>';
+    $('bizIO').innerHTML = '<span>Revenue <b class="num">' + money(fb.inc) + '</b></span><span>Costs <b class="num">' + money(fb.out) + '</b></span>';
+
+    var b = D.buckets();
+    $('perSplitLede').innerHTML = 'The 50/30/20 rule on <b>' + money(b.income, { whole: true }) + '</b> of take-home pay.';
+    $('perSplit').innerHTML = bars(['needs', 'wants', 'savings'].map(function (k) {
+      var r = b[k];
+      return { name: r.label + ' · ' + Math.round(r.share * 100) + '%', pct: r.pct, cls: k, text: money(r.spent) + ' of ' + money(r.target, { whole: true }) };
+    }));
+    var cats = D.categories('business');
+    $('bizCostLede').innerHTML = '<b>' + money(fb.out) + '</b> across ' + cats.length + ' categories. All of it is deductible.';
+    $('bizCosts').innerHTML = cats.map(function (c) {
+      return '<li><span>' + esc(c.name) + '<small>' + c.tx.length + (c.tx.length === 1 ? ' charge' : ' charges') + '</small></span><span class="amt">' + money(c.amt) + '</span></li>';
+    }).join('');
+
+    [['personal', 'perBud', 'perBudLede'], ['business', 'bizBud', 'bizBudLede']].forEach(function (x) {
+      var list = D.budgets(x[0]), sb = D.scopeBudget(x[0]);
+      $(x[2]).innerHTML = '<b>' + money(sb.left) + '</b> left of ' + money(sb.limit, { whole: true }) + '.';
+      $(x[1]).innerHTML = bars(list.map(function (r) { return { name: r.name, pct: r.pct, text: money(r.spent) + ' of ' + money(r.limit, { whole: true }) }; }));
+    });
+
+    var up = D.upcoming('personal', 30), ub = D.upcoming('business', 30);
+    var outP = up.filter(function (u) { return !u.income; }).reduce(function (s, u) { return s - u.amt; }, 0);
+    var outB = ub.filter(function (u) { return !u.income; }).reduce(function (s, u) { return s - u.amt; }, 0);
+    $('perUpLede').innerHTML = '<b>' + money(outP) + '</b> in bills, and two paydays.';
+    $('bizUpLede').innerHTML = '<b>' + money(outB) + '</b> in costs, and the Linden retainer.';
+    $('perUp').innerHTML = upList(up); $('bizUp').innerHTML = upList(ub);
+
+    var goal = function (g) {
+      return '<div class="goal"><div class="top"><b>' + esc(g.name) + '</b><span class="num">' + money(g.saved, { whole: true }) + ' of ' + money(g.target, { whole: true }) + '</span></div>' +
+        '<div class="bar"><i style="transform:scaleX(' + (g.pct / 100).toFixed(3) + ')"></i></div><small>' + g.pct + '% there · ' + g.months + ' months at ' + money(g.monthly, { whole: true }) + ' a month (' + g.by + ')</small></div>';
+    };
+    $('perGoals').innerHTML = D.goals('personal').map(goal).join('');
+    $('bizGoals').innerHTML = D.goals('business').map(goal).join('');
+    $('setaside').innerHTML = '<small>Set aside for tax this month (25% of profit)</small><b class="num">' + money(fb.net * L.TAX_RATE) + '</b><small>Move it to savings when the Linden retainer lands on Oct 5.</small>';
+
+    var wk = D.week();
+    $('perWeek').innerHTML = wk.filter(function (t) { return t.scope === 'personal'; }).map(function (t) {
+      var bk = D.bucketOf(t);
+      return '<li><span>' + esc(t.name) + '<small>' + L.day(t.d) + ' · ' + (t.transfer ? 'Transfer' : esc(t.cat)) + '</small>' +
+        '<span class="sort" role="group" aria-label="Count ' + esc(t.name) + ' as">' + ['needs', 'wants', 'savings'].map(function (k) {
+          return '<button type="button" data-tx="' + t.id + '" data-bucket="' + k + '" aria-pressed="' + (bk === k) + '">' + k.charAt(0).toUpperCase() + k.slice(1, -1) + (k === 'savings' ? 's' : '') + '</button>';
+        }).join('') + '</span></span><span class="amt">' + money(t.amt) + '</span></li>';
+    }).join('');
+    var bw = wk.filter(function (t) { return t.scope === 'business'; });
+    $('bizWeekLede').innerHTML = bw.length + ' things happened. One is a new charge the app wants to ask you about.';
+    $('bizWeek').innerHTML = bw.map(function (t) {
+      return '<li><span>' + esc(t.name) + '<small>' + L.day(t.d) + ' · ' + esc(t.cat) + '</small></span><span class="amt' + (t.amt > 0 ? ' in' : '') + '">' + (t.amt > 0 ? '+' : '') + money(t.amt) + '</span></li>';
+    }).join('');
+  }
+
+  /* ---------- close: who needs you ---------- */
+  var winnerEdge = 50;
+  function renderClose() {
+    var rv = D.reviews(), perOpen = rv.filter(function (r) { return r.scope === 'personal'; }), bizOpen = rv.filter(function (r) { return r.scope === 'business'; });
+    winnerEdge = bizOpen.length > perOpen.length ? 0 : perOpen.length > bizOpen.length ? 100 : 50;
+    var wk = D.week().filter(function (t) { return t.scope === 'personal'; });
+    var revHTML = function (list) {
+      return list.map(function (r) {
+        return '<div class="rev"><p>' + esc(r.title) + '</p><small>' + esc(r.detail) + '</small><div class="btns">' +
+          '<button class="btn solid" type="button" data-review="' + r.id + '" data-answer="yes">' + r.yes + '</button>' +
+          '<button class="btn" type="button" data-review="' + r.id + '" data-answer="no">' + r.no + '</button></div></div>';
+      }).join('');
+    };
+    var square = function (who, text) { return '<div class="inner"><p class="who"><i></i>' + who + '</p><p class="verdict">' + text + '</p></div>'; };
+    $('perHome').innerHTML = perOpen.length ? '<div class="inner"><p class="who"><i></i>Personal</p>' + revHTML(perOpen) + '</div>'
+      : square('Personal', 'Square this week.') .replace('</div>', '<p>' + wk.length + ' things came through and every one is sorted.</p></div>');
+    $('bizHome').innerHTML = bizOpen.length ? '<div class="inner"><p class="who"><i></i>Juniper Studio · ' + bizOpen.length + ' to review</p>' + revHTML(bizOpen) + '</div>'
+      : square('Juniper Studio', 'Square this week.').replace('</div>', '<p>Nothing waiting. Harbor House paid on the 19th.</p></div>');
+    $('bizVerdict').innerHTML = bizOpen.length ? '<div class="inner"><p class="verdict">The studio needs you this week.</p><p>' + bizOpen.length + (bizOpen.length === 1 ? ' charge' : ' charges') + ' to look at. It takes a minute.</p></div>' : '';
+    $('perVerdict').innerHTML = perOpen.length ? '<div class="inner"><p class="verdict">Your side needs you this week.</p><p>' + perOpen.length + ' to look at.</p></div>' : '';
+    if (!rv.length) {
+      $('perVerdict').innerHTML = '';
+      $('bizVerdict').innerHTML = '';
+    }
+  }
+
+  /* ---------- the seam ---------- */
+  var s = 50, solo = null, closeP = 0;
+  var stops = [0, 50, 100];
+  var names = { 0: 'Business', 50: 'Everything', 100: 'Personal' };
+  function effective() {
+    if (solo) return s;
+    var k = Math.min(1, Math.max(0, (closeP - 0.08) / 0.5));
+    k = k * k * (3 - 2 * k);
+    return s + (winnerEdge - s) * k;
+  }
+  function paint() {
+    var e = effective();
+    root.style.setProperty('--s', e.toFixed(2));
+    var h = $('handle');
+    h.setAttribute('aria-valuenow', Math.round(e));
+    var near = e > 70 ? 100 : e < 30 ? 0 : 50;
+    h.setAttribute('aria-valuetext', names[near]);
+    var f = near === 50 ? D.flows('everything') : D.flows(near === 100 ? 'personal' : 'business');
+    $('tip').innerHTML = '<b class="num">' + money(f.net, { sign: true }) + '</b>' + names[near] + (near === 0 ? ' profit' : ' net') + ' · Sept';
+    Array.prototype.forEach.call(document.querySelectorAll('.labels button'), function (b) { b.setAttribute('aria-pressed', String(+b.dataset.go === near && solo !== null)); });
+  }
+  function setSolo(v) {
+    solo = v;
+    document.body.classList.toggle('solo-per', v === 'personal');
+    document.body.classList.toggle('solo-biz', v === 'business');
+  }
+  function go(target, remember) {
+    target = stops.reduce(function (a, b) { return Math.abs(b - target) < Math.abs(a - target) ? b : a; });
+    setSolo(null);
+    s = target; paint();
+    if (target !== 50) setTimeout(function () { if (s === target) { setSolo(target === 100 ? 'personal' : 'business'); paint(); } }, 470);
+    if (remember !== false) store.set('split', String(target));
+  }
+  var handle = $('handle'), dragging = false;
+  handle.addEventListener('pointerdown', function (e) {
+    dragging = true; handle.setPointerCapture(e.pointerId); root.classList.add('dragging'); setSolo(null);
+  });
+  handle.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    s = Math.max(0, Math.min(100, e.clientX / innerWidth * 100)); paint();
+  });
+  function endDrag() { if (!dragging) return; dragging = false; root.classList.remove('dragging'); go(s); }
+  handle.addEventListener('pointerup', endDrag);
+  handle.addEventListener('pointercancel', endDrag);
+  handle.addEventListener('keydown', function (e) {
+    var i = stops.indexOf(solo === 'personal' ? 100 : solo === 'business' ? 0 : Math.round(s));
+    if (i < 0) i = 1;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { go(stops[Math.max(0, i - 1)]); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { go(stops[Math.min(2, i + 1)]); e.preventDefault(); }
+    else if (e.key === 'Home') { go(0); e.preventDefault(); }
+    else if (e.key === 'End') { go(100); e.preventDefault(); }
+  });
+  handle.addEventListener('dblclick', function () { go(50); });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.go) { var v = +t.dataset.go; go(((solo === 'personal' && v === 100) || (solo === 'business' && v === 0)) ? 50 : v); }
+    else if (t.dataset.review) { D.review(t.dataset.review, t.dataset.answer); renderClose(); paint(); }
+    else if (t.dataset.bucket) { D.setBucket(t.dataset.tx, t.dataset.bucket); renderRows(); }
+  });
+
+  /* seam progress ticks, one per row */
+  var rows = Array.prototype.slice.call(document.querySelectorAll('[data-row]'));
+  $('ticks').innerHTML = rows.map(function (r) { return '<i title="' + esc(r.dataset.row) + '"></i>'; }).join('');
+  var ticks = $('ticks').children, act = $('closeAct');
+  function onScroll() {
+    rows.forEach(function (r, i) { ticks[i].classList.toggle('on', r.getBoundingClientRect().top < innerHeight * 0.5); });
+    var rect = act.getBoundingClientRect(), travel = act.offsetHeight - innerHeight;
+    closeP = travel > 0 ? Math.max(0, Math.min(1, -rect.top / travel)) : 0;
+    root.classList.toggle('dragging', dragging || (closeP > 0 && closeP < 1));
+    paint();
+  }
+  var ticking = false;
+  addEventListener('scroll', function () { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; onScroll(); }); }, { passive: true });
+
+  renderRows(); renderClose();
+  var saved = store.get('split');
+  saved = saved === '0' ? 0 : saved === '100' ? 100 : null;
+  if (saved !== null) { s = saved; setSolo(saved === 100 ? 'personal' : 'business'); }
+  onScroll();
+  ScrollCraft.mount(document.body);
+})();
+</script>
+</body>
+</html>

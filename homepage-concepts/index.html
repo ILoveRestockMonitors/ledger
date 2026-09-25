@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger Homepage Concepts</title>
+<meta name="description" content="Five from-scratch homepage designs for Ledger, built with scroll-craft and borrowing Dollarwise's simplest ideas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #F3F3EF; --card: #FFFFFF; --ink: #17191C; --soft: #5A5F66; --line: #17191C1A; --accent: #2F5D3A;
+    --shadow: 0 1px 2px #17191C14, 0 10px 28px -12px #17191C33;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141518; --card: #1D1F23; --ink: #EDEDE8; --soft: #A3A7AD; --line: #EDEDE81F; --accent: #9CCFA6; --shadow: 0 1px 2px #0006, 0 10px 28px -12px #000A; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #141518; --card: #1D1F23; --ink: #EDEDE8; --soft: #A3A7AD; --line: #EDEDE81F; --accent: #9CCFA6; --shadow: 0 1px 2px #0006, 0 10px 28px -12px #000A; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 "Instrument Sans", system-ui, sans-serif; padding-inline: clamp(16px, 4vw, 48px); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-block: clamp(40px, 7vw, 88px) 64px; }
+  h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.2rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 18px; text-wrap: balance; font-weight: 600; }
+  .intro { max-width: 64ch; color: var(--soft); margin: 0 0 12px; font-size: 17px; }
+  .intro b { color: var(--ink); font-weight: 600; }
+  .ideas { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+  .ideas li { border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: 14px; }
+  .list { display: grid; gap: 22px; margin-top: 44px; }
+  .concept { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); overflow: hidden; }
+  .shots { position: relative; background: var(--sw1); padding: 22px 22px 0; display: flex; align-items: flex-end; gap: 14px; min-height: 280px; }
+  .shots img { display: block; border-radius: 8px 8px 0 0; box-shadow: 0 -2px 18px -6px #0005; }
+  .shots .d { width: 76%; height: auto; }
+  .shots .m { width: 20%; height: auto; border-radius: 12px 12px 0 0; }
+  .body { padding: 24px 26px 26px; display: flex; flex-direction: column; gap: 12px; }
+  .top { display: flex; align-items: baseline; gap: 12px; }
+  .top .n { font-size: 14px; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .top h2 { margin: 0; font-size: 26px; letter-spacing: -0.02em; font-weight: 600; }
+  .pitch { margin: 0; font-size: 17px; }
+  dl { margin: 4px 0 0; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 8px 14px; font-size: 14.5px; }
+  dt { color: var(--soft); }
+  dd { margin: 0; }
+  .sw { display: flex; gap: 6px; align-items: center; }
+  .sw i { width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--line); }
+  .open { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 10px; transition: transform 120ms ease-out; }
+  .open:hover { transform: translateY(-1px); }
+  .open:active { transform: translateY(1px); }
+  .open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .next { margin-top: 48px; max-width: 66ch; }
+  .next h2 { font-size: 22px; margin: 0 0 10px; letter-spacing: -0.02em; font-weight: 600; }
+  .next p { color: var(--soft); margin: 0 0 10px; }
+  .next p b { color: var(--ink); }
+  .fine { font-size: 13px; color: var(--soft); margin-top: 36px; }
+  .fine a { color: inherit; }
+  @media (max-width: 820px) {
+    .concept { grid-template-columns: minmax(0, 1fr); }
+    .shots { min-height: 0; padding: 16px 16px 0; }
+    dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    dd { margin-bottom: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Five new homepages for Ledger</h1>
+    <p class="intro">Five directions for the Home screen, each designed from scratch. Each one follows a different <b>scroll-craft</b> page style, so scrolling does something different on every one. All of them borrow the simplest ideas from <b>Dollarwise</b>:</p>
+    <ul class="ideas">
+      <li>Needs, wants and savings (50/30/20)</li>
+      <li>One clear "left to spend" number</li>
+      <li>A short weekly check-in</li>
+      <li>Sorted for you, easy to change</li>
+    </ul>
+    <p class="intro" style="margin-top:22px">Every number is real math on the app's sample data (Alex and Juniper Studio, September 24, 2026). Buttons work, but nothing is saved. Open each one and scroll slowly.</p>
+  </header>
+
+  <div class="list">
+    <article class="concept" style="--sw1:#E3E6E9">
+      <div class="shots"><img class="d" src="previews/1-console-d.jpg" width="1440" height="900" alt="Console on a computer: a working dashboard with the amount left in the September plan, a needs, wants and savings chart, net worth, items to review and recent activity."><img class="m" src="previews/1-console-m.jpg" width="390" height="844" alt="Console on a phone, with a bottom tab bar."></div>
+      <div class="body">
+        <div class="top"><span class="n">1</span><h2>Console</h2></div>
+        <p class="pitch">The home screen is the working app. Scroll down and the next 30 days play forward: bills and paydays land, and your cash balance moves with them.</p>
+        <dl>
+          <dt>Feels like</dt><dd>A calm, dense control panel. Everything in one place.</dd>
+          <dt>Scrolling</dt><dd>Moves a date cursor through the next month. You can also drag it.</dd>
+          <dt>Ends with</dt><dd>A one-line box to add a transaction. Try "Juniper Kitchen 12.50".</dd>
+          <dt>Colors, type</dt><dd class="sw"><i style="background:#E3E6E9"></i><i style="background:#151B22"></i><i style="background:#C2410C"></i><i style="background:#1C7449"></i>&nbsp;Geist</dd>
+        </dl>
+        <a class="open" href="1-console.html">Open Console</a>
+      </div>
+    </article>
+
+    <article class="concept" style="--sw1:#17332C">
+      <div class="shots"><img class="d" src="previews/2-seam-d.jpg" width="1440" height="900" alt="The Seam on a computer: the screen split down the middle, Personal savings on a dark green left side and Juniper Studio profit on a pale slate right side, with an amber handle on the line."><img class="m" src="previews/2-seam-m.jpg" width="390" height="844" alt="The Seam on a phone, still split in two."></div>
+      <div class="body">
+        <div class="top"><span class="n">2</span><h2>The Seam</h2></div>
+        <p class="pitch">Personal and Business side by side, the whole way down. The line between them is the Everything / Personal / Business switch: drag it to one side and that side takes the page.</p>
+        <dl>
+          <dt>Feels like</dt><dd>Two lives, one view. Easy to compare month to month.</dd>
+          <dt>Scrolling</dt><dd>Each row compares the two sides. At the end, the line slides over to whichever side needs you this week.</dd>
+          <dt>Ends with</dt><dd>The charges waiting for an answer, in the side that won.</dd>
+          <dt>Colors, type</dt><dd class="sw"><i style="background:#17332C"></i><i style="background:#DCE3E8"></i><i style="background:#F0A93B"></i>&nbsp;Bricolage Grotesque, Figtree</dd>
+        </dl>
+        <a class="open" href="2-seam.html">Open The Seam</a>
+      </div>
+    </article>
+
+    <article class="concept" style="--sw1:#E5EBE2">
+      <div class="shots"><img class="d" src="previews/3-almanac-d.jpg" width="1440" height="900" alt="The Almanac on a computer: a title page reading September, so far, on pale green ledger paper with a red margin rule, and a receipt note open beside the first figure."><img class="m" src="previews/3-almanac-m.jpg" width="390" height="844" alt="The Almanac on a phone."></div>
+      <div class="body">
+        <div class="top"><span class="n">3</span><h2>The Almanac</h2></div>
+        <p class="pitch">Your month, written as a short letter in four chapters. Every underlined dollar amount opens its own receipt in the margin, so you can see exactly what adds up to it.</p>
+        <dl>
+          <dt>Feels like</dt><dd>Reading, not operating. Quiet and reassuring.</dd>
+          <dt>Scrolling</dt><dd>Turns chapters: where it went, what's coming, what you're building, the week in review.</dd>
+          <dt>Ends with</dt><dd>A one-line invitation to finish the weekly review.</dd>
+          <dt>Colors, type</dt><dd class="sw"><i style="background:#E5EBE2"></i><i style="background:#1D392E"></i><i style="background:#2B5C8A"></i><i style="background:#B5473D"></i>&nbsp;Newsreader, Instrument Sans</dd>
+        </dl>
+        <a class="open" href="3-almanac.html">Open The Almanac</a>
+      </div>
+    </article>
+
+    <article class="concept" style="--sw1:#1B3CD4">
+      <div class="shots"><img class="d" src="previews/4-poster-d.jpg" width="1440" height="900" alt="The Poster on a computer: the number 946 dollars and 22 cents in huge cream type on a cobalt blue background."><img class="m" src="previews/4-poster-m.jpg" width="390" height="844" alt="The Poster on a phone."></div>
+      <div class="body">
+        <div class="top"><span class="n">4</span><h2>The Poster</h2></div>
+        <p class="pitch">One number you need to know, as big as the screen. Then the words NEEDS, WANTS and SAVINGS gain weight as you scroll through September, so the type itself shows how much of each you've used.</p>
+        <dl>
+          <dt>Feels like</dt><dd>Bold and simple. The closest to Dollarwise's "just tell me" spirit.</dd>
+          <dt>Scrolling</dt><dd>Squeezes the big number, then replays the month in the weight of the letters.</dd>
+          <dt>Ends with</dt><dd>The page flips to cream and goes quiet: add a transaction, review this week.</dd>
+          <dt>Colors, type</dt><dd class="sw"><i style="background:#1B3CD4"></i><i style="background:#0E1E6E"></i><i style="background:#F3F0E7"></i>&nbsp;Anybody, Schibsted Grotesk</dd>
+        </dl>
+        <a class="open" href="4-poster.html">Open The Poster</a>
+      </div>
+    </article>
+
+    <article class="concept" style="--sw1:#F2542D">
+      <div class="shots"><img class="d" src="previews/5-pulse-d.jpg" width="1440" height="900" alt="Pulse on a computer: a loud orange screen reading Your week, six things, two need you, under a black top bar with a yellow gauge."><img class="m" src="previews/5-pulse-m.jpg" width="390" height="844" alt="Pulse on a phone."></div>
+      <div class="body">
+        <div class="top"><span class="n">5</span><h2>Pulse</h2></div>
+        <p class="pitch">Your week as fast, colorful screens, one for each thing that happened. Tap Need, Want or Save on each. The gauge in the top bar drains and refills as the week plays back.</p>
+        <dl>
+          <dt>Feels like</dt><dd>Quick and fun, like a story recap. Built for a weekly habit.</dd>
+          <dt>Scrolling</dt><dd>Hard cuts between colors. At the high point the top bar opens up to show what's left.</dd>
+          <dt>Ends with</dt><dd>A giant Check in button that takes you to anything still unanswered.</dd>
+          <dt>Colors, type</dt><dd class="sw"><i style="background:#F2542D"></i><i style="background:#F7D046"></i><i style="background:#8CC8F2"></i><i style="background:#1A1512"></i>&nbsp;Unbounded, Onest</dd>
+        </dl>
+        <a class="open" href="5-pulse.html">Open Pulse</a>
+      </div>
+    </article>
+  </div>
+
+  <section class="next">
+    <h2>Picking one</h2>
+    <p>Reply with the number you like best. You can also <b>mix parts</b>, for example "Console, but with the Almanac's receipts" or "Pulse as the weekly check-in inside Console".</p>
+    <p>Once you approve a direction, it gets the full treatment: Transactions, Budgets, Goals, Reports, Settings and the phone layout, plus a matching light and dark mode.</p>
+  </section>
+
+  <p class="fine">Built with <a href="https://github.com/nateherkai/scroll-craft">scroll-craft</a> (MIT license). Inspired by the Dollarwise budgeting app. Concepts only: they do not change the Ledger app or your data.</p>
+</div>
+</body>
+</html>

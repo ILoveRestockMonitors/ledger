@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger Poster</title>
+<meta name="description" content="Ledger home concept 4: one number at poster scale, and your spending sets the weight of the type.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:ital,wdth,wght@0,50..150,100..900;1,50..150,100..900&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="shared/scrollcraft.css">
+<style>
+  :root {
+    --sc-canvas: #1B3CD4;
+    --sc-surface: #2447E0;
+    --sc-ink: #F3F0E7;
+    --sc-ink-soft: #C3CCF4;
+    --sc-accent: #F3F0E7;
+    --sc-accent-ink: #1B3CD4;
+    --sc-font-display: "Anybody", "Schibsted Grotesk", system-ui, sans-serif;
+    --sc-font-text: "Schibsted Grotesk", system-ui, sans-serif;
+    --sc-font-mono: "Schibsted Grotesk", system-ui, sans-serif;
+    --g: clamp(16px, 4vw, 64px);
+    color-scheme: dark;
+  }
+  body { font-size: 17px; }
+  ::selection { background: var(--sc-ink); color: #1B3CD4; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .num { font-variant-numeric: tabular-nums lining-nums; }
+
+  /* composition chrome: the wordmark is part of the page, not a bar */
+  .mark {
+    position: fixed; z-index: 30; left: var(--g); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--g));
+    font: 800 clamp(1.4rem, 1rem + 1.4vw, 2.4rem)/0.8 var(--sc-font-display); font-stretch: 62%; letter-spacing: -0.02em;
+    writing-mode: vertical-rl; transform: rotate(180deg); color: var(--sc-ink); text-decoration: none;
+  }
+  .scopes { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 18px); left: var(--g); display: flex; gap: 16px; font: 500 13.5px var(--sc-font-text); }
+  .scopes button { border: 0; background: none; color: var(--sc-ink-soft); padding: 4px 0; cursor: pointer; font: inherit; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; text-decoration-thickness: 2px; transition: color 150ms var(--sc-ease-out), text-decoration-color 150ms var(--sc-ease-out); }
+  .scopes button:hover { color: var(--sc-ink); }
+  .scopes button[aria-pressed="true"] { color: var(--sc-ink); text-decoration-color: var(--sc-ink); }
+  .back { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 18px); right: var(--g); font: 500 13.5px var(--sc-font-text); color: var(--sc-ink-soft); }
+
+  /* act 1: the number */
+  .hero { display: flex; flex-direction: column; justify-content: center; padding: 0 var(--g) 0 calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); }
+  .big {
+    font-family: var(--sc-font-display); line-height: 0.8; letter-spacing: -0.045em; margin: 0; white-space: nowrap;
+    font-size: min(calc(88vw / (var(--len, 4) * 0.6 + 0.55)), 52vh);
+    font-weight: calc(820 - var(--sc-p, 0) * 520);
+    font-stretch: calc(100% - var(--sc-p, 0) * 45%);
+    transform: translateY(calc(var(--sc-p, 0) * -4vh));
+    transform-origin: 0 100%;
+  }
+  .big .c { font-size: 0.3em; letter-spacing: -0.02em; vertical-align: 1.9em; font-weight: 500; font-stretch: 80%; margin-left: 0.04em; }
+  .hero-sub { font: 500 clamp(1.1rem, 0.9rem + 1vw, 1.8rem)/1.25 var(--sc-font-text); margin: clamp(18px, 3vh, 34px) 0 0; max-width: 30ch; letter-spacing: -0.01em; }
+  .hero-then { position: absolute; left: calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); right: var(--g); bottom: calc(env(safe-area-inset-bottom, 0px) + 12vh); font: 700 clamp(2rem, 1rem + 4.6vw, 5.4rem)/0.92 var(--sc-font-display); font-stretch: 70%; letter-spacing: -0.03em; margin: 0; max-width: 16ch; text-wrap: balance; }
+
+  /* act 2: the day, then a paragraph */
+  .day { padding: 22vh var(--g) 18vh calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); display: grid; gap: 44px; }
+  .day p.small { font-size: 16px; line-height: 1.6; max-width: 46ch; margin: 0; color: var(--sc-ink-soft); }
+  .day p.small b { color: var(--sc-ink); font-weight: 600; }
+  .meter { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; max-width: 760px; }
+  .meter i { height: 28px; border-radius: 2px; background: color-mix(in oklab, var(--sc-ink) 22%, transparent); }
+  .meter i.used { background: var(--sc-ink); }
+  .meter i.today { outline: 2px solid var(--sc-ink); outline-offset: 2px; background: transparent; }
+
+  /* act 3: the signature. The month fills the type. */
+  .fill-stage { display: flex; flex-direction: column; justify-content: center; padding: 0 var(--g) 0 calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); }
+  .fill-head { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; flex-wrap: wrap; margin-bottom: 2vh; font: 500 15px var(--sc-font-text); color: var(--sc-ink-soft); }
+  .fill-head b { color: var(--sc-ink); font-weight: 600; font-size: 17px; }
+  .words { display: grid; gap: 1.2vh; }
+  .w { display: flex; align-items: baseline; gap: clamp(12px, 2vw, 28px); flex-wrap: wrap; }
+  .w .word { font-family: var(--sc-font-display); font-size: min(11.5vw, 17vh); line-height: 0.86; letter-spacing: -0.03em; text-transform: uppercase; font-weight: 100; font-stretch: 50%; }
+  .w .cap { font: 500 clamp(13px, 0.8rem + 0.3vw, 16px)/1.3 var(--sc-font-text); color: var(--sc-ink-soft); min-width: 11ch; }
+  .w .cap b { display: block; color: var(--sc-ink); font-weight: 600; font-size: 1.12em; }
+  .fill-note { font-size: 14px; color: var(--sc-ink-soft); margin: 3vh 0 0; max-width: 58ch; }
+
+  /* act 4: categories as a paragraph, each word as heavy as its spending */
+  .cats { padding: 20vh var(--g) 16vh calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); }
+  .cats h2 { font: 500 15px var(--sc-font-text); color: var(--sc-ink-soft); margin: 0 0 3vh; letter-spacing: 0; }
+  .cloud { font-family: var(--sc-font-display); font-size: clamp(2.2rem, 1rem + 5.4vw, 6.8rem); line-height: 0.98; letter-spacing: -0.03em; margin: 0; max-width: 15em; text-wrap: balance; }
+  .cloud span { display: inline; white-space: nowrap; }
+  .cloud-key { font-size: 14px; color: var(--sc-ink-soft); margin: 4vh 0 0; max-width: 60ch; line-height: 1.7; }
+  .cloud-key b { color: var(--sc-ink); font-weight: 600; }
+
+  /* act 5: what's next */
+  .next { padding: 18vh var(--g) 22vh calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); }
+  .next .l1 { font: 800 clamp(4rem, 2rem + 13vw, 15rem)/0.8 var(--sc-font-display); font-stretch: 72%; letter-spacing: -0.04em; margin: 0; text-transform: uppercase; }
+  .next .l2 { font: 200 clamp(2rem, 1rem + 5vw, 6rem)/0.95 var(--sc-font-display); font-stretch: 130%; letter-spacing: -0.03em; margin: 1.4vh 0 0; }
+  .next .l3 { font: 700 clamp(2.6rem, 1rem + 8vw, 9rem)/0.9 var(--sc-font-display); font-stretch: 90%; letter-spacing: -0.045em; margin: 1.4vh 0 0; }
+  .rest { list-style: none; margin: 8vh 0 0; padding: 0; columns: 2 18rem; column-gap: 48px; font-size: 15px; max-width: 760px; }
+  .rest li { display: flex; gap: 12px; padding: 5px 0; break-inside: avoid; }
+  .rest .d { width: 52px; color: var(--sc-ink-soft); }
+  .rest .n { flex: 1; }
+  .rest .a { font-variant-numeric: tabular-nums; }
+
+  /* close: the whole page inverts and goes quiet */
+  .close { background: #F3F0E7; color: #1B3CD4; padding: 16vh var(--g) calc(env(safe-area-inset-bottom, 0px) + 14vh) calc(var(--g) + clamp(1.8rem, 3vw, 3rem)); font-size: 14px; line-height: 1.7; position: relative; z-index: 31; }
+  .close p { margin: 0 0 12px; max-width: 52ch; }
+  .close a, .close .link { color: #1B3CD4; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  .close .link:hover, .close a:hover { text-decoration-thickness: 2px; }
+  .close :focus-visible { outline-color: #1B3CD4; }
+  .close form { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin: 6px 0 14px; }
+  .close input { border: 0; border-bottom: 1px solid #1B3CD4; background: transparent; color: #1B3CD4; font: inherit; padding: 4px 0; width: min(22rem, 100%); }
+  .close input::placeholder { color: #1B3CD48C; }
+  .close .fine { color: #1B3CD4B3; margin-top: 36px; }
+  .close .asks p { margin-bottom: 4px; }
+
+  @media (max-width: 720px) {
+    .hero, .fill-stage, .day, .cats, .next, .close { padding-left: calc(var(--g) + 26px); }
+    .hero-then { left: calc(var(--g) + 26px); bottom: calc(env(safe-area-inset-bottom, 0px) + 9vh); }
+    .scopes { gap: 12px; font-size: 13px; left: calc(var(--g) + 26px); }
+    .back { display: none; }
+    .mark { font-size: 1.3rem; }
+    .big { font-size: calc(80vw / (var(--len, 4) * 0.6 + 0.55)); }
+    .meter i { height: 20px; }
+    .w .word { font-size: 13.5vw; }
+    .w { gap: 2px 12px; }
+    .w .cap { min-width: 0; }
+    .w .cap b { display: inline; }
+  }
+</style>
+</head>
+<body>
+<span data-sc-progress></span>
+<a class="mark" href="index.html" aria-label="Ledger, all concepts">Ledger</a>
+<div class="scopes" role="group" aria-label="Whose money" id="scopes"></div>
+<a class="back" href="index.html">All five concepts</a>
+
+<main>
+  <!-- ACT 1 (pin): one number at poster scale. Scroll squeezes it and says what it means. -->
+  <section data-sc-act="pin" data-sc-span="2" data-sc-drift="#1B3CD4" id="heroAct">
+    <div data-sc-stage class="hero">
+      <h1 class="vh" id="h1"></h1>
+      <p class="big num" aria-hidden="true" id="big"></p>
+      <p class="hero-sub" id="heroSub" data-sc-cue="0 0.42 0"></p>
+      <p class="hero-then" id="heroThen" data-sc-cue="0.46" data-sc-kinetic="words"></p>
+    </div>
+  </section>
+
+  <!-- ACT 2 (flow): a day, then a paragraph -->
+  <section class="day" data-sc-act="flow" data-sc-drift="#16309F">
+    <div class="meter" id="meter" role="img"></div>
+    <p class="small" id="dayText"></p>
+  </section>
+
+  <!-- ACT 3 (pin): the signature. Scroll through September and the words take on weight as money is used. -->
+  <section data-sc-act="pin" data-sc-span="2.8" data-sc-drift="#0E1E6E" id="fillAct">
+    <div data-sc-stage class="fill-stage">
+      <div class="fill-head"><span><b id="fillDate">September 1</b> · personal spending against the 50/30/20 split</span><span id="fillIncome"></span></div>
+      <h2 class="vh">Needs, wants and savings, as a share of what each is allowed</h2>
+      <div class="words" id="words"></div>
+      <p class="fill-note">Each word is as heavy as the share it has used. Heavier and wider means closer to its limit.</p>
+    </div>
+  </section>
+
+  <!-- ACT 4 (flow): categories, set by money -->
+  <section class="cats" data-sc-act="flow" data-sc-drift="#16309F">
+    <h2 id="catsHead"></h2>
+    <p class="cloud" id="cloud" data-sc-reveal="right" data-sc-reveal-at="0.12 0.4"></p>
+    <p class="cloud-key" id="cloudKey"></p>
+  </section>
+
+  <!-- ACT 5 (flow): what's next -->
+  <section class="next" data-sc-act="flow" data-sc-drift="#1B3CD4">
+    <h2 class="vh">Coming up</h2>
+    <p class="l1" id="n1"></p>
+    <p class="l2" id="n2"></p>
+    <p class="l3 num" id="n3"></p>
+    <ul class="rest" id="rest"></ul>
+  </section>
+
+  <!-- CLOSE: the smallest type on the site -->
+  <footer class="close">
+    <p id="closeLine"></p>
+    <form id="addForm" autocomplete="off" novalidate>
+      <label for="addText">Add a transaction</label>
+      <input id="addText" type="text" placeholder="Juniper Kitchen 12.50">
+      <button class="link" type="submit">Add</button>
+    </form>
+    <p id="addMsg" aria-live="polite"></p>
+    <div class="asks" id="asks"></div>
+    <p class="fine">Concept 4 of 5. Sample data for Alex and Juniper Studio, Thursday, September 24, 2026. <a href="index.html">Compare all five</a>.</p>
+  </footer>
+</main>
+
+<script src="shared/ledger-sample.js"></script>
+<script>
+(function () {
+  var L = LedgerSample, D = L.create(), money = L.money;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  var store = { get: function (k) { try { return localStorage.getItem('ledger-c4-' + k); } catch (e) { return null; } },
+                set: function (k, v) { try { localStorage.setItem('ledger-c4-' + k, v); } catch (e) {} } };
+  var scope = store.get('scope'); if (!L.LABEL[scope]) scope = 'everything';
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderScopes() {
+    $('scopes').innerHTML = ['everything', 'personal', 'business'].map(function (s) {
+      return '<button type="button" data-scope="' + s + '" aria-pressed="' + (s === scope) + '">' + L.LABEL[s] + '</button>';
+    }).join('');
+  }
+
+  function heroFigures() {
+    var p = D.plan();
+    if (scope === 'business') {
+      var f = D.flows('business');
+      return { v: f.net, sub: 'Juniper Studio profit in September so far.', then: money(f.net * L.TAX_RATE) + ' of it is the tax bill.', h1: money(f.net) + ' Juniper Studio profit in September' };
+    }
+    var b = D.scopeBudget(scope);
+    var perDay = b.left / p.daysLeft;
+    return { v: b.left, sub: (scope === 'personal' ? 'left in your personal budgets' : 'left to spend in September') + '. ' + (p.daysLeft === 6 ? 'Six' : p.daysLeft) + ' days to go.',
+      then: 'That is ' + money(perDay) + ' a day.', h1: money(b.left) + ' left to spend in September' };
+  }
+
+  function renderHero() {
+    var h = heroFigures(), s = money(h.v);
+    $('h1').textContent = h.h1;
+    $('big').innerHTML = s.slice(0, -3) + '<span class="c">' + s.slice(-3) + '</span>';
+    $('big').style.setProperty('--len', s.slice(0, -3).length);
+    $('heroSub').textContent = h.sub;
+    var then = $('heroThen');
+    if (then.classList.contains('sc-is-split')) {
+      // already split by the engine: rewrite the words in place
+      var units = then.querySelectorAll('.sc-split__i'), parts = h.then.split(' ');
+      if (units.length === parts.length) { Array.prototype.forEach.call(units, function (u, i) { u.textContent = parts[i]; }); }
+      else { then.textContent = h.then; }
+    } else { then.textContent = h.then; }
+  }
+
+  function renderDay() {
+    var p = D.plan(), b = D.scopeBudget(scope), today = 30 - p.daysLeft;
+    var usedDays = Math.round(Math.min(1, b.spent / b.limit) * 30);
+    $('meter').innerHTML = Array.from({ length: 30 }, function (_, i) {
+      return '<i class="' + (i < usedDays ? 'used' : '') + (i === today - 1 ? ' today' : '') + '"></i>';
+    }).join('');
+    $('meter').setAttribute('aria-label', b.pct + '% of the ' + b.label.toLowerCase() + ' used by day ' + today + ' of 30');
+    if (scope === 'business') {
+      var f = D.flows('business');
+      $('dayText').innerHTML = 'The studio budgets allow <b>' + money(b.limit) + '</b> for software and contractors, and <b>' + money(b.spent) + '</b> is used. Revenue so far is <b>' + money(f.inc) + '</b> against <b>' + money(f.out) + '</b> in costs. Each bar is one day of September; the filled bars show how much of the budget is used.';
+    } else {
+      $('dayText').innerHTML = 'The ' + b.label.toLowerCase() + ' allows <b>' + money(b.limit) + '</b>. You have used <b>' + money(b.spent) + '</b> of it, ' + b.pct + ' percent, and ' + Math.round(today / 30 * 100) + ' percent of the month is gone. Each bar is one day of September; the filled bars show how much of the plan is used, and the outlined bar is today.';
+    }
+  }
+
+  /* the signature: weight and width follow money, day by day */
+  var days = [];
+  for (var d = 1; d <= 24; d++) days.push('2026-09-' + String(d).padStart(2, '0'));
+  // Targets come from the month's take-home, so the type only ever gains weight.
+  var monthIncome = D.buckets().income;
+  var byDay = days.map(function (dd) { return D.buckets(dd, monthIncome); });
+  function recomputeDays() { byDay = days.map(function (dd) { return D.buckets(dd, monthIncome); }); }
+  function setWords(i) {
+    var b = byDay[i];
+    ['needs', 'wants', 'savings'].forEach(function (k) {
+      var r = b[k], t = Math.max(0, Math.min(1, r.spent / (r.target || 1)));
+      var el = $('w-' + k);
+      el.style.fontWeight = Math.round(100 + t * 800);
+      el.style.fontStretch = (50 + t * 100).toFixed(1) + '%';
+      $('c-' + k).innerHTML = '<b>' + Math.round(t * 100) + '% used</b>' + money(r.spent) + ' of ' + money(r.target, { whole: true });
+    });
+    $('fillDate').textContent = L.dayLong(days[i]).replace(/^\w+, /, '');
+    $('fillIncome').textContent = money(b.income, { whole: true }) + ' expected take-home';
+  }
+  function renderWords() {
+    $('words').innerHTML = ['needs', 'wants', 'savings'].map(function (k) {
+      return '<div class="w"><span class="word" id="w-' + k + '">' + k + '</span><span class="cap" id="c-' + k + '"></span></div>';
+    }).join('');
+    setWords(reduce ? 23 : dayIndex());
+  }
+
+  function renderCats() {
+    var s = scope === 'business' ? 'business' : 'personal';
+    var cats = D.categories(s), max = cats.length ? cats[0].amt : 1;
+    $('catsHead').textContent = (s === 'business' ? 'Juniper Studio' : 'Personal') + ' spending in September, each word set by what it cost';
+    var order = cats.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+    $('cloud').innerHTML = order.map(function (c) {
+      var t = Math.sqrt(c.amt / max);
+      var name = c.name.replace(' / Mortgage', '').replace(' & ', ' and ');
+      return (order.indexOf(c) ? ' ' : '') + '<span style="font-weight:' + Math.round(100 + t * 800) + ';font-stretch:' + (55 + t * 95).toFixed(0) + '%" title="' + esc(c.name) + ': ' + money(c.amt) + '">' + esc(name) + '</span>';
+    }).join('');
+    $('cloudKey').innerHTML = cats.map(function (c) { return esc(c.name) + ' <b>' + money(c.amt) + '</b>'; }).join(' · ');
+  }
+
+  function renderNext() {
+    var s = scope === 'everything' ? 'everything' : scope;
+    var up = D.upcoming(s, 30).filter(function (u) { return !u.income; });
+    var first = up.slice().sort(function (a, b) { return a.amt - b.amt; })[0] || up[0];
+    if (!first) { $('n1').textContent = 'Nothing'; $('n2').textContent = 'due in thirty days'; $('n3').textContent = ''; $('rest').innerHTML = ''; return; }
+    $('n1').textContent = first.name.replace('Maple Court ', '').replace('The Workshop ', '');
+    $('n2').textContent = 'is due ' + L.dayLong(first.d).replace(/^\w+, /, '');
+    $('n3').textContent = money(-first.amt);
+    $('rest').innerHTML = D.upcoming(s, 30).filter(function (u) { return u !== first && !(u.name === first.name && u.d === first.d); }).map(function (u) {
+      return '<li><span class="d">' + L.day(u.d) + '</span><span class="n">' + esc(u.name) + (u.income ? ', expected' : '') + '</span><span class="a">' + (u.income ? '+' : '') + money(u.amt) + '</span></li>';
+    }).join('');
+  }
+
+  function renderClose() {
+    var rv = D.reviews(), p = D.plan();
+    $('closeLine').innerHTML = 'That is September so far: ' + money(p.spent) + ' spent, ' + money(p.left) + ' to go. ' +
+      (rv.length ? '<button class="link" type="button" id="showAsks">Review this week (' + rv.length + ')</button>' : 'This week is reviewed.');
+    if (!rv.length) $('asks').innerHTML = '';
+  }
+  function renderAsks() {
+    $('asks').innerHTML = D.reviews().map(function (r) {
+      return '<p>' + esc(r.title) + '. ' + esc(r.detail) + '. <button class="link" type="button" data-review="' + r.id + '" data-answer="yes">' + r.yes + '</button> or <button class="link" type="button" data-review="' + r.id + '" data-answer="no">' + r.no.toLowerCase() + '</button>.</p>';
+    }).join('');
+  }
+
+  function renderAll() { renderScopes(); renderHero(); renderDay(); renderCats(); renderNext(); renderClose(); }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.scope) { scope = t.dataset.scope; store.set('scope', scope); renderAll(); }
+    else if (t.id === 'showAsks') { renderAsks(); var f = $('asks').querySelector('button'); if (f) f.focus(); }
+    else if (t.dataset.review) { D.review(t.dataset.review, t.dataset.answer); renderClose(); if (D.reviews().length) renderAsks(); }
+  });
+  $('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var raw = $('addText').value.trim(), m = raw.match(/\$?(\d[\d,]*(?:\.\d{1,2})?)/);
+    var name = m ? raw.replace(m[0], '').replace(/\s+/g, ' ').trim() : '';
+    if (!m || !name) { $('addMsg').textContent = 'Type a name and an amount, like "Juniper Kitchen 12.50".'; return; }
+    var amt = parseFloat(m[1].replace(/,/g, ''));
+    var into = scope === 'business' ? 'business' : 'personal';
+    D.addTx({ name: name, cat: into === 'business' ? 'Other Business' : 'Dining & Coffee', amt: -amt, scope: into });
+    $('addMsg').textContent = 'Added ' + name + ', ' + money(-amt) + '. The number at the top is now ' + money(heroFigures().v) + '.';
+    $('addText').value = '';
+    recomputeDays(); renderAll(); setWords(reduce ? 23 : dayIndex());
+  });
+
+  var fillAct = $('fillAct');
+  function dayIndex() {
+    var r = fillAct.getBoundingClientRect(), travel = fillAct.offsetHeight - innerHeight;
+    var p = travel > 0 ? Math.max(0, Math.min(1, (-r.top + innerHeight * 0.35) / (travel + innerHeight * 0.35))) : 1;
+    return Math.round(Math.min(1, p / 0.85) * 23);
+  }
+  var last = -1, ticking = false;
+  addEventListener('scroll', function () {
+    if (ticking || reduce) return; ticking = true;
+    requestAnimationFrame(function () { ticking = false; var i = dayIndex(); if (i !== last) { last = i; setWords(i); } });
+  }, { passive: true });
+
+  renderAll();
+  renderWords();
+})();
+</script>
+<script src="shared/scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
+</body>
+</html>

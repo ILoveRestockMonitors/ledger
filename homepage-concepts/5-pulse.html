@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger Pulse</title>
+<meta name="description" content="Ledger home concept 5: your week as fast hard cuts, with a gauge in the top bar that drains as you go.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800;900&family=Onest:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="shared/scrollcraft.css">
+<style>
+  :root {
+    --ink: #1A1512; --bone: #F5F0E6;
+    --tomato: #F2542D; --butter: #F7D046; --sky: #8CC8F2; --forest: #1F4D35; --mint: #A3E4C1; --blush: #F5B8C4;
+    --sc-canvas: var(--bone); --sc-surface: #fff;
+    --sc-ink: var(--ink); --sc-ink-soft: #4A3F38;
+    --sc-accent: var(--ink); --sc-accent-ink: var(--bone);
+    --sc-font-display: "Unbounded", "Onest", system-ui, sans-serif;
+    --sc-font-text: "Onest", system-ui, sans-serif;
+    --sc-font-mono: "Onest", system-ui, sans-serif;
+    --barH: 64px; --tickH: 30px;
+    --g: clamp(16px, 4vw, 56px);
+    color-scheme: light;
+  }
+  body { background: var(--bone); font-size: 17px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* the loud bar */
+  .bar {
+    position: fixed; inset: 0 0 auto 0; z-index: 50; background: var(--ink); color: var(--bone);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .bar-row { height: var(--barH); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 0 var(--g); }
+  .word { font: 900 22px/1 var(--sc-font-display); letter-spacing: -0.02em; color: var(--bone); text-decoration: none; }
+  .gauge { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .gauge .track { position: relative; flex: 1; min-width: 40px; height: 14px; border-radius: 7px; background: #3A312B; overflow: hidden; }
+  .gauge .fill { position: absolute; inset: 0; background: var(--butter); border-radius: 7px; transform-origin: 0 50%; transition: transform 380ms var(--sc-ease-out), background-color 300ms var(--sc-ease-out); }
+  .gauge.drain .fill { background: var(--tomato); }
+  .gauge.gain .fill { background: var(--mint); }
+  .gauge span { font: 800 14px/1 var(--sc-font-display); color: var(--bone); white-space: nowrap; letter-spacing: 0; }
+  .gauge .when { font: 700 12px var(--sc-font-text); letter-spacing: 0.06em; text-transform: uppercase; color: #CFC4B6; }
+  .gauge .v { font-size: 19px; transition: color 300ms var(--sc-ease-out); }
+  .gauge.drain .v { color: var(--tomato); } .gauge.gain .v { color: var(--mint); }
+  .cta { font: 900 22px/1 var(--sc-font-display); letter-spacing: -0.02em; color: var(--ink); background: var(--butter); border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; text-decoration: none; white-space: nowrap; transition: transform 120ms var(--sc-ease-out), background-color 150ms var(--sc-ease-out); }
+  .cta:hover { background: #FFE07A; }
+  .cta:active { transform: scale(0.97); }
+  .ticker { height: var(--tickH); overflow: hidden; background: var(--butter); color: var(--ink); border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+  .ticker-track { display: flex; width: max-content; animation: tick 38s linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  .ticker-track p { margin: 0; white-space: nowrap; font: 700 13px/26px var(--sc-font-text); letter-spacing: 0.04em; text-transform: uppercase; padding-right: 32px; }
+  .ticker-track b { font-weight: 800; }
+  @keyframes tick { to { transform: translateX(-50%); } }
+
+  /* the peak lives in the chrome: the bar unfurls, holds, and folds back */
+  .peak {
+    position: fixed; z-index: 45; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + var(--barH) + var(--tickH) + 4px);
+    height: min(66vh, 620px); background: var(--ink); color: var(--bone);
+    clip-path: inset(0 0 calc((1 - var(--peak, 0)) * 100%) 0); pointer-events: none;
+    display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--g) clamp(24px, 5vh, 48px);
+  }
+  .peak p { margin: 0; }
+  .peak .k { font: 700 14px var(--sc-font-text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--butter); }
+  .peak .v { font: 900 clamp(3.6rem, 1rem + 12vw, 12rem)/0.86 var(--sc-font-display); letter-spacing: -0.05em; margin: 10px 0 18px; }
+  .peak .row { display: flex; gap: 12px 36px; flex-wrap: wrap; font: 800 clamp(1.1rem, 0.8rem + 1.4vw, 2rem)/1.1 var(--sc-font-display); }
+  .peak .row span { color: var(--butter); }
+
+  /* cuts */
+  main { padding-top: calc(env(safe-area-inset-top, 0px) + var(--barH) + var(--tickH)); }
+  .cut { min-height: 88vh; padding: clamp(40px, 8vh, 96px) var(--g) clamp(40px, 7vh, 80px); display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
+  .cut.short { min-height: 70vh; }
+  .t-tomato { background: var(--tomato); color: var(--ink); }
+  .t-butter { background: var(--butter); color: var(--ink); }
+  .t-sky { background: var(--sky); color: var(--ink); }
+  .t-forest { background: var(--forest); color: var(--bone); }
+  .t-mint { background: var(--mint); color: var(--ink); }
+  .t-ink { background: var(--ink); color: var(--bone); }
+  .t-blush { background: var(--blush); color: var(--ink); }
+  .t-bone { background: var(--bone); color: var(--ink); }
+  .date { font: 700 14px var(--sc-font-text); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 18px; }
+  .shout { font: 900 clamp(3.2rem, 1rem + 11vw, 11.5rem)/0.84 var(--sc-font-display); letter-spacing: -0.055em; margin: 0; text-transform: uppercase; text-wrap: balance; }
+  .shout.md { font-size: clamp(2.6rem, 1rem + 7.5vw, 8rem); }
+  .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; margin: 26px 0 0; font: 700 clamp(1.2rem, 0.9rem + 1.3vw, 2rem)/1.15 var(--sc-font-text); letter-spacing: -0.01em; }
+  .line .amt { font-family: var(--sc-font-display); font-weight: 800; letter-spacing: -0.03em; }
+  .note { font-size: 16px; max-width: 46ch; margin: 18px 0 0; line-height: 1.5; font-weight: 500; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+  .chip { border: 2.5px solid currentColor; background: transparent; color: inherit; border-radius: 99px; padding: 8px 18px; font: 800 14px var(--sc-font-display); letter-spacing: 0; cursor: pointer; transition: background-color 120ms var(--sc-ease-out), color 120ms var(--sc-ease-out), transform 100ms var(--sc-ease-out); }
+  .chip:active { transform: scale(0.96); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+  .t-ink .chip[aria-pressed="true"], .t-forest .chip[aria-pressed="true"] { background: var(--bone); color: var(--ink); border-color: var(--bone); }
+  .chip:hover { background: color-mix(in oklab, currentColor 12%, transparent); }
+  .chip.solid { background: var(--butter); color: var(--ink); border-color: var(--butter); }
+  .chip.solid:hover { background: #FFE07A; }
+  .answered { font: 800 18px var(--sc-font-display); margin-top: 22px; }
+  .tag { display: inline-block; font: 700 12px var(--sc-font-text); letter-spacing: 0.08em; text-transform: uppercase; border: 2px solid currentColor; border-radius: 99px; padding: 3px 10px; }
+
+  .bars { display: grid; gap: 18px; margin-top: 30px; max-width: 980px; }
+  .b { display: grid; grid-template-columns: 11ch minmax(0, 1fr); gap: 16px; align-items: center; font: 900 clamp(1.1rem, 0.8rem + 1.2vw, 1.8rem)/1 var(--sc-font-display); letter-spacing: -0.02em; }
+  .b .track { position: relative; height: clamp(40px, 7vh, 64px); border: 3px solid var(--ink); border-radius: 10px; overflow: hidden; }
+  .b .track i { position: absolute; inset: 0; background: var(--ink); transform-origin: 0 50%; }
+  .b .track span { position: absolute; right: 12px; top: 50%; translate: 0 -50%; font-size: 0.8em; color: var(--ink); mix-blend-mode: normal; }
+  .b .track span.inside { color: var(--butter); left: 12px; right: auto; }
+  .b small { grid-column: 2; font: 600 14px var(--sc-font-text); letter-spacing: 0; margin-top: -8px; }
+
+  .final { min-height: 92vh; }
+  .final .shout { font-size: clamp(3.4rem, 1rem + 13vw, 14rem); }
+  .big-cta { margin-top: 34px; font: 900 clamp(2rem, 1rem + 5vw, 5.4rem)/1 var(--sc-font-display); letter-spacing: -0.04em; background: var(--ink); color: var(--butter); border: 0; border-radius: 16px; padding: 0.35em 0.55em; cursor: pointer; align-self: flex-start; transition: transform 120ms var(--sc-ease-out); }
+  .big-cta:hover { transform: translateY(-2px); }
+  .big-cta:active { transform: scale(0.98); }
+  .final .fine { font: 500 14px var(--sc-font-text); margin-top: 30px; }
+  .final .fine a { color: inherit; }
+
+  .t-ink :focus-visible, .t-forest :focus-visible, .bar :focus-visible, .peak :focus-visible { outline-color: var(--butter); }
+
+  @media (max-width: 720px) {
+    :root { --barH: 56px; --tickH: 28px; }
+    .bar-row { gap: 10px; }
+    .word { font-size: 0; }
+    .word::before { content: "L"; font-size: 22px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--bone); color: var(--ink); }
+    .gauge { gap: 8px; flex-wrap: wrap; row-gap: 4px; }
+    .gauge .track { flex-basis: 100%; height: 8px; order: 3; }
+    .gauge .when { font-size: 10px; }
+    .gauge .v { font-size: 14px; }
+    .cta { font-size: 15px; padding: 9px 10px; }
+    .cut { min-height: 78vh; }
+    .shout { font-size: 11vw; }
+    .shout.md { font-size: 10vw; }
+    .final .shout { font-size: 15vw; }
+    .b { grid-template-columns: 1fr; gap: 8px; }
+    .b small { grid-column: 1; margin-top: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track { animation: none; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-row">
+    <a class="word" href="index.html" aria-label="Ledger, all concepts">LEDGER</a>
+    <div class="gauge" id="gauge" role="meter" aria-label="Left in the September plan" aria-valuemin="0" aria-valuemax="4200" aria-valuenow="946">
+      <span class="when" id="gWhen"></span><span class="v num" id="gVal"></span><span class="track"><i class="fill" id="gFill"></i></span>
+    </div>
+    <button class="cta" type="button" id="topCta">CHECK IN</button>
+  </div>
+  <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+</header>
+
+<div class="peak" id="peak" aria-hidden="true">
+  <p class="k">Today, September 24</p>
+  <p class="v num" id="peakV"></p>
+  <p class="row" id="peakRow"></p>
+</div>
+
+<main id="cuts"></main>
+
+<script src="shared/ledger-sample.js"></script>
+<script>
+(function () {
+  var L = LedgerSample, D = L.create(), money = L.money, root = document.documentElement;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
+
+  var SHOUT = { 'Trailside Fitness': 'Gym.', 'Juniper Kitchen': 'Dinner out.', 'Harbor House project': 'Paid.', 'Transfer to rainy day savings': 'Saved.', 'Cloudbox Storage': 'New charge?', 'Willow Market': 'Groceries.' };
+  var GROUND = ['t-butter', 't-sky', 't-forest', 't-mint', 't-ink', 't-blush'];
+
+  /* ---------- the week as a timeline of plan states ---------- */
+  var week = D.week();
+  var start = L.addDays(L.TODAY, -7);
+  function states() {
+    var left0 = D.plan(start).left, out = [{ when: L.day(start), left: left0, kind: 'start' }], left = left0;
+    week.forEach(function (t) {
+      var kind = t.transfer ? 'save' : t.amt > 0 ? 'gain' : 'drain';
+      if (kind === 'drain') left = L.r2(left + t.amt);
+      out.push({ when: L.day(t.d), left: left, kind: kind, t: t });
+    });
+    return out;
+  }
+  var S = states();
+
+  function cutFor(t, i) {
+    var inc = t.amt > 0, biz = t.scope === 'business';
+    var bk = D.bucketOf(t);
+    var sort = biz ? '<p class="note"><span class="tag">Juniper Studio</span> Business money stays out of your 50/30/20.</p>' :
+      '<div class="chips" role="group" aria-label="Count ' + esc(t.name) + ' as">' + ['needs', 'wants', 'savings'].map(function (k) {
+        return '<button class="chip" type="button" data-tx="' + t.id + '" data-bucket="' + k + '" aria-pressed="' + (bk === k) + '">' + { needs: 'NEED', wants: 'WANT', savings: 'SAVE' }[k] + '</button>';
+      }).join('') + '</div>';
+    var extra = '';
+    if (t.name === 'Cloudbox Storage') extra = reviewBlock('cloud', 'It billed the studio card and looks like it repeats monthly.');
+    if (t.transfer) extra = '<p class="note">Moved to Rainy day savings. Transfers never count as spending.</p>';
+    return '<section class="cut ' + GROUND[i % GROUND.length] + '" data-state="' + (i + 1) + '" data-sc-act="flow">' +
+      '<p class="date">' + L.dayLong(t.d) + '</p>' +
+      '<h2 class="shout" data-sc-reveal="up" data-sc-reveal-at="0.06 0.26">' + esc(SHOUT[t.name] || t.name) + '</h2>' +
+      '<p class="line" data-sc-in><span>' + esc(t.transfer ? 'Rainy day savings' : t.name) + '</span><span class="amt num">' + (inc ? '+' : '') + money(t.amt) + '</span></p>' +
+      (t.name === 'Cloudbox Storage' ? extra : sort + extra) + '</section>';
+  }
+  function reviewBlock(id, why) {
+    var r = D.reviews().filter(function (x) { return x.id === id; })[0];
+    var body = r ? '<div class="chips" id="rev-' + id + '"><button class="chip solid" type="button" data-review="' + id + '" data-answer="yes">' + r.yes.toUpperCase() + '</button><button class="chip" type="button" data-review="' + id + '" data-answer="no">' + r.no.toUpperCase() + '</button></div>'
+      : '<p class="answered">Done. Thanks.</p>';
+    return '<p class="note">' + why + '</p><div data-rev="' + id + '">' + body + '</div>';
+  }
+
+  function render() {
+    var p = D.plan(), b = D.buckets(), rv = D.reviews();
+    var up = D.upcoming('everything', 30).filter(function (u) { return !u.income; })[0];
+    var html = '';
+    html += '<section class="cut t-tomato" data-state="0" data-sc-act="flow">' +
+      '<p class="date">' + L.day(L.addDays(L.TODAY, -6)) + ' to ' + L.day(L.TODAY) + ' · Alex and Juniper Studio</p>' +
+      '<h1 class="shout">Your week.<br>' + WORDS[week.length] + ' things.<br><span id="needYou">' + (rv.length ? WORDS[rv.length] + ' need you.' : 'All done.') + '</span></h1>' +
+      '<p class="note">The bar up top is your September plan. Watch it move as the week plays back.</p></section>';
+    week.forEach(function (t, i) { html += cutFor(t, i); });
+    html += '<section class="cut t-bone" id="peakCut" data-state="' + (week.length + 1) + '" data-sc-act="flow" style="min-height:118vh">' +
+      '<h2 class="shout md" style="margin-top:auto">Under pace.</h2>' +
+      '<p class="note">' + p.pct + '% of the plan used with ' + Math.round((30 - p.daysLeft) / 30 * 100) + '% of the month gone.</p></section>';
+    html += '<section class="cut t-butter" data-sc-act="flow"><p class="date">September so far · 50/30/20 of ' + money(b.income, { whole: true }) + ' take-home</p>' +
+      '<h2 class="shout md" data-sc-reveal="up" data-sc-reveal-at="0.06 0.26">The split.</h2><div class="bars">' +
+      ['needs', 'wants', 'savings'].map(function (k) {
+        var r = b[k], w = Math.min(1, r.spent / r.target), inside = w > 0.72;
+        return '<div class="b"><span>' + r.label.toUpperCase() + '</span><span class="track"><i style="transform:scaleX(' + w.toFixed(3) + ')"></i><span class="' + (inside ? 'inside' : '') + '">' + r.pct + '%</span></span>' +
+          '<small>' + money(r.spent) + ' of ' + money(r.target, { whole: true }) + ' · ' + Math.round(r.share * 100) + '% share</small></div>';
+      }).join('') + '</div></section>';
+    html += '<section class="cut t-ink" data-sc-act="flow"><p class="date">Studio Design Suite · Business</p>' +
+      '<h2 class="shout md" data-sc-reveal="up" data-sc-reveal-at="0.06 0.26">Price went up.</h2>' +
+      '<p class="line"><span>$49.00</span><span>to</span><span class="amt num">$54.00</span></p>' + reviewBlock('suite', 'Which price should the plan use from October 12?') + '</section>';
+    if (up) {
+      var inDays = L.daysBetween(L.TODAY, up.d);
+      html += '<section class="cut short t-sky" data-sc-act="flow"><p class="date">Next up · ' + L.dayLong(up.d) + '</p>' +
+        '<h2 class="shout md" data-sc-reveal="up" data-sc-reveal-at="0.06 0.26">' + esc(up.name.replace('Maple Court ', '')) + ' in ' + inDays + ' days.</h2>' +
+        '<p class="line"><span class="amt num">' + money(-up.amt) + '</span><span>from Everyday checking, which has ' + money(D.accounts('personal')[0].bal) + '</span></p></section>';
+    }
+    html += '<section class="cut final t-tomato" id="final" data-sc-act="flow"><h2 class="shout" id="finalShout">' + (rv.length ? 'Your turn.' : 'Checked in.') + '</h2>' +
+      '<button class="big-cta" type="button" id="bigCta">' + (rv.length ? 'CHECK IN' : 'SEE YOU THURSDAY') + '</button>' +
+      '<p class="fine" id="finalNote">' + (rv.length ? WORDS[rv.length] + ' left to answer. Check in takes you straight there.' : 'Every charge is sorted and answered.') + '</p>' +
+      '<p class="fine">Concept 5 of 5 · sample data for Alex and Juniper Studio · <a href="index.html">compare all five</a></p></section>';
+    $('cuts').innerHTML = html;
+
+    $('peakV').textContent = money(p.left);
+    $('peakRow').innerHTML = '<b>left in the plan</b><b><span>' + p.daysLeft + '</span> days</b><b><span>' + money(p.perDay) + '</span> a day</b>';
+    $('ticker').innerHTML = [0, 1].map(function () {
+      return '<p>' + D.accounts('everything').map(function (a) { return esc(a.name) + ' <b>' + money(a.bal) + '</b>'; }).join(' &nbsp;✦&nbsp; ') +
+        ' &nbsp;✦&nbsp; Net worth <b>' + money(D.netWorth('everything')) + '</b> &nbsp;✦&nbsp; </p>';
+    }).join('');
+  }
+
+  /* ---------- the gauge follows the cut you are on ---------- */
+  var current = -1;
+  function setGauge(i) {
+    if (i === current) return;
+    var prev = current; current = i;
+    var st = S[Math.min(i, S.length - 1)], g = $('gauge');
+    var isToday = i >= S.length;
+    $('gWhen').textContent = isToday ? 'Today · left' : st.when + ' · left';
+    $('gVal').textContent = money(st.left);
+    $('gFill').style.transform = 'scaleX(' + Math.max(0, st.left / L.PLAN).toFixed(4) + ')';
+    g.setAttribute('aria-valuenow', Math.round(st.left));
+    g.setAttribute('aria-valuetext', money(st.left) + ' left, ' + (isToday ? 'today' : st.when));
+    g.classList.remove('drain', 'gain');
+    if (prev >= 0 && i > prev && (st.kind === 'drain' || st.kind === 'gain')) {
+      void g.offsetWidth; g.classList.add(st.kind);
+      clearTimeout(setGauge.t); setGauge.t = setTimeout(function () { g.classList.remove('drain', 'gain'); }, 650);
+    }
+  }
+  var smooth = function (a, b, x) { x = Math.max(0, Math.min(1, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
+  function onScroll() {
+    var cuts = document.querySelectorAll('[data-state]'), mark = innerHeight * 0.45, idx = 0;
+    Array.prototype.forEach.call(cuts, function (c) { if (c.getBoundingClientRect().top < mark) idx = +c.dataset.state; });
+    setGauge(idx);
+    var pc = $('peakCut');
+    if (pc) {
+      var r = pc.getBoundingClientRect(), q = (innerHeight * 0.7 - r.top) / (r.height + innerHeight * 0.1);
+      var e = smooth(0, 0.22, q) * (1 - smooth(0.78, 1, q));
+      root.style.setProperty('--peak', e.toFixed(3));
+    }
+  }
+  var ticking = false;
+  addEventListener('scroll', function () { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; onScroll(); }); }, { passive: true });
+
+  function goCheckIn() {
+    var open = D.reviews()[0];
+    if (!open) { $('final').scrollIntoView({ behavior: 'smooth' }); return; }
+    var box = document.querySelector('[data-rev="' + open.id + '"]');
+    box.closest('.cut').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () { var b = box.querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 650);
+  }
+  function refreshReviews() {
+    var rv = D.reviews();
+    ['cloud', 'suite'].forEach(function (id) {
+      var box = document.querySelector('[data-rev="' + id + '"]');
+      if (box && !rv.some(function (r) { return r.id === id; })) box.innerHTML = '<p class="answered">Done. Thanks.</p>';
+    });
+    $('needYou').textContent = rv.length ? WORDS[rv.length] + ' need you.' : 'All done.';
+    $('finalShout').textContent = rv.length ? 'Your turn.' : 'Checked in.';
+    $('bigCta').textContent = rv.length ? 'CHECK IN' : 'SEE YOU THURSDAY';
+    $('finalNote').textContent = rv.length ? WORDS[rv.length] + ' left to answer. Check in takes you straight there.' : 'Every charge is sorted and answered.';
+    $('topCta').textContent = rv.length ? 'CHECK IN' : 'DONE';
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (t.id === 'topCta' || t.id === 'bigCta') goCheckIn();
+    else if (t.dataset.review) { D.review(t.dataset.review, t.dataset.answer); refreshReviews(); }
+    else if (t.dataset.bucket) {
+      D.setBucket(t.dataset.tx, t.dataset.bucket);
+      Array.prototype.forEach.call(document.querySelectorAll('button[data-tx="' + t.dataset.tx + '"]'), function (b) { b.setAttribute('aria-pressed', String(b === t)); });
+    }
+  });
+
+  render();
+  onScroll();
+})();
+</script>
+<script src="shared/scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
+</body>
+</html>

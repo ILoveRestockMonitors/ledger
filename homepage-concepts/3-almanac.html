@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger Almanac</title>
+<meta name="description" content="Ledger home concept 3: the month written as a short letter, and every figure opens its receipt.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="shared/scrollcraft.css">
+<style>
+  :root {
+    --paper: #E5EBE2; --paper-2: #D8E1D6; --ink: #1B2922; --soft: #4B5D53; --rule: #2B5C8A; --margin-red: #B5473D;
+    --deep: #1D392E; --deep-ink: #EDF1E7; --deep-soft: #AFC3B6; --deep-rule: #9EC4E6;
+    --blue-paper: #DCE4EA;
+    --sc-canvas: var(--paper); --sc-surface: var(--paper-2);
+    --sc-ink: var(--ink); --sc-ink-soft: var(--soft);
+    --sc-accent: var(--rule); --sc-accent-ink: #F3F6F1;
+    --sc-font-display: "Newsreader", Georgia, serif;
+    --sc-font-text: "Newsreader", Georgia, serif;
+    --sc-font-mono: "Instrument Sans", system-ui, sans-serif;
+    --ui: "Instrument Sans", system-ui, sans-serif;
+    --margin: clamp(0px, 7vw, 120px);
+    color-scheme: light;
+  }
+  body { background: var(--paper); font-size: clamp(1.06rem, 1rem + 0.25vw, 1.2rem); line-height: 1.62; font-optical-sizing: auto; }
+  .chapter, .title-page { position: relative; }
+  .ground-paper { background: var(--paper); color: var(--ink); --c-soft: var(--soft); --c-rule: var(--rule); --c-line: #1B292226; }
+  .ground-deep { background: var(--deep); color: var(--deep-ink); --c-soft: var(--deep-soft); --c-rule: var(--deep-rule); --c-line: #EDF1E726; }
+  .ground-blue { background: var(--blue-paper); color: var(--ink); --c-soft: #4A5B66; --c-rule: var(--rule); --c-line: #1B292226; }
+  /* the red double margin rule of a columnar pad */
+  .ground-paper::before, .ground-blue::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--margin) + 64px); width: 4px;
+    border-left: 1px solid color-mix(in oklab, var(--margin-red) 55%, transparent); border-right: 1px solid color-mix(in oklab, var(--margin-red) 55%, transparent);
+    pointer-events: none;
+  }
+  .page { padding: clamp(4.5rem, 9vw, 8.5rem) clamp(1rem, 4vw, 3rem) clamp(4rem, 8vw, 7rem) calc(var(--margin) + 104px); max-width: 1320px; }
+
+  /* folio: the margin carries place, nothing else */
+  .folio {
+    position: fixed; left: calc(var(--margin) * 0.35 + 8px); top: 50%; z-index: 20;
+    writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg);
+    font: 500 12px/1 var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--soft);
+    display: flex; gap: 18px; transition: color 200ms var(--sc-ease-out);
+  }
+  .folio b { color: var(--ink); font-weight: 600; transition: color 200ms var(--sc-ease-out); }
+  .folio.on-deep { color: var(--deep-soft); } .folio.on-deep b { color: var(--deep-ink); }
+  .folio a { color: inherit; text-decoration: none; }
+  .folio a:hover { text-decoration: underline; }
+
+  /* title page */
+  .title-page .page { min-height: min(92vh, 900px); display: flex; flex-direction: column; justify-content: center; padding-top: clamp(3rem, 7vw, 6rem); }
+  .kicker { font: 600 12.5px var(--ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-rule); margin: 0 0 28px; }
+  h1 { font: 400 clamp(3.2rem, 1.6rem + 7vw, 8.4rem)/0.92 var(--sc-font-display); letter-spacing: -0.035em; margin: 0 0 34px; font-variation-settings: "opsz" 72; }
+  h1 em { font-style: italic; font-weight: 300; }
+  .deck { font-size: clamp(1.3rem, 1.05rem + 0.9vw, 1.9rem); line-height: 1.38; letter-spacing: -0.012em; max-width: 30ch; margin: 0; text-wrap: pretty; }
+  .byline { font: 500 13px var(--ui); color: var(--c-soft); margin: 34px 0 0; letter-spacing: 0.01em; }
+
+  /* chapters */
+  .plate { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 0 22px; margin: 0 0 clamp(2rem, 4vw, 3.5rem); max-width: 56rem; }
+  .plate .no { font: italic 300 clamp(2.4rem, 1.5rem + 3vw, 4.4rem)/1 var(--sc-font-display); color: var(--c-rule); }
+  .plate h2 { font: 400 clamp(2.2rem, 1.3rem + 3.4vw, 4.6rem)/1 var(--sc-font-display); letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
+  .para { display: grid; grid-template-columns: minmax(0, 36rem) minmax(0, 17rem); gap: 0 clamp(2rem, 4vw, 4rem); align-items: start; }
+  .para + .para { margin-top: 1.1em; }
+  .para p { margin: 0; text-wrap: pretty; }
+  .para p.lead::first-line { font-variant-caps: small-caps; letter-spacing: 0.02em; }
+  .notes { display: grid; gap: 12px; font-family: var(--ui); }
+  .notes:empty { display: none; }
+
+  /* the signature: every figure is a footnote that opens its receipt */
+  .fig {
+    font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer;
+    font-variant-numeric: lining-nums tabular-nums; white-space: nowrap;
+    text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--c-rule);
+    text-decoration-thickness: 1.5px; text-underline-offset: 0.2em;
+    transition: text-decoration-color 150ms var(--sc-ease-out), background-color 150ms var(--sc-ease-out);
+    border-radius: 3px;
+  }
+  .fig sup { font: 600 0.55em var(--ui); color: var(--c-rule); margin-left: 1px; vertical-align: 0.7em; }
+  .fig:hover { background: color-mix(in oklab, var(--c-rule) 10%, transparent); text-decoration-style: solid; }
+  .fig[aria-expanded="true"] { text-decoration-style: solid; background: color-mix(in oklab, var(--c-rule) 14%, transparent); }
+  .note {
+    position: relative; background: #F4F7F2; color: var(--ink); border-radius: 4px; padding: 14px 16px 12px;
+    box-shadow: 0 1px 2px #1B292222, 0 8px 20px -8px #1B292244; font-size: 13px; line-height: 1.4;
+    animation: noteIn 240ms var(--sc-ease-out);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 21px, #2B5C8A14 21px 22px);
+    background-position: 0 38px;
+  }
+  @keyframes noteIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+  .note .t { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; margin: 0 0 8px; }
+  .note .t span sup { color: var(--rule); font-size: 10px; margin-right: 4px; }
+  .note .x { border: 0; background: none; color: var(--soft); cursor: pointer; padding: 0 2px; font: 600 15px/1 var(--ui); }
+  .note table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .note td { padding: 3px 0; vertical-align: top; }
+  .note td.d { color: var(--soft); width: 44px; white-space: nowrap; }
+  .note td.a { text-align: right; white-space: nowrap; padding-left: 8px; }
+  .note tr.total td { border-top: 1px solid var(--ink); padding-top: 5px; font-weight: 600; }
+  .note tr.total td.a { border-bottom: 3px double var(--ink); }
+  .note .src { margin: 8px 0 0; color: var(--soft); font-size: 12px; }
+
+  /* the columnar pad table */
+  .pad { margin: clamp(2rem, 4vw, 3rem) 0; max-width: 42rem; font-family: var(--ui); font-size: 14.5px; }
+  .pad table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; background: color-mix(in oklab, #fff 28%, transparent); }
+  .pad th { font-weight: 600; text-align: right; padding: 10px 12px; border-bottom: 2px solid var(--ink); font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--soft); }
+  .pad th:first-child, .pad td:first-child { text-align: left; }
+  .pad td { padding: 11px 12px; text-align: right; border-bottom: 1px solid #1B29221F; }
+  .pad td + td, .pad th + th { border-left: 1px solid #2B5C8A33; }
+  .pad tr.total td { font-weight: 600; border-top: 1px solid var(--ink); border-bottom: 3px double var(--ink); }
+  .pad .bar { display: block; height: 5px; background: #1B29221A; margin-top: 6px; border-radius: 3px; overflow: hidden; }
+  .pad .bar i { display: block; height: 100%; background: var(--rule); }
+  .pad caption { caption-side: bottom; text-align: left; font-size: 12.5px; color: var(--soft); padding-top: 10px; }
+
+  .sched { list-style: none; margin: clamp(2rem, 4vw, 3rem) 0 0; padding: 0; max-width: 40rem; font-family: var(--ui); font-size: 15px; }
+  .sched li { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; }
+  .sched .d { width: 56px; flex: none; color: var(--c-soft); font-variant-numeric: tabular-nums; }
+  .sched .n { flex: none; }
+  .sched .n small { color: var(--c-soft); margin-left: 6px; }
+  .sched .lead { flex: 1; border-bottom: 1.5px dotted color-mix(in oklab, currentColor 35%, transparent); translate: 0 -5px; min-width: 20px; }
+  .sched .a { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sched .a.in { color: var(--c-rule); }
+
+  .spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+  .spread .para { grid-template-columns: minmax(0, 1fr); }
+  .figure { margin: 0; font-family: var(--ui); }
+  .figure svg { width: 100%; height: auto; }
+  .figure figcaption { font-size: 12.5px; color: var(--soft); margin-top: 10px; line-height: 1.45; }
+
+  .week { list-style: none; margin: clamp(2rem, 4vw, 3rem) 0 0; padding: 0; max-width: 44rem; font-family: var(--ui); }
+  .week li { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--c-line); font-size: 15px; }
+  .week li:last-child { border-bottom: 1px solid var(--c-line); }
+  .week .d { color: var(--c-soft); font-size: 13.5px; }
+  .week .n small { display: block; color: var(--c-soft); font-size: 13px; }
+  .week .a { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .week .a.in { color: var(--rule); }
+  .week .sort { grid-column: 2 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chipbtn { border: 1px solid #1B292240; background: transparent; color: var(--ink); border-radius: 99px; padding: 4px 12px; font: 500 13px var(--ui); cursor: pointer; transition: background-color 150ms var(--sc-ease-out), border-color 150ms var(--sc-ease-out); }
+  .chipbtn:hover { border-color: var(--ink); }
+  .chipbtn[aria-pressed="true"] { background: var(--ink); color: var(--blue-paper); border-color: var(--ink); }
+  .chipbtn:active { transform: scale(0.97); }
+  .studio-tag { font: 500 13px var(--ui); color: var(--c-soft); }
+  .asks { margin: clamp(2.5rem, 5vw, 3.5rem) 0 0; max-width: 44rem; display: grid; gap: 22px; }
+  .ask p { margin: 0 0 10px; }
+  .ask .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ask .done { font: 500 14px var(--ui); color: var(--rule); }
+  .status { font: 500 14px var(--ui); color: var(--c-soft); margin: 22px 0 0; }
+
+  .colophon .page { padding-block: clamp(3.5rem, 7vw, 6rem) clamp(4rem, 8vw, 6rem); }
+  .colophon h2 { font: 600 12px var(--ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--deep-soft); margin: 0 0 18px; }
+  .colophon p { max-width: 38rem; font-size: 15px; line-height: 1.6; margin: 0 0 14px; color: var(--deep-soft); }
+  .colophon p.next { color: var(--deep-ink); font-size: clamp(1.15rem, 1rem + 0.5vw, 1.4rem); line-height: 1.5; margin-top: 26px; }
+  .colophon a { color: var(--deep-rule); }
+
+  :focus-visible { outline-color: var(--c-rule, var(--rule)); }
+
+  @media (max-width: 1060px) {
+    .para, .spread { grid-template-columns: minmax(0, 1fr); }
+    .notes { margin-top: 12px; max-width: 26rem; }
+    .figure { max-width: 26rem; }
+  }
+  @media (max-width: 720px) {
+    :root { --margin: 0px; }
+    .page { padding-left: 34px; padding-right: 18px; }
+    .ground-paper::before, .ground-blue::before { left: 16px; }
+    .folio { writing-mode: horizontal-tb; transform: none; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 34px; right: 16px; font-size: 10.5px; gap: 10px; }
+    .folio .yr { display: none; }
+    .folio { background: var(--paper); padding: 5px 8px; border-radius: 4px; right: auto; box-shadow: 0 1px 3px #1B292222; }
+    .folio.on-deep { background: var(--deep); }
+    .folio.on-blue { background: var(--blue-paper); }
+    .plate { grid-template-columns: 1fr; gap: 6px; }
+    .week li { grid-template-columns: 50px minmax(0, 1fr) auto; gap: 4px 10px; font-size: 14.5px; }
+    .week .sort { grid-column: 1 / -1; }
+    .sched { font-size: 14px; }
+    .pad { overflow-x: auto; font-size: 13px; }
+    .pad td, .pad th { padding: 9px 6px; }
+    .pad th { font-size: 11px; letter-spacing: 0.02em; }
+    .sched .n small { display: block; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="folio" id="folio" aria-label="Where you are">
+  <a href="index.html"><b>Ledger</b></a><span class="yr">September 2026</span><span id="folioCh">Title</span>
+</nav>
+
+<main>
+  <header class="title-page ground-paper" data-folio="Title">
+    <div class="page">
+      <p class="kicker">The September letter</p>
+      <h1>September, <em>so far.</em></h1>
+      <div class="para">
+        <p class="deck" id="deck"></p>
+        <div class="notes" id="n-deck"></div>
+      </div>
+      <p class="byline">Prepared for Alex · Thursday, September 24, 2026 · Sample data · Every underlined figure opens its receipt</p>
+    </div>
+  </header>
+
+  <section class="chapter ground-paper" data-folio="I · Where it went" data-sc-act="flow" aria-labelledby="ch1">
+    <div class="page">
+      <div class="plate" data-sc-reveal="up" data-sc-reveal-at="0.02 0.16"><span class="no" aria-hidden="true">I.</span><h2 id="ch1">Where it went</h2></div>
+      <div id="ch1body" data-sc-in></div>
+    </div>
+  </section>
+
+  <section class="chapter ground-deep" data-folio="II · What's coming" data-sc-act="flow" aria-labelledby="ch2">
+    <div class="page">
+      <div class="plate" data-sc-reveal="up" data-sc-reveal-at="0.02 0.18"><span class="no" aria-hidden="true">II.</span><h2 id="ch2">What's coming</h2></div>
+      <div id="ch2body" data-sc-in></div>
+    </div>
+  </section>
+
+  <section class="chapter ground-paper" data-folio="III · What you're building" data-sc-act="flow" aria-labelledby="ch3">
+    <div class="page">
+      <div class="plate" data-sc-reveal="up" data-sc-reveal-at="0.02 0.18"><span class="no" aria-hidden="true">III.</span><h2 id="ch3">What you're building</h2></div>
+      <div class="spread">
+        <div id="ch3body"></div>
+        <figure class="figure" data-sc-parallax="-0.08">
+          <svg id="jars" viewBox="0 0 330 250" role="img" aria-label="Progress toward three savings goals"></svg>
+          <figcaption id="jarsCap"></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter ground-blue" id="week" data-folio="IV · The week in review" data-sc-act="flow" aria-labelledby="ch4">
+    <div class="page">
+      <div class="plate" data-sc-reveal="up" data-sc-reveal-at="0.02 0.18"><span class="no" aria-hidden="true">IV.</span><h2 id="ch4">The week in review</h2></div>
+      <div class="para"><p id="weekIntro"></p><div class="notes"></div></div>
+      <ul class="week" id="weekList"></ul>
+      <div class="asks" id="asks"></div>
+      <p class="status" id="weekStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <footer class="colophon ground-deep" data-folio="Colophon">
+    <div class="page">
+      <h2>Colophon</h2>
+      <p>This letter is Ledger's home screen, written fresh each morning from your accounts. Figures are reconciled through Thursday, September 24, 2026, using sample data for Alex and Juniper Studio. Set in Newsreader and Instrument Sans.</p>
+      <p class="next" id="nextLine"></p>
+      <p>Concept 3 of 5. <a href="index.html">Compare all five concepts</a>.</p>
+    </div>
+  </footer>
+</main>
+
+<script src="shared/ledger-sample.js"></script>
+<script src="shared/scrollcraft.js"></script>
+<script>
+(function () {
+  var L = LedgerSample, D = L.create(), money = L.money;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  var word = function (n) { return WORDS[n] || String(n); };
+  var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+
+  /* ---------- receipts: every figure knows what it is made of ---------- */
+  var txRows = function (list) { return list.map(function (t) { return [L.day(t.d), t.name, t.amt < 0 ? -t.amt : t.amt]; }); };
+  function receipt(key) {
+    var b = D.buckets(), p = D.plan(), fp = D.flows('personal'), fb = D.flows('business');
+    var up = D.upcoming('everything', 30), g = {};
+    D.goals('everything').forEach(function (x) { g[x.name] = x; });
+    var R = {
+      'plan-left': { t: 'Left in the plan', rows: [['', 'September plan', p.limit], ['', 'Personal spending', -fp.out], ['', 'Studio spending', -fb.out]], total: p.left, src: 'Transfers are not spending.' },
+      'per-day': { t: 'A day, to the 30th', rows: [['', 'Left in the plan', p.left], ['', 'Days remaining', p.daysLeft, 'n']], total: p.perDay, src: 'Left divided by days remaining.' },
+      income: { t: 'Take-home pay', rows: txRows(D.tx.filter(function (t) { return t.scope === 'personal' && t.amt > 0 && !t.transfer; })), total: b.income },
+      needs: { t: 'Needs', rows: txRows(b.needs.tx), total: b.needs.spent, src: 'Rent, groceries, transit and internet.' },
+      'needs-target': { t: 'Allowed for needs', rows: [['', 'Take-home pay', b.income], ['', '50 percent', 0.5, 'x']], total: b.needs.target },
+      rent: { t: 'Rent', rows: txRows(D.tx.filter(function (t) { return t.cat === 'Rent / Mortgage'; })), total: 1650 },
+      wants: { t: 'Wants', rows: txRows(b.wants.tx), total: b.wants.spent, src: 'Dining, shopping, fun and subscriptions.' },
+      savings: { t: 'Saved', rows: txRows(b.savings.tx), total: b.savings.spent },
+      'savings-target': { t: 'Meant to save', rows: [['', 'Take-home pay', b.income], ['', '20 percent', 0.2, 'x']], total: b.savings.target },
+      'savings-gap': { t: 'Still to move', rows: [['', 'Meant to save', b.savings.target], ['', 'Saved so far', -b.savings.spent]], total: b.savings.left },
+      'biz-rev': { t: 'Studio revenue', rows: txRows(D.tx.filter(function (t) { return t.scope === 'business' && t.amt > 0; })), total: fb.inc },
+      'biz-cost': { t: 'Studio costs', rows: txRows(D.spendTx('business')), total: fb.out },
+      'biz-profit': { t: 'Studio profit', rows: [['', 'Revenue', fb.inc], ['', 'Costs', -fb.out]], total: fb.net },
+      tax: { t: 'Set aside for tax', rows: [['', 'Studio profit', fb.net], ['', '25 percent', 0.25, 'x']], total: L.r2(fb.net * L.TAX_RATE) },
+      'up-rent': { t: 'Rent, October', rows: txRows(up.filter(function (u) { return u.name === 'Maple Court rent'; })), total: 1650 },
+      'up-bills': { t: 'Bills, next 30 days', rows: txRows(up.filter(function (u) { return !u.income; })), total: L.sum(up.filter(function (u) { return !u.income; }), function (u) { return -u.amt; }) },
+      'up-in': { t: 'Expected in', rows: txRows(up.filter(function (u) { return u.income; })), total: L.sum(up.filter(function (u) { return u.income; }), function (u) { return u.amt; }), src: 'Expected from past deposits, not promised.' }
+    };
+    Object.keys(g).forEach(function (n) {
+      var x = g[n];
+      R['goal-' + n] = { t: n, rows: [['', 'Target', x.target], ['', 'Saved', -x.saved]], total: x.left, totalLabel: 'To go', src: money(x.monthly, { whole: true }) + ' a month finishes it in ' + x.months + ' months, ' + x.by + '.' };
+    });
+    return R[key];
+  }
+  var figN = 0;
+  function fig(key, value, opt) {
+    figN++;
+    return '<button type="button" class="fig" data-fig="' + key + '" data-n="' + figN + '" aria-expanded="false">' + money(value, opt) + '<sup>' + figN + '</sup></button>';
+  }
+  function noteHTML(key, n) {
+    var r = receipt(key);
+    var fmt = function (row) {
+      if (row[3] === 'x') return '× ' + Math.round(row[2] * 100) + '%';
+      if (row[3] === 'n') return '÷ ' + row[2];
+      return money(row[2]);
+    };
+    return '<div class="note" role="note" data-key="' + key + '"><p class="t"><span><sup>' + n + '</sup>' + esc(r.t) + '</span><button class="x" type="button" aria-label="Close receipt">×</button></p><table>' +
+      r.rows.map(function (row) { return '<tr><td class="d">' + esc(row[0]) + '</td><td>' + esc(row[1]) + '</td><td class="a">' + fmt(row) + '</td></tr>'; }).join('') +
+      '<tr class="total"><td class="d"></td><td>' + (r.totalLabel || 'Total') + '</td><td class="a">' + money(r.total) + '</td></tr></table>' +
+      (r.src ? '<p class="src">' + esc(r.src) + '</p>' : '') + '</div>';
+  }
+  function para(html, cls) { return '<div class="para"><p' + (cls ? ' class="' + cls + '"' : '') + '>' + html + '</p><div class="notes"></div></div>'; }
+
+  /* ---------- the letter ---------- */
+  function render() {
+    figN = 0;
+    var p = D.plan(), b = D.buckets(), fb = D.flows('business');
+    $('deck').innerHTML = 'Twenty-four days in, you have ' + fig('plan-left', p.left) + ' left in the plan and ' + word(p.daysLeft) + ' days to spend it, about ' + fig('per-day', p.perDay) + ' a day. Here is where the rest went, what is coming, and the few things that need you this week.';
+
+    var topWants = b.wants.tx.slice().sort(function (x, y) { return x.amt - y.amt; }).slice(0, 2).map(function (t) { return t.name; });
+    var wantsShare = b.wants.spent / b.wants.target;
+    $('ch1body').innerHTML =
+      para('You brought home ' + fig('income', b.income) + '. The rule of thumb splits it three ways: half for needs, three tenths for wants, a fifth for savings. Needs took ' + fig('needs', b.needs.spent) + ' of the ' + fig('needs-target', b.needs.target) + ' they were allowed, and rent alone was ' + fig('rent', 1650) + ' of that.', 'lead') +
+      para('Wants came to ' + fig('wants', b.wants.spent) + ', ' + (wantsShare < 0.25 ? 'well under a quarter of their share' : wantsShare < 0.5 ? 'under half of their share' : 'most of their share') + '. The biggest were ' + esc(topWants.join(' and ')) + '. Savings reached ' + fig('savings', b.savings.spent) + ' of the ' + fig('savings-target', b.savings.target) + ' you meant to put away, so ' + fig('savings-gap', Math.max(0, b.savings.left)) + ' is still to move before the month ends.') +
+      '<div class="pad"><table><caption>50/30/20 on September take-home pay. Change a sort in chapter IV and this table follows.</caption>' +
+      '<thead><tr><th scope="col">Share</th><th scope="col">Allowed</th><th scope="col">Used</th><th scope="col">Left</th></tr></thead><tbody>' +
+      ['needs', 'wants', 'savings'].map(function (k) {
+        var r = b[k];
+        return '<tr><td>' + r.label + ' · ' + Math.round(r.share * 100) + '%<span class="bar"><i style="width:' + Math.min(100, r.pct) + '%"></i></span></td><td>' + money(r.target) + '</td><td>' + money(r.spent) + '</td><td>' + money(r.left) + '</td></tr>';
+      }).join('') +
+      '<tr class="total"><td>Take-home</td><td>' + money(b.income) + '</td><td>' + money(b.needs.spent + b.wants.spent + b.savings.spent) + '</td><td>' + money(b.income - b.needs.spent - b.wants.spent - b.savings.spent) + '</td></tr></tbody></table></div>' +
+      para('The studio kept its own books. Juniper Studio brought in ' + fig('biz-rev', fb.inc) + ' and spent ' + fig('biz-cost', fb.out) + ', a profit of ' + fig('biz-profit', fb.net) + '. A quarter of that, ' + fig('tax', fb.net * L.TAX_RATE) + ', belongs to the tax bill and is best moved out of sight.');
+
+    var up = D.upcoming('everything', 30), bills = up.filter(function (u) { return !u.income; }), ins = up.filter(function (u) { return u.income; });
+    $('ch2body').innerHTML =
+      para('October opens with rent, ' + fig('up-rent', 1650) + ' on the first, the same day Cedar Labs pays. Over the next thirty days ' + fig('up-bills', L.sum(bills, function (u) { return -u.amt; })) + ' in bills are scheduled across ' + word(bills.length) + ' payees, and ' + fig('up-in', L.sum(ins, function (u) { return u.amt; })) + ' is expected in. Nothing lands before the month turns, so the ' + money(p.left) + ' left in September is yours to spend or save.', 'lead') +
+      '<ol class="sched">' + up.map(function (u) {
+        return '<li><span class="d">' + L.day(u.d) + '</span><span class="n">' + esc(u.name) + '<small>' + L.LABEL[u.scope] + (u.income ? ', expected' : '') + '</small></span><span class="lead" aria-hidden="true"></span><span class="a' + (u.income ? ' in' : '') + '">' + (u.income ? '+' : '') + money(u.amt) + '</span></li>';
+      }).join('') + '</ol>';
+
+    var gs = D.goals('everything'), gl = function (n) { return gs.filter(function (x) { return x.name === n; })[0]; };
+    var a = gl('A softer landing'), k = gl('A week in Kyoto'), s = gl('Studio upgrade');
+    $('ch3body').innerHTML =
+      para('A softer landing, the rainy day fund, holds ' + fig('goal-A softer landing', a.saved, { whole: true }) + ' toward ' + money(a.target, { whole: true }) + '. At ' + money(a.monthly, { whole: true }) + ' a month it is done in ' + a.by + ', ' + word(a.months) + ' deposits from now.', 'lead') +
+      para('Kyoto is further off. A week there needs ' + money(k.target, { whole: true }) + ' and ' + money(k.saved, { whole: true }) + ' is set aside, ' + k.pct + ' percent, with ' + fig('goal-A week in Kyoto', k.left, { whole: true }) + ' to go at ' + money(k.monthly, { whole: true }) + ' a month. The studio upgrade sits at ' + money(s.saved, { whole: true }) + ' of ' + money(s.target, { whole: true }) + ', and the ' + fig('goal-Studio upgrade', s.left, { whole: true }) + ' it still needs would come out of one good month of retainers.');
+    var bars = gs.map(function (g, i) {
+      var x = 22 + i * 108, h = 170, fill = h * g.pct / 100;
+      return '<g><rect x="' + x + '" y="30" width="72" height="' + h + '" rx="10" fill="none" stroke="#1B2922" stroke-opacity=".35" stroke-width="1.5"/>' +
+        '<rect x="' + (x + 5) + '" y="' + (30 + h - fill + 5) + '" width="62" height="' + Math.max(0, fill - 10) + '" rx="6" fill="#2B5C8A" fill-opacity="' + (0.55 + i * 0.15) + '"/>' +
+        '<text x="' + (x + 36) + '" y="20" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="13" font-weight="600" fill="#1B2922">' + g.pct + '%</text>' +
+        '<text x="' + (x + 36) + '" y="222" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="12" fill="#4B5D53">' + esc(g.name.replace('A week in ', '').replace('A softer landing', 'Rainy day').replace('Studio upgrade', 'Studio')) + '</text>' +
+        '<text x="' + (x + 36) + '" y="240" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="11" fill="#4B5D53">' + money(g.saved, { whole: true }) + '</text></g>';
+    }).join('');
+    $('jars').innerHTML = bars;
+    $('jarsCap').textContent = 'Three goals, filled to scale. Each jar is its own target, so the heights compare progress, not dollars.';
+
+    renderWeek();
+  }
+
+  function renderWeek() {
+    var wk = D.week(), rv = D.reviews();
+    $('weekIntro').innerHTML = cap(word(wk.length)) + ' things came through between Friday the 18th and today. Each one is already sorted. Change any that look wrong, then answer the ' + (rv.length ? word(rv.length) + (rv.length === 1 ? ' question' : ' questions') + ' below.' : 'questions below. There are none left.');
+    $('weekList').innerHTML = wk.map(function (t) {
+      var bk = D.bucketOf(t), inc = t.amt > 0;
+      var sort = t.scope === 'business' ? '<span class="studio-tag">Juniper Studio, kept out of the 50/30/20 split</span>' :
+        ['needs', 'wants', 'savings'].map(function (k) {
+          var lbl = { needs: 'Need', wants: 'Want', savings: 'Savings' }[k];
+          return '<button type="button" class="chipbtn" data-tx="' + t.id + '" data-bucket="' + k + '" aria-pressed="' + (bk === k) + '">' + lbl + '</button>';
+        }).join('');
+      return '<li><span class="d">' + L.day(t.d) + '</span><span class="n">' + esc(t.name) + '<small>' + (t.transfer ? 'Transfer to savings' : esc(t.cat)) + '</small></span><span class="a' + (inc ? ' in' : '') + '">' + (inc ? '+' : '') + money(t.amt) + '</span><span class="sort" role="group" aria-label="Count ' + esc(t.name) + ' as">' + sort + '</span></li>';
+    }).join('');
+    var all = [{ id: 'cloud', q: 'Cloudbox Storage charged the studio card $12.00 on the 22nd, and it looks like it will again. Should it be tracked as a subscription?' },
+               { id: 'suite', q: 'Studio Design Suite charged $54.00 this month, not the $49.00 on file. Which price should the plan use?' }];
+    var open = rv.map(function (r) { return r.id; });
+    $('asks').innerHTML = all.map(function (a) {
+      var r = rv.filter(function (x) { return x.id === a.id; })[0];
+      if (!r) return '<div class="ask"><p>' + esc(a.q) + '</p><p class="done">Answered. Thank you.</p></div>';
+      return '<div class="ask"><p>' + esc(a.q) + '</p><div class="btns"><button type="button" class="chipbtn" data-review="' + r.id + '" data-answer="yes">' + r.yes + '</button><button type="button" class="chipbtn" data-review="' + r.id + '" data-answer="no">' + r.no + '</button></div></div>';
+    }).join('');
+    $('weekStatus').textContent = open.length ? word(open.length).replace(/^./, function (c) { return c.toUpperCase(); }) + ' left to answer. Sorting changes update chapter I straight away.' : 'The week is reviewed. See you next Thursday.';
+    $('nextLine').innerHTML = open.length ? 'When you have a minute, <a href="#week" id="goWeek">finish this week\'s review</a>. ' + cap(word(open.length)) + (open.length === 1 ? ' question is' : ' questions are') + ' waiting.' : 'This week is reviewed. The next letter arrives Friday morning.';
+  }
+
+  /* ---------- interactions ---------- */
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest('.fig');
+    if (f) {
+      var box = f.closest('.para').querySelector('.notes');
+      var open = box.querySelector('.note[data-key="' + CSS.escape(f.dataset.fig) + '"]');
+      if (open) { open.remove(); f.setAttribute('aria-expanded', 'false'); }
+      else { box.insertAdjacentHTML('beforeend', noteHTML(f.dataset.fig, f.dataset.n)); f.setAttribute('aria-expanded', 'true'); }
+      return;
+    }
+    var x = e.target.closest('.note .x');
+    if (x) {
+      var note = x.closest('.note'), key = note.dataset.key, para = note.closest('.para');
+      var btn = para.querySelector('.fig[data-fig="' + CSS.escape(key) + '"]');
+      note.remove(); if (btn) { btn.setAttribute('aria-expanded', 'false'); btn.focus(); }
+      return;
+    }
+    var c = e.target.closest('button');
+    if (c && c.dataset.bucket) { D.setBucket(c.dataset.tx, c.dataset.bucket); render(); restoreFocus(c); return; }
+    if (c && c.dataset.review) { D.review(c.dataset.review, c.dataset.answer); renderWeek(); return; }
+    var g = e.target.closest('#goWeek');
+    if (g) { e.preventDefault(); $('week').scrollIntoView({ behavior: 'smooth' }); setTimeout(function () { var b = document.querySelector('#asks button'); if (b) b.focus({ preventScroll: true }); }, 600); }
+  });
+  function restoreFocus(c) {
+    var b = document.querySelector('button[data-tx="' + c.dataset.tx + '"][data-bucket="' + c.dataset.bucket + '"]');
+    if (b) b.focus({ preventScroll: true });
+  }
+
+  /* the folio follows the chapter under the middle of the screen */
+  var parts = Array.prototype.slice.call(document.querySelectorAll('[data-folio]'));
+  var folio = $('folio');
+  function onScroll() {
+    var mid = innerHeight * 0.18, cur = parts[0];
+    parts.forEach(function (p) { if (p.getBoundingClientRect().top <= mid) cur = p; });
+    $('folioCh').textContent = cur.dataset.folio;
+    folio.classList.toggle('on-deep', cur.classList.contains('ground-deep'));
+    folio.classList.toggle('on-blue', cur.classList.contains('ground-blue'));
+  }
+  var ticking = false;
+  addEventListener('scroll', function () { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; onScroll(); }); }, { passive: true });
+
+  render();
+  // Open the first receipt on wide screens, so the idea is visible at rest.
+  if (matchMedia('(min-width: 1061px)').matches) { var first = document.querySelector('#deck .fig'); if (first) first.click(); }
+  onScroll();
+  ScrollCraft.mount(document.body);
+})();
+</script>
+</body>
+</html>
