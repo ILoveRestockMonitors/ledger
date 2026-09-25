@@ -140,7 +140,10 @@ class PlaidPersistenceTests(unittest.TestCase):
         self.assertEqual(db.q1("SELECT plaid_item_id,access_token FROM items WHERE id='local'"), {"plaid_item_id": "old-plaid-item", "access_token": "old-access"})
         self.assertEqual(db.q1("SELECT COUNT(*) n FROM accounts")["n"], 0)
 
-    def test_remove_item_detaches_subscription_with_scope_wide_identity(self):
+    def test_remove_item_archives_accounts_and_keeps_subscription_identity(self):
+        # Disconnecting archives the item's accounts instead of deleting them,
+        # so linked subscriptions keep their account and learned identity and
+        # reattach cleanly if the same bank is reconnected.
         db.ex("INSERT INTO items(id,plaid_item_id,institution,env,access_token,created_at) VALUES(?,?,?,?,?,?)", ("item", "plaid-item", "Bank", "sandbox", "access", "2026-01-01"))
         db.ex("INSERT INTO accounts(id,item_id,name,type,scope,balance,plaid_account_id,created_at) VALUES(?,?,?,?,?,?,?,?)", ("account", "item", "Checking", "depository", "personal", 0, "plaid-account", "2026-01-01"))
         sub = subscriptions.save({"merchant": "Detached SaaS", "scope": "personal", "account_id": "account", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
@@ -148,9 +151,11 @@ class PlaidPersistenceTests(unittest.TestCase):
         db.ex("INSERT INTO subscription_learning(normalized_key,decision,updated_at) VALUES(?,?,?)", (old_key, "confirm", "2026-01-01"))
         with patch.object(plaid_client, "_post", return_value={}):
             plaid_client.remove_item("item")
-        detached = db.q1("SELECT account_id,source,normalized_key FROM subscriptions WHERE id=?", (sub["id"],))
-        self.assertEqual((detached["account_id"], detached["source"], detached["normalized_key"]), (None, "manual", "detached saas|personal|"))
-        self.assertEqual(db.q1("SELECT normalized_key FROM subscription_learning WHERE normalized_key=?", ("detached saas|personal|",))["normalized_key"], "detached saas|personal|")
+        self.assertEqual(db.q1("SELECT archived FROM accounts WHERE id='account'")["archived"], 1)
+        self.assertIsNone(db.q1("SELECT access_token FROM items WHERE id='item'")["access_token"])
+        kept = db.q1("SELECT account_id,source,normalized_key FROM subscriptions WHERE id=?", (sub["id"],))
+        self.assertEqual((kept["account_id"], kept["source"], kept["normalized_key"]), ("account", sub["source"], old_key))
+        self.assertEqual(db.q1("SELECT decision FROM subscription_learning WHERE normalized_key=?", (old_key,))["decision"], "confirm")
 
     def test_manual_price_review_uses_latest_charge(self):
         sub = subscriptions.save({"merchant": "Manual SaaS", "scope": "personal", "amount": 20, "cadence": "monthly", "next_due": "2026-09-01", "status": "active"})
