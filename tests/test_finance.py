@@ -310,7 +310,7 @@ class FinanceTests(unittest.TestCase):
 
     def test_historical_networth_excludes_future_posted_transactions(self):
         self.db.ex("UPDATE accounts SET balance=100 WHERE id='a'")
-        self.db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,pending,is_transfer,created_at) VALUES(?,?,?,?,?,?,?,?,?)", ("future", "a", "personal", 50, "2026-09-20", "Future income", 0, 0, "2026-09-04"))
+        self.db.ex("INSERT INTO transactions(id,account_id,scope,amount,posted,name,pending,is_transfer,created_at) VALUES(?,?,?,?,?,?,?,?,?)", ("future", "a", "personal", 50, (date.today() + timedelta(days=30)).isoformat(), "Future income", 0, 0, date.today().isoformat()))
         from unittest.mock import patch
         with patch.object(self.analytics, "month_list", return_value=[(2026, 8), (2026, 9)]):
             series = self.analytics.net_worth_series()
