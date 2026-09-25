@@ -203,7 +203,14 @@ class FinanceTests(unittest.TestCase):
         self._tx("Soon", "2026-09-01", 10)
         self.subscriptions.save({"merchant": "Later", "scope": "personal", "account_id": "a", "amount": 10, "cadence": "monthly", "next_due": "2026-09-20", "status": "active"})
         self.subscriptions.save({"merchant": "Soon", "scope": "personal", "account_id": "a", "amount": 10, "cadence": "monthly", "next_due": "2026-09-10", "status": "active"})
-        plan = self.subscriptions.monthly_plan("personal", "2026-09")
+        # Pin "today" to when this fixture was written so 2026-09-20 stays a
+        # future-posted charge regardless of the wall clock.
+        from unittest.mock import patch
+        class PinnedDate(date):
+            @classmethod
+            def today(cls): return cls(2026, 9, 4)
+        with patch.object(self.subscriptions, "date", PinnedDate):
+            plan = self.subscriptions.monthly_plan("personal", "2026-09")
         self.assertEqual(plan["spent"], 10)
         self.assertEqual([x["due"] for x in plan["upcoming_items"]], ["2026-09-10", "2026-09-20"])
 
