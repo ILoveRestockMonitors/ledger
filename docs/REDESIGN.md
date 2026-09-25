@@ -29,7 +29,7 @@ Pick whichever is easiest; none of them touch your records.
 
 1. **Instant, no redeploy:** Settings → Layout → **Classic layout**. It is saved on your Ledger, so every device and home-screen app switches after a reload. Choose **New layout** to come back.
 2. **One browser only:** open Ledger with `?layout=classic` (or `?layout=new`). Settings shows a "Use the saved setting" link to clear it.
-3. **Remove the code:** revert the pull request that added this layout on GitHub (Revert button), or check out the `pre-redesign` tag on the home lab and rebuild. The extra `layout` preference is ignored by older versions.
+3. **Remove the code:** press **Revert** on the merged pull request on GitHub, then update the home lab as usual. Or, on the home lab, check out `8e47e63` (the last commit before this change) and rebuild. The extra `layout` preference is ignored by older versions.
 
 If the new layout ever fails to load a page, that page falls back to the classic version automatically and says so.
 
