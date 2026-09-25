@@ -9,6 +9,8 @@ const state = {
 };
 
 async function api(path, opts = {}) {
+  const changesData = !['GET', 'HEAD'].includes((opts.method || 'GET').toUpperCase());
+  if (changesData) window.LedgerHomeCache?.clear();
   if (LedgerDemo.active && path === '/config' && (opts.method || 'GET').toUpperCase() === 'POST') {
     return LedgerDemo.savePreferences(opts.body);
   }
@@ -21,6 +23,7 @@ async function api(path, opts = {}) {
     ...rest,
     body: payload,
   });
+  if (changesData) window.LedgerHomeCache?.clear();
   const ct = res.headers.get("content-type") || "";
   const data = ct.includes("json") ? await res.json() : await res.text();
   if (!res.ok) throw new Error((data && data.error) || `HTTP ${res.status}`);

@@ -73,7 +73,7 @@
     if (!force && Date.now() - netsAt < 20000) return;
     netsAt = Date.now();
     try {
-      const [all, per, biz] = await Promise.all(['', '?scope=personal', '?scope=business'].map(q => api('/summary/overview' + q)));
+      const [all, per, biz] = await Promise.all(['', '?scope=personal', '?scope=business'].map(q => LedgerHomeCache.read('/summary/overview' + q)));
       const data = { everything: all, personal: per, business: biz };
       for (const s of SCOPES) {
         bar.querySelector(`[data-rd-net="${s}"]`).textContent = signed(data[s].net_this_month);
@@ -93,7 +93,7 @@
   }
 
   function wash(origin) {
-    if (root.dataset.motionPaused === 'true' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (root.dataset.motionPaused === 'true' || matchMedia('(max-width: 700px), (prefers-reduced-motion: reduce)').matches) return;
     const r = origin?.getBoundingClientRect?.();
     const el = document.createElement('div');
     el.className = 'rd-wash';
@@ -105,7 +105,7 @@
   }
 
   // Re-render the current page in place (no "Loading…" flash) and roll the content in.
-  async function refresh() {
+  async function refresh({ scopeSwitch = false } = {}) {
     const page = state.page;
     const token = state.renderToken = (state.renderToken || 0) + 1;
     try {
@@ -113,8 +113,10 @@
       if (state.renderToken !== token) return;
       view.innerHTML = html;
       view.classList.remove('rd-enter');
-      void view.offsetWidth;
-      view.classList.add('rd-enter');
+      if (!scopeSwitch) {
+        void view.offsetWidth;
+        view.classList.add('rd-enter');
+      }
       afterRender();
     } catch (e) {
       if (state.renderToken === token) toast(e.message || 'Could not refresh this page.', 'err');
@@ -129,7 +131,7 @@
     state.txFilters.offset = 0;
     syncChrome();
     wash(origin);
-    refresh();
+    refresh({ scopeSwitch: true });
   }
 
   const baseNavigate = navigate;
@@ -210,15 +212,35 @@
       <div class="rd-links">${cat ? `<button type="button" class="link-button" data-rd-filter-cat="${esc(cat.id)}">View transactions →</button>` : ''}<button type="button" class="link-button" data-rd-page="budgets">Budgets →</button></div></div>`;
   }
 
+  function homePaths(selectedScope) {
+    const q = selectedScope === 'everything' ? '' : '&scope=' + selectedScope;
+    const days = Math.max(0, new Date().getDate() - 1);
+    return [
+      '/summary/overview' + (q ? '?' + q.slice(1) : ''), '/summary/overview?scope=personal', '/summary/overview?scope=business',
+      '/monthly-plan', '/subscriptions', '/transactions?limit=6' + q,
+      '/summary/cashflow?months=12&scope=personal', '/summary/cashflow?months=12&scope=business',
+      '/goals', `/summary/categories?days=${days}&kind=expense` + q, '/budgets', '/accounts',
+      '/summary/networth?months=12' + q, selectedScope === 'business' ? '/business/summary' : null,
+    ];
+  }
+  let warmTimer;
+  function warmHomeScopes(selectedScope) {
+    clearTimeout(warmTimer);
+    warmTimer = setTimeout(() => {
+      if (state.page !== 'overview' || scope !== selectedScope || document.hidden) return;
+      const paths = new Set(SCOPES.filter(s => s !== selectedScope).flatMap(homePaths).filter(Boolean));
+      // Best-effort preload; errors are retried on demand, never cached.
+      for (const path of paths) LedgerHomeCache.read(path).catch(() => {});
+    }, 200);
+  }
   async function homePage() {
-    const q = scopeQuery('&'), days = Math.max(0, new Date().getDate() - 1);
-    const [ov, ovP, ovB, plan, subs, recent, cfP, cfB, goals, cats, budgets, accounts, nw, biz] = await Promise.all([
-      api('/summary/overview' + scopeQuery()), api('/summary/overview?scope=personal'), api('/summary/overview?scope=business'),
-      api('/monthly-plan'), api('/subscriptions'), api('/transactions?limit=6' + q),
-      api('/summary/cashflow?months=12&scope=personal'), api('/summary/cashflow?months=12&scope=business'),
-      api('/goals'), api(`/summary/categories?days=${days}&kind=expense` + q), api('/budgets'), api('/accounts'),
-      api('/summary/networth?months=12' + q), scope === 'business' ? api('/business/summary') : null,
-    ]);
+    const selectedScope = scope;
+    const [ov, ovP, ovB, plan, subs, recent, cfP, cfB, goals, cats, budgets, accounts, nw, biz] = await Promise.all(
+      homePaths(selectedScope).map(path => path ? LedgerHomeCache.read(path) : null)
+    );
+    // A later tap owns the render; don't overwrite its chart/detail state.
+    if (scope !== selectedScope) return '';
+    warmHomeScopes(selectedScope);
     updateBadge(subs);
     comfort.subscriptions = [...subs.items, ...subs.candidates, ...(subs.canceled || [])];
     home.data = { ov, plan, cfP, cfB, goals, cats, budgets, accounts, nw };

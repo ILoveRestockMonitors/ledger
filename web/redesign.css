@@ -398,3 +398,6 @@ html[data-motion-paused=true] .rd-wash{display:none}
  .rd-bulk,.rd-prompt{flex-wrap:wrap}
  .rd-undo{bottom:calc(var(--mobile-nav-height,64px) + var(--mobile-nav-bottom-gap,12px) + 12px)}
 }
+
+/* Scope taps should feel immediate on phones; avoid the full-page paint wash. */
+@media(max-width:700px){.rd-switch-ind{transition:transform .16s ease-out,box-shadow .16s}.rd-wash{display:none}}
