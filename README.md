@@ -1,3 +1,5 @@
+Redesign demo with an Everything / Personal / Business switch, spending at a glance, and both Sarah and Cornelious designs: run `python3 redesign-demo/serve.py` ([details](redesign-demo/README.md)).
+
 Sarah’s non-rent spending card and mobile navigation polish: [details](docs/SARAH-BUDGET-MOBILE.md).
 
 Latest mobile polish: [V2.0.2](docs/MOBILE-V2.0.2.md).

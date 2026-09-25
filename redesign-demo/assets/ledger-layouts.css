@@ -1,0 +1,76 @@
+/* Ledger redesign · layout layer shared by every artboard.
+   Sarah = forest (Lora, woodland stream, leaf bubbles).
+   Cornelious = Aurora glass in Manrope over the Zekrom storm (dark) or Reshiram sunfire (light),
+   with the control-bound lightning and fire hovers from cornelious-storm.js / cornelious-pokemon.js. */
+
+.lg>aside,.lg>main,.lg>.scroller{position:relative;z-index:1}
+
+/* ---------- Sarah: leaf-shaped constellation with the original leafBreeze sway ---------- */
+.lg[data-layout=sarah] .bub{border-radius:72% 5% 72% 5%;background:linear-gradient(135deg,transparent 49%,color-mix(in srgb,var(--c) 55%,transparent) 49.5%,transparent 51%),radial-gradient(ellipse at 28% 22%,color-mix(in srgb,var(--c) 34%,var(--panel)),color-mix(in srgb,var(--c) 13%,var(--panel)) 76%);box-shadow:inset 1px 1px 0 rgba(255,255,255,.32),0 7px 18px rgba(22,49,21,.1)}
+.lg[data-layout=sarah] .bub:nth-child(2n){border-radius:5% 72% 5% 72%}
+.lg[data-layout=sarah] .bub b,.lg[data-layout=sarah] .bub small{position:relative;z-index:1;text-shadow:0 1px 6px var(--panel)}
+.lg[data-layout=sarah] .bub:hover{transform:translateY(-6px) rotate(-4deg) scale(1.12)}
+.lg[data-layout=sarah] .bub:nth-child(2n):hover{transform:translateY(-6px) rotate(4deg) scale(1.12)}
+.lg[data-layout=sarah] .bub[aria-pressed=true]{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--c)}
+.lg[data-layout=cornelious] .corn-only-hide,.lg[data-layout=sarah] .sarah-only-hide{display:none!important}
+
+/* ---------- Cornelious: tokens ---------- */
+.lg[data-layout=cornelious] *{font-family:'Manrope','Segoe UI',system-ui,sans-serif!important}
+.lg[data-layout=cornelious][data-theme=dark]{--bg:#06070c;--panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.17);--ink:#eaedf7;--muted:#a3abc6;--pos:#4ade80;--neg:#ff6b8b;--warn:#fcd34d;--per:#ff9a6b;--per-soft:rgba(255,154,107,.16);--biz:#9d90ff;--biz-soft:rgba(139,124,255,.19);--all:#4fd8f5;--all-soft:rgba(79,216,245,.14);--on-acc:#0a0710;--shadow:0 10px 30px rgba(0,0,0,.35)}
+.lg[data-layout=cornelious][data-theme=light]{--bg:#fffaf2;--panel:rgba(255,255,255,.74);--panel-2:rgba(75,42,24,.06);--line:rgba(75,42,24,.12);--line-2:rgba(75,42,24,.22);--ink:#1f1712;--muted:#6d594f;--pos:#7d5f0e;--neg:#b93a0b;--warn:#94751f;--per:#b94b0b;--per-soft:rgba(185,75,11,.11);--biz:#5a4bd6;--biz-soft:rgba(90,75,214,.11);--all:#8a6400;--all-soft:rgba(217,165,20,.17);--on-acc:#ffffff;--shadow:0 10px 30px rgba(75,42,24,.08)}
+.lg[data-layout=cornelious][data-scope=everything]{--wash:rgba(79,216,245,.2)}
+.lg[data-layout=cornelious][data-theme=light][data-scope=everything]{--wash:rgba(217,165,20,.22)}
+.lg[data-layout=cornelious][data-scope=personal]{--wash:rgba(255,154,107,.2)}
+.lg[data-layout=cornelious][data-scope=business]{--wash:rgba(139,124,255,.22)}
+
+/* ---------- Cornelious: storm / sunfire backdrop and glass ---------- */
+.corn-bg{position:absolute;left:0;top:0;right:0;height:1100px;z-index:0;pointer-events:none;overflow:hidden;-webkit-mask-image:linear-gradient(#000 58%,transparent);mask-image:linear-gradient(#000 58%,transparent)}
+.corn-bg img,.corn-bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:72% 40%}
+.lg[data-theme=light] .corn-bg img,.lg[data-theme=light] .corn-bg video{object-position:80% 40%}
+.corn-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,7,12,.62),rgba(6,7,12,.18) 58%,rgba(6,7,12,.34)),radial-gradient(ellipse at 87% 43%,rgba(50,163,255,.12),transparent 55%)}
+.lg[data-theme=light] .corn-bg::after{background:linear-gradient(90deg,rgba(255,250,242,.66),rgba(255,250,242,.12) 58%,rgba(255,250,242,.3)),radial-gradient(ellipse at 87% 43%,rgba(248,156,59,.12),transparent 55%)}
+.lg[data-layout=cornelious] .card,.lg[data-layout=cornelious] .switch,.lg[data-layout=cornelious] .glass,.lg[data-layout=cornelious]>aside,.lg[data-layout=cornelious] .sticky,.lg[data-layout=cornelious] .tabbar{-webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%)}
+.lg[data-layout=cornelious] .card{border-radius:22px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.07)}
+.lg[data-layout=cornelious][data-theme=light] .card{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.9)}
+.lg[data-layout=cornelious] .ind{background:color-mix(in srgb,var(--acc) 15%,var(--panel));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 55%,transparent),0 0 26px color-mix(in srgb,var(--acc) 26%,transparent)}
+.lg[data-layout=cornelious] .fig,.lg[data-layout=cornelious] .big{letter-spacing:-.04em;font-weight:600}
+.lg[data-layout=cornelious] .bub{animation-name:none;border-radius:50%;background:radial-gradient(circle at 30% 25%,color-mix(in srgb,var(--c) 42%,transparent),color-mix(in srgb,var(--c) 12%,transparent) 76%);border-color:color-mix(in srgb,var(--c) 60%,transparent);box-shadow:0 0 24px color-mix(in srgb,var(--c) 16%,transparent)}
+.lg[data-layout=cornelious] .bub:hover{filter:brightness(1.075) drop-shadow(0 7px 12px color-mix(in srgb,var(--c) 30%,transparent))}
+.lg[data-layout=cornelious] .ring-prog{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--acc) 45%,transparent))}
+.lg[data-layout=cornelious] .spark-line{filter:drop-shadow(0 0 4px color-mix(in srgb,var(--acc) 50%,transparent))}
+
+/* ---------- Cornelious: actionable words turn ice blue (storm) or orange (sunfire) ---------- */
+.lg[data-layout=cornelious][data-theme=dark] :is(.link,.nav,.tab,.btn:not(.btn-primary),.icon,.seg button,.tbtn):is(:hover,:focus-visible){color:#bff4ff}
+.lg[data-layout=cornelious][data-theme=light] :is(.link,.nav,.tab,.btn:not(.btn-primary),.icon,.seg button,.tbtn):is(:hover,:focus-visible){color:#9a3412}
+
+/* ---------- Cornelious: control-bound lightning and fire, behind labels, never taking input ---------- */
+.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn){position:relative;isolation:isolate}
+.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn)::after{content:'';position:absolute;inset:-5px;z-index:-1;pointer-events:none;opacity:0;border-radius:inherit;transition:opacity .3s}
+.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;border-radius:inherit}
+/* Zekrom: crackling outline plus branching strikes */
+.lg[data-layout=cornelious][data-theme=dark] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn):is(:hover,:focus-visible)::after{opacity:1;background:url(fx/electric.svg) 0 0/100% 300% no-repeat;filter:drop-shadow(0 0 3px #25aaff) drop-shadow(0 0 7px #2284e8);animation:cornCrackle .42s infinite}
+.lg[data-layout=cornelious][data-theme=dark] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{background:url(fx/bolts.svg) 0 0/100% 300% no-repeat;filter:drop-shadow(0 0 5px #238fea)}
+.lg[data-layout=cornelious][data-theme=dark] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn):is(:hover,:focus-visible)::before{animation:cornStrike 2.2s linear infinite}
+/* Reshiram: licking flames and rising embers */
+.lg[data-layout=cornelious][data-theme=light] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn)::after{inset:auto -5px -5px -5px;height:78%;border-radius:0;transform-origin:50% 100%;background:url(fx/flames.svg) left bottom/auto 100% repeat-x,url(fx/flames-2.svg) 19px bottom/auto 82% repeat-x;-webkit-mask-image:linear-gradient(90deg,#000,rgba(0,0,0,.55) 30%,rgba(0,0,0,.55) 70%,#000);mask-image:linear-gradient(90deg,#000,rgba(0,0,0,.55) 30%,rgba(0,0,0,.55) 70%,#000)}
+.lg[data-layout=cornelious][data-theme=light] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn):is(:hover,:focus-visible)::after{opacity:1;filter:drop-shadow(0 0 3px #ffac38) drop-shadow(0 0 6px #ed6821);animation:cornFlame .85s ease-in-out infinite alternate}
+.lg[data-layout=cornelious][data-theme=light] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{inset:-10px -5px 0;background:url(fx/embers.svg) 0 0/64px 64px repeat;-webkit-mask-image:linear-gradient(transparent,#000 55%);mask-image:linear-gradient(transparent,#000 55%)}
+.lg[data-layout=cornelious][data-theme=light] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn):is(:hover,:focus-visible)::before{opacity:.85;animation:cornEmbers 2.4s linear infinite}
+.lg[data-layout=cornelious] .btn-primary:is(:hover,:focus-visible){color:var(--on-acc)}
+@keyframes cornCrackle{0%,32%{background-position:0 0}33%,65%{background-position:0 50%}66%,100%{background-position:0 100%}}
+@keyframes cornStrike{0%{opacity:0;background-position:0 0}4%{opacity:.95}22%{opacity:0}33.2%{opacity:0;background-position:0 0}33.4%{background-position:0 50%}37%{opacity:.95}55%{opacity:0}66.5%{opacity:0;background-position:0 50%}66.7%{background-position:0 100%}70%{opacity:.95}88%{opacity:0}100%{opacity:0;background-position:0 100%}}
+@keyframes cornFlame{from{transform:scaleY(.72);opacity:.65}to{transform:scaleY(1.12);opacity:.95}}
+@keyframes cornEmbers{from{background-position:0 0}to{background-position:0 -64px}}
+.lg[data-motion=paused][data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn)::after,
+.lg[data-motion=paused][data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{display:none}
+@media (hover:none){.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn)::after,.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{display:none}}
+@media (prefers-reduced-motion:reduce){.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.seg2 button,.bub,.tbtn)::after,.lg[data-layout=cornelious] :is(.btn,.nav,.tab,.icon,.seg button,.bub,.tbtn)::before{display:none}}
+
+/* ---------- Design switch wash (the app's palette-change wash) ---------- */
+.lwash{position:absolute;inset:0;pointer-events:none;z-index:61;background:radial-gradient(circle at var(--lx,1000px) var(--ly,56px),var(--acc) 0,transparent 70%);opacity:0}
+.lwash-a{animation:lwashA 1.1s ease-out both}
+.lwash-b{animation:lwashB 1.1s ease-out both}
+@keyframes lwashA{0%{opacity:0;clip-path:circle(0px at var(--lx,1000px) var(--ly,56px))}15%{opacity:.3}100%{opacity:0;clip-path:circle(2600px at var(--lx,1000px) var(--ly,56px))}}
+@keyframes lwashB{0%{opacity:0;clip-path:circle(0px at var(--lx,1000px) var(--ly,56px))}15%{opacity:.3}100%{opacity:0;clip-path:circle(2600px at var(--lx,1000px) var(--ly,56px))}}
+.lg[data-motion=paused] .lwash{display:none}
+@media (prefers-reduced-motion:reduce){.lwash{display:none}}

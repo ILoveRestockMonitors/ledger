@@ -1,0 +1,31 @@
+/* Website mode for the canvas screens: fluid desktop, full-height phone, local fonts. */
+@font-face{font-family:'Lora';font-style:normal;font-weight:400 700;font-display:swap;src:url(../web/fonts/lora-0.woff2) format('woff2')}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(../web/fonts/manrope-0.woff2) format('woff2')}
+html,body{margin:0;min-height:100%}
+body{background:#f8f5ef}
+body[data-theme=dark]{background:#10120f}
+body[data-layout=cornelious][data-theme=dark]{background:#06070c}
+body[data-layout=cornelious][data-theme=light]{background:#fffaf2}
+
+/* Desktop: the 1440px artboards become a fluid page with a sticky sidebar. */
+.site-desktop .lg{width:auto!important;height:auto!important;min-height:100vh;overflow:visible!important}
+.site-desktop .lg>aside{position:sticky!important;top:0;align-self:flex-start;height:100vh;overflow-y:auto}
+.site-desktop .corn-bg{position:fixed!important;inset:0!important;height:100vh!important;-webkit-mask-image:none!important;mask-image:none!important}
+.site-desktop :is(.wash,.lwash,.scrim){position:fixed!important}
+.site-desktop .modal{position:fixed!important;top:10vh!important;left:calc(50% - 230px)!important}
+.site-desktop .lg>.undo{position:fixed!important}
+
+/* Phone: the 390 × 844 frame fills the screen; tablets get a centred column. */
+.site-phone .lg.mob{width:100%!important;max-width:560px;height:100vh!important;height:100dvh!important;margin:0 auto}
+body.site-phone:not(.site-device){background:#e8e3d9}
+.site-device{display:grid;place-items:center;min-height:100vh;background:#d9d3c7}
+.site-device[data-theme=dark]{background:#0b0c0a}
+.site-device .lg.mob{width:390px!important;height:min(844px,calc(100vh - 56px))!important;max-width:none;margin:28px auto;border-radius:44px;box-shadow:0 0 0 10px #1b1c1a,0 30px 80px rgba(0,0,0,.35)}
+
+/* Demo-only control for previewing the phone layout on a desktop browser. */
+#view-toggle{position:fixed;right:16px;bottom:16px;z-index:1000;display:flex;gap:2px;padding:3px;border-radius:12px;background:rgba(20,20,18,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font:700 12px 'Manrope',system-ui,sans-serif}
+#view-toggle[hidden]{display:none}
+#view-toggle span{align-self:center;padding:0 8px 0 10px;color:rgba(255,255,255,.7)}
+#view-toggle button{height:32px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.8);font:inherit;cursor:pointer}
+#view-toggle button[aria-pressed=true]{background:#fff;color:#1b1c1a}
+#view-toggle button:focus-visible{outline:2px solid #fff;outline-offset:2px}
