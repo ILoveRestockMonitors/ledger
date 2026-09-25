@@ -45,6 +45,7 @@ DEFAULT_CONFIG = {
     "density": "comfortable",
     "font_family": "lora",
     "palette": "paper",
+    "layout": "new",                 # new | classic (Settings → Layout)
     "home_cards": ["recent", "upcoming", "cashflow", "goals"],
     "monthly_spending_target": 0,
     "plaid_redirect_uri": "",

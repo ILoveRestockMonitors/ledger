@@ -1,4 +1,4 @@
-Redesign demo with an Everything / Personal / Business switch, spending at a glance, and both Sarah and Cornelious designs: run `python3 redesign-demo/serve.py` ([details](redesign-demo/README.md)).
+New layout with an Everything / Personal / Business switch, spending at a glance, and redesigned Home, Transactions and Budgets in both Sarah and Cornelious: [details, deploy and revert](docs/REDESIGN.md). Switch back anytime in Settings → Layout → Classic. Clickable fictional preview: `python3 redesign-demo/serve.py` ([demo](redesign-demo/README.md)).
 
 Sarah’s non-rent spending card and mobile navigation polish: [details](docs/SARAH-BUDGET-MOBILE.md).
 
