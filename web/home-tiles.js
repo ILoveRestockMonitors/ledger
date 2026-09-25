@@ -63,7 +63,8 @@
         const controls = document.createElement('div'); controls.className = 'home-tile-controls';
         const button = document.createElement('button');
         button.type = 'button'; button.className = 'link-button home-tile-hide';
-        button.dataset.homeTileHide = id; button.textContent = 'Hide';
+        button.dataset.homeTileHide = id;
+        button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.5 5.4A11 11 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.1 3.7M6.2 6.2A20 20 0 0 0 2 12s4 7 10 7a10 10 0 0 0 5-1.4"/></svg><span>Hide</span>';
         button.setAttribute('aria-label', `Hide ${labels[id] || id} tile`);
         controls.append(button); card.prepend(controls);
       }

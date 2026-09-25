@@ -2,8 +2,10 @@
 .rd-home .home-tiles-reflow{grid-template-columns:repeat(var(--home-visible-columns),minmax(0,1fr))}
 /* Fit Hide into the existing top padding instead of adding a layout row. */
 .rd-home [data-home-tile]{position:relative}
-.home-tile-controls{position:absolute;top:0;right:12px;z-index:1;display:flex;margin:0}
-.rd-home .home-tile-hide{min-height:24px;line-height:16px;padding:4px 8px;font-size:11px}
+.home-tile-controls{position:absolute;top:2px;right:16px;z-index:1;display:flex;margin:0}
+.rd-home .home-tile-hide{display:inline-flex;align-items:center;gap:4px;box-sizing:border-box;min-height:20px;line-height:14px;padding:2px 7px;font:500 10px/14px var(--font);color:var(--muted)!important;background:rgba(var(--tint),.05);border:1px solid var(--border);border-radius:999px;text-decoration:none;transition:background-color .15s,color .15s,border-color .15s}
+.rd-home .home-tile-hide svg{width:11px;height:11px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.rd-home .home-tile-hide:hover,.rd-home .home-tile-hide:focus-visible{color:var(--text)!important;background:rgba(var(--tint),.12);border-color:var(--border-soft);text-decoration:none}
 /* Separate home actions, with tile management to the left of Add transaction. */
 .rd-home .rd-welcome{position:relative;z-index:10;align-items:center}
 .home-tile-actions{position:relative;flex:none;display:flex;align-items:center;gap:10px}
