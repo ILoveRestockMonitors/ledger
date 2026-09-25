@@ -49,7 +49,11 @@
       restore.type = 'button'; restore.className = 'btn btn-sm';
       restore.dataset.homeTilesRestore = ''; restore.textContent = 'Show all tiles';
       options.append(restore); manager.append(options);
-      home.querySelector('.rd-welcome').after(manager);
+      const add = home.querySelector('.rd-welcome [data-action="add-tx"]');
+      const actions = document.createElement('div');
+      actions.className = 'home-tile-actions';
+      add.before(actions);
+      actions.append(add, manager);
     }
     for (const card of cards) {
       const id = card.dataset.homeTile;
