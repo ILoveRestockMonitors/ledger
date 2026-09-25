@@ -514,7 +514,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/config":
             if any(key in b for key in ("receipt_lookup_enabled", "receipt_auto_apply", "receipt_daily_limit")):
                 raise ValueError("Use the purchase lookup settings to change these preferences.")
-            for key, allowed in (("palette",("colorful","paper")),("font_family",("system","nunito","manrope","lora")),("theme",("light","dark","system")),("accent",("blue","sage","plum","clay")),("density",("comfortable","compact")),("plaid_env",("sandbox","production"))):
+            for key, allowed in (("palette",("colorful","paper")),("font_family",("system","nunito","manrope","lora")),("theme",("light","dark","system")),("accent",("blue","sage","plum","clay")),("density",("comfortable","compact")),("layout",("new","classic")),("plaid_env",("sandbox","production"))):
                 if key in b and b[key] not in allowed: raise ValueError(f"Invalid {key} choice.")
             for key, low, high in (("tax_rate_business",0,1),("monthly_spending_target",0,1e12),("sync_interval_minutes",15,1440)):
                 if key in b: b[key] = number(b[key],low,high)

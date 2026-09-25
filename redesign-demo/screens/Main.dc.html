@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ledger · Home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d2c5f53c04fd0d050a33e9df6da515a2">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=Manrope:wght@400..800&amp;display=swap">
+<style>
+@property --acc{syntax:'<color>';inherits:true;initial-value:#5d6a3c}
+@property --acc-soft{syntax:'<color>';inherits:true;initial-value:#ebeedd}
+body{margin:0;background:#e8e3d9}
+.lg{--lx:946px;--ly:56px}
+a{color:#5d6a3c}a:hover{color:#48532d}
+.lg{--bg:#f8f5ef;--panel:#fffdf9;--panel-2:#f1ece3;--line:#e5ddcf;--line-2:#d3c9b8;--ink:#272a23;--muted:#64645a;--pos:#2f7a4e;--neg:#a3452c;--warn:#8c6a1f;--per:#a4501f;--per-soft:#f6e5d8;--biz:#4a47b8;--biz-soft:#e7e6f8;--all:#5d6a3c;--all-soft:#e9ecdb;--on-acc:#ffffff;--shadow:0 1px 2px rgba(60,48,30,.05),0 8px 24px rgba(60,48,30,.05);--wy:148px;--wash:rgba(93,106,60,.22);font-family:'Manrope','Segoe UI',system-ui,sans-serif;color:var(--ink);background:var(--bg);transition:--acc .7s ease,--acc-soft .7s ease,background-color .5s ease,color .5s ease;-webkit-font-smoothing:antialiased}
+.lg[data-theme=dark]{--bg:#10120f;--panel:#181b17;--panel-2:#1f231e;--line:#2a2f28;--line-2:#3a4037;--ink:#eeebe3;--muted:#aaa99c;--pos:#86d0a5;--neg:#f0a38a;--warn:#e7c275;--per:#f0a877;--per-soft:#33241b;--biz:#aeacff;--biz-soft:#23233f;--all:#c6d196;--all-soft:#262a1c;--on-acc:#10120f;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px rgba(0,0,0,.28)}
+.lg[data-scope=everything]{--acc:var(--all);--acc-soft:var(--all-soft);--wx:473px;--wash:rgba(93,106,60,.24)}
+.lg[data-scope=personal]{--acc:var(--per);--acc-soft:var(--per-soft);--wx:840px;--wash:rgba(164,80,31,.22)}
+.lg[data-scope=business]{--acc:var(--biz);--acc-soft:var(--biz-soft);--wx:1207px;--wash:rgba(74,71,184,.22)}
+.lg *{box-sizing:border-box}
+.lg [data-s=personal]{--c:var(--per);--c-soft:var(--per-soft)}
+.lg [data-s=business]{--c:var(--biz);--c-soft:var(--biz-soft)}
+.lg button{font-family:inherit}
+.lg button:focus-visible,.lg a:focus-visible,.lg input:focus-visible,.lg select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.h{margin:0;font-family:'Lora',Georgia,serif;font-weight:500;font-size:17px;letter-spacing:-.2px;color:var(--ink)}
+.note{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.card{position:relative;isolation:isolate;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);transition:background-color .5s,border-color .5s}
+.card::before{content:'';position:absolute;inset:-35%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 35% 40%,color-mix(in srgb,var(--acc) 10%,transparent),transparent 58%);animation:tintDrift 14s ease-in-out infinite alternate}
+.card:nth-child(2n)::before{animation-duration:19s;animation-direction:alternate-reverse}
+.card:nth-child(3n)::before{animation-delay:-6s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform 360ms cubic-bezier(.22,1.4,.36,1),background-color .4s,border-color .4s,color .4s,filter .24s}
+.btn:hover{transform:translateY(-2px) scale(1.03);filter:brightness(1.03)}
+.btn:active{transform:scale(.96);transition-duration:100ms}
+.btn-primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.btn-sm{height:32px;padding:0 12px;font-size:12px;border-radius:8px}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--muted);justify-content:flex-start}
+.btn-ghost:hover{background:var(--panel);color:var(--ink)}
+.btn svg,.nav svg,.icon svg,.tab svg,.chip svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.icon{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);cursor:pointer;transition:transform 360ms cubic-bezier(.22,1.4,.36,1)}
+.icon:hover{transform:translateY(-2px) scale(1.06)}
+.link{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0;border:0;background:none;color:var(--acc);font-weight:700;font-size:13px;cursor:pointer;text-decoration:none}
+.link:hover{text-decoration:underline;text-underline-offset:3px}
+.nav{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:10px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;transition:background-color .3s,color .3s}
+.nav:hover{background:var(--panel);color:var(--ink)}
+.nav.on{background:var(--acc-soft);color:var(--ink)}
+.nav.on svg{stroke:var(--acc)}
+.count{margin-left:auto;min-width:22px;height:20px;padding:0 6px;border-radius:6px;display:inline-grid;place-items:center;background:var(--acc);color:var(--on-acc);font-size:11px;font-weight:800}
+.switch{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:6px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line)}
+.ind{position:absolute;top:6px;left:6px;bottom:6px;width:calc((100% - 12px) / 3);border-radius:13px;background:var(--panel);box-shadow:var(--shadow),inset 0 -3px 0 var(--acc);transition:transform .6s cubic-bezier(.3,1.3,.4,1),box-shadow .6s}
+.lg[data-scope=personal] .ind{transform:translateX(100%)}
+.lg[data-scope=business] .ind{transform:translateX(200%)}
+.tab{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:0 22px;border:0;background:transparent;border-radius:13px;cursor:pointer;color:var(--muted);text-align:left;transition:color .4s}
+.tab[aria-selected=true]{color:var(--ink)}
+.tab-top{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.2px}
+.tab[aria-selected=true] .tab-top svg{stroke:var(--acc)}
+.tab-fig{font-family:'Lora',Georgia,serif;font-size:22px;font-weight:500;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.tab-fig small{font-family:'Manrope',sans-serif;font-size:12px;font-weight:600;letter-spacing:0;color:var(--muted);margin-left:6px}
+.tab-sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tab:hover .tab-top{transform:translateX(2px)}
+.tab-top{transition:transform .36s cubic-bezier(.22,1.4,.36,1)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 9px;border-radius:99px;font-size:11.5px;font-weight:800;letter-spacing:.1px;border:1px solid transparent;color:var(--c,var(--acc));background:var(--c-soft,var(--acc-soft));white-space:nowrap}
+.chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+button.chip{cursor:pointer;transition:transform 360ms cubic-bezier(.22,1.4,.36,1),border-color .2s}
+button.chip:hover{transform:translateY(-1px) scale(1.06);border-color:currentColor}
+button.chip svg{width:12px;height:12px;opacity:.7}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--acc));flex:none}
+.amb{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.amb-v,.amb-p{position:absolute;right:0;top:0;width:74%;height:100%;object-fit:cover;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 46%);mask-image:linear-gradient(90deg,transparent 0%,#000 46%)}
+.amb-v{opacity:.92}
+.lg[data-theme=dark] .amb-v{opacity:.72}
+.glass{background:color-mix(in srgb,var(--panel) 80%,transparent);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-radius:16px}
+.fig{font-family:'Lora',Georgia,serif;font-weight:500;letter-spacing:-1.8px;font-variant-numeric:tabular-nums;line-height:1}
+.fig .cents{font-size:.5em;letter-spacing:-.3px;color:var(--muted);margin-left:2px}
+.delta{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:99px;background:var(--acc-soft);color:var(--ink);font-size:12.5px;font-weight:700;width:fit-content}
+.delta svg{width:13px;height:13px;stroke:var(--pos);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.meta{display:flex;gap:28px}
+.meta div{display:flex;flex-direction:column;gap:3px}
+.meta small{font-size:11.5px;color:var(--muted);font-weight:600}
+.meta b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.spark-line{fill:none;stroke:var(--acc);stroke-width:2;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:0}
+.spark-area{fill:color-mix(in srgb,var(--acc) 12%,transparent);stroke:none}
+.acct{display:flex;align-items:center;gap:12px;min-height:42px;padding:4px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.acct:last-child{border-bottom:0}
+.acct b{display:block;font-size:13.5px;font-weight:700}
+.acct small{display:block;font-size:12px;color:var(--muted)}
+.neg{color:var(--neg)}
+.pos{color:var(--pos)}
+.split{display:flex;gap:3px;height:14px;border-radius:99px;overflow:hidden}
+.split button{height:100%;border:0;padding:0;cursor:pointer;transition:width .7s cubic-bezier(.165,.84,.44,1),opacity .5s,filter .2s}
+.split button:hover{filter:brightness(1.1)}
+.split .sp{background:var(--per)}
+.split .sb{background:var(--biz)}
+.srow{display:grid;grid-template-columns:14px 1fr auto 48px auto;align-items:center;gap:10px;min-height:40px;font-size:13.5px}
+.srow b{font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.kv{display:flex;flex-direction:column;gap:3px}
+.kv small{font-size:11.5px;font-weight:600;color:var(--muted)}
+.kv b{font-family:'Lora',Georgia,serif;font-size:21px;font-weight:500;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.big{font-family:'Lora',Georgia,serif;font-size:34px;font-weight:500;letter-spacing:-.9px;font-variant-numeric:tabular-nums;line-height:1.1}
+.track{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+.track i{display:block;height:100%;border-radius:99px;background:var(--c,var(--acc));transition:width .8s cubic-bezier(.165,.84,.44,1),background-color .6s;animation:grow .9s cubic-bezier(.165,.84,.44,1) both}
+.line-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:30px;font-size:13px}
+.line-row b{font-variant-numeric:tabular-nums}
+.rev{display:flex;flex-direction:column;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.rev:first-of-type{border-top:0}
+.rev b{font-size:13.5px}
+.rev small{display:block;font-size:12px;color:var(--muted)}
+.ring-bg{fill:none;stroke:var(--panel-2);stroke-width:10}
+.ring-prog{fill:none;stroke:var(--acc);stroke-width:10;stroke-linecap:round;stroke-dasharray:314.159;transition:stroke-dashoffset .9s cubic-bezier(.165,.84,.44,1),stroke .6s}
+.watch{display:flex;flex-direction:column;gap:6px}
+.wpct{font-weight:800;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.wpct.warn{color:var(--warn)}
+.wpct.over{color:var(--neg)}
+.seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--panel-2)}
+.seg button{height:30px;padding:0 11px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;transition:background-color .25s,color .25s,transform .36s cubic-bezier(.22,1.4,.36,1)}
+.seg button:hover{transform:scale(1.05)}
+.seg button[aria-pressed=true]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(40,30,20,.12)}
+.bars{display:grid;gap:10px;height:200px;align-items:end}
+.bar{display:flex;flex-direction:column;align-items:stretch;gap:8px;height:100%;padding:0;border:0;background:transparent;cursor:pointer;color:var(--muted)}
+.bar-track{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:2px;transform-origin:bottom;animation:rise .7s cubic-bezier(.165,.84,.44,1) both}
+.bar-seg{display:block;border-radius:6px;min-height:0;transition:height .75s cubic-bezier(.165,.84,.44,1),opacity .3s,filter .2s}
+.bar-seg.per{background:var(--per)}
+.bar-seg.biz{background:var(--biz)}
+.bar-val{align-self:center;font-size:11px;font-weight:800;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 6px;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .3s;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar:hover .bar-val,.bar[aria-pressed=true] .bar-val{opacity:1;transform:none}
+.bar:hover .bar-seg{filter:brightness(1.08)}
+.bars[data-any=true] .bar[aria-pressed=false] .bar-seg{opacity:.38}
+.bar-lbl{font-size:11.5px;font-weight:700;text-align:center}
+.bar[aria-pressed=true] .bar-lbl{color:var(--ink)}
+.legend{display:flex;gap:14px;font-size:12px;font-weight:700;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.cloud{flex:1;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;align-items:center;gap:12px 14px;padding:6px 0}
+.bub{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px;border-radius:50%;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:radial-gradient(ellipse at 30% 24%,color-mix(in srgb,var(--c) 30%,var(--panel)),color-mix(in srgb,var(--c) 13%,var(--panel)) 76%);color:var(--ink);cursor:pointer;text-align:center;animation-name:breeze;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate;transition:transform 360ms cubic-bezier(.22,1.4,.36,1),box-shadow .3s,filter .24s}
+.bub b{font-size:12px;font-weight:800;line-height:1.2;max-width:90%}
+.bub small{font-size:11.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.bub:hover{transform:translateY(-6px) scale(1.1);filter:brightness(1.05) drop-shadow(0 8px 12px color-mix(in srgb,var(--c) 24%,transparent));animation-play-state:paused}
+.bub[aria-pressed=true]{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--c)}
+.stat3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat3 div{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:var(--panel-2)}
+.stat3 small{font-size:11px;font-weight:700;color:var(--muted)}
+.stat3 b{font-size:14px;font-variant-numeric:tabular-nums}
+.tx{display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:0}
+.av{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:10px;background:var(--c-soft,var(--panel-2));color:var(--c,var(--muted));font-size:12px;font-weight:800;transition:transform .3s cubic-bezier(.22,1.4,.36,1)}
+.tx:hover .av{transform:translateY(-2px) rotate(-5deg) scale(1.09)}
+.tx-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tx-main b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-main small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-amt{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tx-amt.pos{color:var(--pos)}
+.flip{width:100px;justify-content:space-between}
+.daychip{width:40px;height:40px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:var(--panel-2);line-height:1}
+.daychip b{font-size:15px;font-weight:800}
+.daychip small{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.undo{position:absolute;left:16px;right:16px;bottom:14px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px;padding:0 8px 0 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:13px;font-weight:700}
+.undo .link{color:var(--bg);text-decoration:underline;text-underline-offset:3px;padding:0 10px}
+.goal{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:var(--panel-2);transition:transform 360ms cubic-bezier(.22,1.4,.36,1)}
+.goal:hover{transform:translateY(-4px) scale(1.015)}
+.goal-add{align-items:center;justify-content:center;border:1.5px dashed var(--line-2);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer}
+.goal-add:hover{color:var(--acc);border-color:var(--acc)}
+.roll-a{animation:rollA .6s cubic-bezier(.165,.84,.44,1) both}
+.roll-b{animation:rollB .6s cubic-bezier(.165,.84,.44,1) both}
+.draw-a{animation:drawA 1.4s cubic-bezier(.4,0,.2,1) both}
+.draw-b{animation:drawB 1.4s cubic-bezier(.4,0,.2,1) both}
+.wash{position:absolute;inset:0;pointer-events:none;z-index:60;background:radial-gradient(circle at var(--wx) var(--wy),var(--wash) 0,transparent 62%)}
+.wash-a{animation:washA 1.05s ease-out both}
+.wash-b{animation:washB 1.05s ease-out both}
+.scrim{position:absolute;inset:0;z-index:70;background:rgba(20,18,12,.34);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);animation:fade .3s ease both}
+.modal{position:absolute;z-index:71;top:128px;left:610px;width:460px;display:flex;flex-direction:column;gap:14px;padding:26px;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 30px 80px rgba(20,16,8,.28);animation:pop .35s cubic-bezier(.22,1.3,.36,1) both}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.input{height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600}
+.seg-lg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:12px;background:var(--panel-2)}
+.seg-lg button{height:40px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.seg-lg button[aria-pressed=true]{background:var(--panel);color:var(--c);box-shadow:0 1px 3px rgba(40,30,20,.12)}
+.err{margin:0;min-height:18px;font-size:12.5px;font-weight:700;color:var(--neg)}
+@keyframes tintDrift{from{transform:translate(-12%,-9%) scale(.92);opacity:.55}to{transform:translate(14%,12%) scale(1.12);opacity:1}}
+@keyframes breeze{from{rotate:-2deg;translate:0 2px}to{rotate:2deg;translate:0 -2px}}
+@keyframes rollA{from{opacity:0;transform:translateY(10px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes rollB{from{opacity:0;transform:translateY(10px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes drawA{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes drawB{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes washA{0%{opacity:0;clip-path:circle(0px at var(--wx) var(--wy))}14%{opacity:1}100%{opacity:0;clip-path:circle(1900px at var(--wx) var(--wy))}}
+@keyframes washB{0%{opacity:0;clip-path:circle(0px at var(--wx) var(--wy))}14%{opacity:1}100%{opacity:0;clip-path:circle(1900px at var(--wx) var(--wy))}}
+@keyframes rise{from{opacity:.4;transform:scaleY(.9)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.lg[data-motion=paused] .card::before,.lg[data-motion=paused] .bub{animation-play-state:paused!important}
+.lg[data-motion=paused] :is(.roll-a,.roll-b,.draw-a,.draw-b,.bar-track,.track i,.scrim,.modal){animation:none!important}
+.lg[data-motion=paused] .wash{display:none}
+.lg[data-motion=paused] :is(.btn,.icon,.chip,.bub,.goal,.seg button,.av,.tab-top):hover{transform:none!important;filter:none!important}
+@media (prefers-reduced-motion:reduce){.lg *,.lg *::before{animation:none!important;transition-duration:.01ms!important}.lg .wash{display:none}}
+</style>
+</helmet>
+<div id="top" class="lg" data-scope="{{scope}}" data-theme="{{theme}}" data-motion="{{motion}}" data-layout="{{layout}}" style="position: relative; width: 1440px; height: 2390px; display: flex; overflow: hidden">
+<sc-if value="{{isCorn}}" hint-placeholder-val="{{ false }}"><div class="corn-bg" aria-hidden="true"><img src="{{corn.poster}}" alt=""><video class="amb-v" src="{{corn.src}}" poster="{{corn.poster}}" preload="auto"></video></div></sc-if>
+
+<aside aria-label="Main navigation" style="width: 240px; flex: none; display: flex; flex-direction: column; gap: 28px; padding: 28px 18px; background: var(--panel-2); border-right: 1px solid var(--line)">
+<a href="#top" aria-label="Ledger home" style="display: flex; align-items: center; gap: 12px; padding: 0 6px; text-decoration: none; color: var(--ink)">
+<img src="/_blob/9b7171f5b4a5952ab68580f51a24231f" alt="" style="width: 36px; height: 36px; border-radius: 8px">
+<span style="display: flex; flex-direction: column; gap: 1px">
+<span style="font-family: 'Lora', Georgia, serif; font-size: 24px; font-weight: 600; letter-spacing: -0.8px; line-height: 1">ledger.</span>
+<span style="font-family: 'Lora', Georgia, serif; font-style: italic; font-size: 11.5px; color: var(--muted)">{{logoSub}}</span>
+</span>
+</a>
+<nav aria-label="Pages" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav on" href="#top" aria-current="page"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path></svg>Home</a>
+<a class="nav" href="{{links.tx}}"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M7 7h13l-4-4"></path><path d="M17 17H4l4 4"></path></svg>Transactions</a>
+<a class="nav" href="{{links.bud}}"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>Budgets</a>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"></path><path d="M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15"></path><path d="M4 20v-5h5"></path></svg>Subscriptions<sc-if value="{{reviewCountOn}}" hint-placeholder-val="{{ true }}"><span class="count" aria-label="{{reviewCountLabel}}">{{reviewCount}}</span></sc-if></a>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 4h11l-2 4 2 4H5"></path></svg>Goals</a>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 20h16"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg>Reports</a>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path></svg>Your future</a>
+<div class="eyebrow" style="padding: 18px 12px 6px; font-size: 10.5px">Your setup</div>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path></svg>Accounts</a>
+<a class="nav" href="#top"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h4"></path><path d="M12 17h8"></path><circle cx="10" cy="17" r="2"></circle></svg>Settings</a>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 18px; border-top: 1px solid var(--line)">
+<button class="btn btn-primary" onClick="{{openAdd}}" style="width: 100%; height: 44px"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Add transaction</button>
+<button class="btn btn-ghost" onClick="{{toggleTheme}}" style="width: 100%">
+<sc-if value="{{isDark}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
+<sc-if value="{{isLight}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if>
+{{themeLabel}}</button>
+<button class="btn btn-ghost" onClick="{{toggleMotion}}" aria-pressed="{{motionPressed}}" style="width: 100%"><svg width="16" height="16" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>{{motionLabel}}</button>
+<button class="btn btn-ghost" style="width: 100%"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"></path></svg>Demo version</button>
+</div>
+</aside>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 28px 44px 40px">
+
+<header style="height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px">
+<div>
+<h1 style="margin: 0; font-family: 'Lora', Georgia, serif; font-size: 28px; font-weight: 500; letter-spacing: -0.6px">Good afternoon, Alex</h1>
+<p class="note" style="margin-top: 2px">Thursday, September 24, 2026 · 5 accounts · Sample data</p>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<div class="seg" role="group" aria-label="Design"><button aria-pressed="{{design.sarah}}" onClick="{{design.toSarah}}">Sarah</button><button aria-pressed="{{design.corn}}" onClick="{{design.toCorn}}">Cornelious</button></div>
+<button class="btn" style="width: 240px; justify-content: flex-start; color: var(--muted); font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search transactions<span style="margin-left: auto; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; background: var(--panel-2)">⌘K</span></button>
+<button class="icon" aria-label="Sync your banks"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v5h-5"></path></svg></button>
+<button class="icon" aria-label="Your settings" style="font-weight: 800; font-size: 14px; background: var(--acc-soft); border-color: transparent">A</button>
+</div>
+</header>
+
+<div class="switch" role="tablist" aria-label="Whose money" style="height: 88px">
+<span class="ind" aria-hidden="true"></span>
+<button class="tab" role="tab" aria-selected="{{tabs.everything.sel}}" onClick="{{tabs.everything.pick}}">
+<span class="tab-top"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>Everything</span>
+<span class="tab-fig">{{tabs.everything.net}}<small>{{tabs.everything.word}}</small></span>
+<span class="tab-sub">{{tabs.everything.sub}}</span>
+</button>
+<button class="tab" role="tab" aria-selected="{{tabs.personal.sel}}" onClick="{{tabs.personal.pick}}">
+<span class="tab-top"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path></svg>Personal</span>
+<span class="tab-fig">{{tabs.personal.net}}<small>{{tabs.personal.word}}</small></span>
+<span class="tab-sub">{{tabs.personal.sub}}</span>
+</button>
+<button class="tab" role="tab" aria-selected="{{tabs.business.sel}}" onClick="{{tabs.business.pick}}">
+<span class="tab-top"><svg width="16" height="16" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path><path d="M3 13h18"></path></svg>Business · Juniper Studio</span>
+<span class="tab-fig">{{tabs.business.net}}<small>{{tabs.business.word}}</small></span>
+<span class="tab-sub">{{tabs.business.sub}}</span>
+</button>
+</div>
+
+<section class="card" style="height: 330px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; padding: 28px">
+<div class="amb" aria-hidden="true">
+<sc-if value="{{amb.on}}" hint-placeholder-val="{{ true }}">
+<img class="amb-p" src="{{amb.poster}}" alt="">
+<video class="amb-v" src="{{amb.src}}" poster="{{amb.poster}}" preload="auto"></video>
+</sc-if>
+</div>
+<div style="position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div class="eyebrow">{{hero.eyebrow}}</div>
+<div class="fig roll-{{anim}}" style="font-size: 64px"><span>{{hero.whole}}</span><span class="cents">{{hero.cents}}</span></div>
+<div class="delta roll-{{anim}}"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>{{hero.delta}}</div>
+<svg viewBox="0 0 600 78" preserveAspectRatio="none" aria-label="{{hero.sparkLabel}}" role="img" style="width: 100%; max-width: 520px; height: 58px; flex: none; margin-top: auto; overflow: visible">
+<path class="spark-area" d="{{spark.area}}"></path>
+<path class="spark-line draw-{{anim}}" d="{{spark.line}}" pathLength="1"></path>
+</svg>
+<div class="meta">
+<div><small>Assets</small><b>{{hero.assets}}</b></div>
+<div><small>Liabilities</small><b>{{hero.liab}}</b></div>
+<div><small>Cash on hand</small><b>{{hero.cash}}</b></div>
+</div>
+</div>
+<div class="glass" style="position: relative; z-index: 1; display: flex; flex-direction: column; padding: 16px 18px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px">
+<h2 class="h">{{hero.acctTitle}}</h2>
+<span class="note" style="margin: 0">{{hero.acctCount}}</span>
+</div>
+<sc-for list="{{accts}}" as="a" hint-placeholder-count="5">
+<div class="acct roll-{{anim}}" data-s="{{a.scope}}">
+<span class="dot"></span>
+<span style="flex: 1; min-width: 0"><b>{{a.name}}</b><small>{{a.sub}}</small></span>
+<span class="{{a.cls}}" style="font-size: 14px; font-weight: 700">{{a.bal}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<div style="height: 256px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+<sc-if value="{{isAll}}" hint-placeholder-val="{{ true }}">
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div><h2 class="h">Where September’s spending went</h2><p class="note">Posted purchases · transfers excluded</p></div>
+<div class="split" role="group" aria-label="Spending split">
+<button class="sp" aria-label="{{split.pAria}}" onClick="{{split.goP}}" style="width: {{split.pW}}"></button>
+<button class="sb" aria-label="{{split.bAria}}" onClick="{{split.goB}}" style="width: {{split.bW}}"></button>
+</div>
+<div style="display: flex; flex-direction: column">
+<div class="srow" data-s="personal"><span class="dot"></span><span style="font-weight: 700">Personal</span><b>{{split.pAmt}}</b><span class="note" style="margin: 0; text-align: right">{{split.pPct}}</span><button class="link" onClick="{{split.goP}}">View</button></div>
+<div class="srow" data-s="business"><span class="dot"></span><span style="font-weight: 700">Business</span><b>{{split.bAmt}}</b><span class="note" style="margin: 0; text-align: right">{{split.bPct}}</span><button class="link" onClick="{{split.goB}}">View</button></div>
+</div>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px">
+<div><h2 class="h">Money in, money out</h2><p class="note">September so far, both sides together</p></div>
+<div class="grid2">
+<div class="kv"><small>Income</small><b class="pos">{{io.inc}}</b></div>
+<div class="kv"><small>Spending</small><b>{{io.out}}</b></div>
+<div class="kv"><small>Saved</small><b>{{io.net}}</b></div>
+<div class="kv"><small>Savings rate</small><b>{{io.rate}}</b></div>
+</div>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h">Needs a look</h2><span class="note" style="margin: 0">{{reviewNote}}</span></div>
+<sc-for list="{{reviews}}" as="r" hint-placeholder-count="2">
+<div class="rev">
+<div><b>{{r.title}}</b><small>{{r.sub}}</small></div>
+<div style="display: flex; gap: 8px"><button class="btn btn-sm" onClick="{{r.no}}">{{r.noL}}</button><button class="btn btn-sm btn-primary" onClick="{{r.yes}}">{{r.yesL}}</button></div>
+</div>
+</sc-for>
+<sc-if value="{{reviewsDone}}" hint-placeholder-val="{{ false }}"><p class="note" style="margin-top: 12px">All caught up. Your recurring payments match your plan.</p></sc-if>
+</section>
+</sc-if>
+<sc-if value="{{isPer}}" hint-placeholder-val="{{ false }}">
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+<div><h2 class="h">September without rent</h2><p class="note">Posted spending outside Rent / Mortgage</p></div>
+<div class="big">{{per.noRent}}</div>
+<div class="track" data-s="personal"><i style="width: {{per.shareW}}"></i></div>
+<div class="line-row" style="margin-top: auto"><span class="note" style="margin: 0">Rent excluded</span><b>{{per.rent}}</b></div>
+<div class="line-row"><span class="note" style="margin: 0">Other categories</span><b>{{per.others}}</b></div>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+<div><h2 class="h">Runway</h2><p class="note">How long personal balances cover this month’s pace</p></div>
+<div class="big">{{per.runway}}<span style="font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0; color: var(--muted); margin-left: 8px">months</span></div>
+<div class="line-row" style="margin-top: auto"><span class="note" style="margin: 0">Personal balances</span><b>{{per.bal}}</b></div>
+<div class="line-row"><span class="note" style="margin: 0">Spent this month</span><b>{{per.spend}}</b></div>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+<div><h2 class="h">Saved in September</h2><p class="note">Personal income less personal spending</p></div>
+<div class="big">{{per.saved}}</div>
+<div class="delta" style="background: var(--panel-2)">{{per.delta}}</div>
+<div class="line-row" style="margin-top: auto"><span class="note" style="margin: 0">Savings rate</span><b>{{per.rate}}</b></div>
+</section>
+</sc-if>
+<sc-if value="{{isBiz}}" hint-placeholder-val="{{ false }}">
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+<div><h2 class="h">Set aside for taxes</h2><p class="note">At your 25% rate on September profit</p></div>
+<div class="big">{{biz.tax}}</div>
+<div class="line-row" style="margin-top: auto"><span class="note" style="margin: 0">September profit</span><b>{{biz.profit}}</b></div>
+<div class="line-row"><span class="note" style="margin: 0">Last 12 months</span><b>{{biz.taxTTM}}</b></div>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h">Deductible spend</h2><span class="note" style="margin: 0">12 months</span></div>
+<div class="big" style="font-size: 28px; margin-bottom: 4px">{{biz.dedTotal}}</div>
+<sc-for list="{{biz.ded}}" as="d" hint-placeholder-count="4">
+<div class="line-row" style="min-height: 26px"><span class="note" style="margin: 0">{{d.name}}</span><b>{{d.amt}}</b></div>
+</sc-for>
+</section>
+<section class="card roll-{{anim}}" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h">Clients</h2><span class="note" style="margin: 0">12 months</span></div>
+<sc-for list="{{biz.clients}}" as="c" hint-placeholder-count="2">
+<div class="tx" data-s="business" style="min-height: 52px"><span class="av">{{c.ini}}</span><span class="tx-main"><b>{{c.name}}</b><small>{{c.n}}</small></span><span class="tx-amt pos">{{c.amt}}</span></div>
+</sc-for>
+<div class="line-row" style="margin-top: auto; border-top: 1px solid var(--line); padding-top: 8px"><span class="note" style="margin: 0">Revenue, 12 months</span><b>{{biz.revTTM}}</b></div>
+</section>
+</sc-if>
+</div>
+
+<div style="height: 360px; display: grid; grid-template-columns: 5fr 7fr; gap: 20px">
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start"><div><h2 class="h roll-{{anim}}">{{plan.title}}</h2><p class="note">24 days in · 6 to go</p></div><button class="link">Edit plan</button></div>
+<div style="display: flex; align-items: center; gap: 24px">
+<div style="position: relative; width: 120px; height: 120px; flex: none">
+<svg viewBox="0 0 120 120" style="width: 120px; height: 120px; transform: rotate(-90deg)"><circle class="ring-bg" cx="60" cy="60" r="50"></circle><circle class="ring-prog" cx="60" cy="60" r="50" style="stroke-dashoffset: {{plan.offset}}"></circle></svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center"><b class="roll-{{anim}}" style="font-family: 'Lora', Georgia, serif; font-size: 28px; font-weight: 500">{{plan.pct}}</b><small class="eyebrow" style="font-size: 10px">{{plan.cap}}</small></div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<div class="line-row"><span class="note" style="margin: 0">Spent</span><b>{{plan.spent}}</b></div>
+<div class="line-row"><span class="note" style="margin: 0">{{plan.limitLabel}}</span><b>{{plan.limit}}</b></div>
+<div class="line-row"><span class="note" style="margin: 0">{{plan.remLabel}}</span><b style="color: var(--warn)">{{plan.rem}}</b></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto">
+<sc-for list="{{plan.watch}}" as="w" hint-placeholder-count="3">
+<div class="watch" data-s="{{w.scope}}">
+<div class="line-row" style="min-height: 0"><span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700"><span class="dot"></span>{{w.name}}<span class="note" style="margin: 0; font-weight: 500">{{w.sub}}</span></span><span class="{{w.cls}}">{{w.pct}}</span></div>
+<div class="track" style="height: 6px"><i style="width: {{w.width}}"></i></div>
+</div>
+</sc-for>
+</div>
+</section>
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div><h2 class="h">Monthly {{chart.word}}</h2><p class="note">Select a month to inspect</p></div>
+<div style="display: flex; gap: 8px">
+<div class="seg" role="group" aria-label="Measure"><sc-for list="{{chart.metrics}}" as="m" hint-placeholder-count="2"><button aria-pressed="{{m.p}}" onClick="{{m.pick}}">{{m.l}}</button></sc-for></div>
+<div class="seg" role="group" aria-label="Chart range"><sc-for list="{{chart.ranges}}" as="r" hint-placeholder-count="3"><button aria-pressed="{{r.p}}" onClick="{{r.pick}}">{{r.n}}</button></sc-for></div>
+</div>
+</div>
+<div class="bars" data-any="{{chart.any}}" style="grid-template-columns: repeat({{range}}, minmax(0, 1fr))">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="12">
+<button class="bar" aria-pressed="{{b.sel}}" aria-label="{{b.aria}}" onClick="{{b.pick}}">
+<span class="bar-track"><span class="bar-val">{{b.value}}</span><span class="bar-seg biz" style="height: {{b.bH}}"></span><span class="bar-seg per" style="height: {{b.pH}}"></span></span>
+<span class="bar-lbl">{{b.label}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--line)">
+<div style="display: flex; align-items: center; gap: 18px"><span class="note" style="margin: 0">{{chart.footL}}</span>
+<sc-if value="{{isAll}}" hint-placeholder-val="{{ true }}"><span class="legend"><span data-s="personal"><span class="dot"></span>Personal</span><span data-s="business"><span class="dot"></span>Business</span></span></sc-if></div>
+<b class="num" style="font-size: 16px">{{chart.footV}}</b>
+</div>
+</section>
+</div>
+
+<div style="height: 400px; display: grid; grid-template-columns: 7fr 5fr; gap: 20px">
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: flex-start"><div><h2 class="h">Spend constellation</h2><p class="note">{{cloudNote}}</p></div><a class="link" href="{{links.tx}}">All categories</a></div>
+<div class="cloud">
+<sc-for list="{{bubbles}}" as="b" hint-placeholder-count="7">
+<button class="bub" data-s="{{b.s}}" aria-pressed="{{b.sel}}" aria-label="{{b.aria}}" onClick="{{b.pick}}" style="width: {{b.size}}; height: {{b.size}}; animation-delay: {{b.delay}}; animation-duration: {{b.dur}}"><b>{{b.name}}</b><small>{{b.amt}}</small></button>
+</sc-for>
+</div>
+</section>
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+<sc-if value="{{cdOn}}" hint-placeholder-val="{{ true }}">
+<div class="roll-{{cdAnim}}" style="display: flex; flex-direction: column; gap: 10px; flex: 1" data-s="{{cd.scope}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><h3 style="margin: 0; font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 500">{{cd.name}}</h3><span class="chip">{{cd.scopeLabel}}</span></div>
+<p class="note" style="margin: -4px 0 0">{{cd.share}}</p>
+<div class="big" style="font-size: 30px">{{cd.amt}}</div>
+<div class="track"><i style="width: {{cd.width}}"></i></div>
+<div class="stat3"><div><small>Budget</small><b>{{cd.budget}}</b></div><div><small>Purchases</small><b>{{cd.n}}</b></div><div><small>Remaining</small><b>{{cd.rem}}</b></div></div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{cd.items}}" as="i" hint-placeholder-count="3">
+<div class="line-row" style="border-bottom: 1px solid var(--line); min-height: 32px"><span><span class="note" style="margin: 0; display: inline-block; width: 52px">{{i.d}}</span>{{i.name}}</span><b>{{i.amt}}</b></div>
+</sc-for>
+</div>
+<a class="link" href="{{links.tx}}" style="margin-top: auto">View transactions</a>
+</div>
+</sc-if>
+</section>
+</div>
+
+<div style="height: 478px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+<section class="card" style="padding: 22px 24px 64px; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px"><div><h2 class="h">Recent activity</h2><p class="note">Tap a scope to move a purchase between personal and business</p></div><a class="link" href="{{links.tx}}">View all</a></div>
+<sc-for list="{{recent}}" as="t" hint-placeholder-count="6">
+<div class="tx" data-s="{{t.scope}}">
+<span class="av">{{t.ini}}</span>
+<span class="tx-main"><b>{{t.name}}</b><small>{{t.sub}}</small></span>
+<span class="{{t.cls}}">{{t.amt}}</span>
+<button class="chip flip" onClick="{{t.flip}}" aria-label="{{t.flipLabel}}" title="{{t.flipLabel}}">{{t.scopeLabel}}<svg viewBox="0 0 24 24"><path d="M7 4 3 8l4 4"></path><path d="M3 8h14"></path><path d="m17 20 4-4-4-4"></path><path d="M21 16H7"></path></svg></button>
+</div>
+</sc-for>
+<sc-if value="{{undo.on}}" hint-placeholder-val="{{ false }}">
+<div class="undo roll-{{undo.anim}}" role="status"><span>{{undo.text}}</span><button class="link" onClick="{{undoFn}}">Undo</button></div>
+</sc-if>
+</section>
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px"><div><h2 class="h">Coming up</h2><p class="note">{{upNote}}</p></div><button class="link">Subscriptions</button></div>
+<sc-for list="{{upcoming}}" as="u" hint-placeholder-count="6">
+<div class="tx roll-{{anim}}" data-s="{{u.scope}}">
+<span class="daychip"><b>{{u.day}}</b><small>{{u.mon}}</small></span>
+<span class="tx-main"><b>{{u.name}}</b><small>{{u.sub}}</small></span>
+<span class="tx-amt">{{u.amt}}</span>
+<span class="chip" style="width: 88px">{{u.scopeLabel}}</span>
+</div>
+</sc-for>
+</section>
+</div>
+
+<section class="card" style="height: 214px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h">Savings goals</h2><button class="link">Manage goals</button></div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{goals}}" as="g" hint-placeholder-count="3">
+<div class="goal roll-{{anim}}" data-s="{{g.scope}}">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><b style="font-size: 14px">{{g.name}}</b><span class="chip">{{g.scopeLabel}}</span></div>
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 500">{{g.pct}}</span><span class="note" style="margin: 0">{{g.of}}</span></div>
+<div class="track" style="height: 6px"><i style="width: {{g.width}}"></i></div>
+<span class="note" style="margin: 0">{{g.plan}}</span>
+</div>
+</sc-for>
+<sc-if value="{{goalAddOn}}" hint-placeholder-val="{{ false }}"><button class="goal goal-add">{{goalAddLabel}}</button></sc-if>
+</div>
+</section>
+
+</main>
+
+<sc-if value="{{washOn}}" hint-placeholder-val="{{ false }}"><div class="wash wash-{{anim}}" aria-hidden="true"></div></sc-if>
+<sc-if value="{{lwashOn}}" hint-placeholder-val="{{ false }}"><div class="lwash lwash-{{lanim}}" aria-hidden="true"></div></sc-if>
+
+<sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+<div class="scrim" aria-hidden="true"></div>
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="qa-title" data-s="{{form.scope}}">
+<div style="display: flex; justify-content: space-between; align-items: center"><h2 id="qa-title" class="h" style="font-size: 22px">Add a transaction</h2><button class="icon" aria-label="Close" onClick="{{closeAdd}}"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<p class="note" style="margin-top: -8px">Cash and manual entries count in budgets and reports without changing an account balance.</p>
+<div class="seg-lg" role="group" aria-label="This is for">
+<button aria-pressed="{{form.isPer}}" onClick="{{form.setPer}}" data-s="personal"><span class="dot"></span>Personal</button>
+<button aria-pressed="{{form.isBiz}}" onClick="{{form.setBiz}}" data-s="business"><span class="dot"></span>Business</button>
+</div>
+<label class="fld" for="qa-name">Name or merchant<input id="qa-name" class="input" value="{{form.name}}" onChange="{{form.onName}}" placeholder="Coffee shop" autocomplete="off"></label>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<label class="fld" for="qa-amt">Amount<input id="qa-amt" class="input" value="{{form.amount}}" onChange="{{form.onAmt}}" inputmode="decimal" placeholder="24.50" autocomplete="off"></label>
+<label class="fld" for="qa-dir">Type<select id="qa-dir" class="input" value="{{form.dir}}" onChange="{{form.onDir}}"><option value="out">Money out</option><option value="in">Money in</option></select></label>
+</div>
+<label class="fld" for="qa-cat">Category<select id="qa-cat" class="input" value="{{form.cat}}" onChange="{{form.onCat}}"><sc-for list="{{form.cats}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}">{{o.v}}</option></sc-for></select></label>
+<p class="err" role="alert">{{form.err}}</p>
+<div style="display: flex; justify-content: flex-end; gap: 10px"><button class="btn" onClick="{{closeAdd}}">Never mind</button><button class="btn btn-primary" onClick="{{submitAdd}}" style="background: var(--c); border-color: var(--c)">{{form.submitLabel}}</button></div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Appearance"},"layout":{"editor":"enum","options":["sarah","cornelious"],"default":"sarah","section":"Appearance"},"startScope":{"editor":"enum","options":["everything","personal","business"],"default":"everything","section":"Demo"},"$preview":{"width":1440,"height":2390}}'>
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const LABEL={everything:'Everything',personal:'Personal',business:'Business'};
+const r2=n=>Math.round(n*100)/100;
+const money=(n,sign)=>{const v=r2(n);const s=Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return (v<0?'−':(sign&&v>0?'+':''))+'$'+s;};
+const day=d=>MON[+d.slice(5,7)-1]+' '+(+d.slice(8,10));
+const initials=n=>n.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+/* Ledger's curated demo dataset (backend/demo_preview.py), month to date on Sept 24, 2026. */
+const ACCOUNTS=[
+ {name:'Everyday checking',type:'Checking',scope:'personal',bal:6840.25},
+ {name:'Rainy day savings',type:'Savings',scope:'personal',bal:16200},
+ {name:'Long-term investments',type:'Investments',scope:'personal',bal:28450},
+ {name:'Juniper Studio checking',type:'Checking',scope:'business',bal:12860.50},
+ {name:'Studio rewards card',type:'Credit card',scope:'business',bal:-640.75}];
+const TX=[
+ ['t01','2026-09-01','Maple Court rent','Rent / Mortgage','Everyday checking',-1650,'personal',1,0],
+ ['t02','2026-09-01','Cedar Labs payroll','Payroll','Everyday checking',2750,'personal',0,0],
+ ['t03','2026-09-02','Willow Market','Groceries','Everyday checking',-92.40,'personal',0,0],
+ ['t04','2026-09-03','City transit pass','Transport & Fuel','Everyday checking',-46.80,'personal',0,0],
+ ['t05','2026-09-03','The Workshop desk','Studio / Coworking','Juniper Studio checking',-280,'business',1,0],
+ ['t06','2026-09-04','Juniper Kitchen','Dining & Coffee','Everyday checking',-32.50,'personal',0,0],
+ ['t07','2026-09-05','Linden Design retainer','Invoice Payment','Juniper Studio checking',3060,'business',0,0],
+ ['t08','2026-09-06','Weekend Supply Co.','Shopping','Everyday checking',-84.50,'personal',0,0],
+ ['t09','2026-09-07','Streamlight TV','Subscriptions','Everyday checking',-17.99,'personal',1,0],
+ ['t10','2026-09-08','Paper & Pine supplies','Office Supplies','Studio rewards card',-76.50,'business',0,0],
+ ['t11','2026-09-09','Willow Market','Groceries','Everyday checking',-100.55,'personal',0,0],
+ ['t12','2026-09-10','Hearth Internet','Internet & Phone','Everyday checking',-65,'personal',1,0],
+ ['t13','2026-09-11','Juniper Kitchen','Dining & Coffee','Everyday checking',-38.50,'personal',0,0],
+ ['t14','2026-09-11','Starlight Cinema','Entertainment','Everyday checking',-42,'personal',0,0],
+ ['t15','2026-09-12','Studio Design Suite','Software & SaaS','Studio rewards card',-49,'business',1,0],
+ ['t16','2026-09-14','Soundwave Music','Subscriptions','Everyday checking',-10.99,'personal',1,0],
+ ['t17','2026-09-15','Cedar Labs payroll','Payroll','Everyday checking',2750,'personal',0,0],
+ ['t18','2026-09-16','Willow Market','Groceries','Everyday checking',-108.70,'personal',0,0],
+ ['t19','2026-09-16','Ellis Illustration','Contractors','Juniper Studio checking',-350,'business',0,0],
+ ['t20','2026-09-18','Trailside Fitness','Health & Fitness','Everyday checking',-35,'personal',1,0],
+ ['t21','2026-09-18','Juniper Kitchen','Dining & Coffee','Everyday checking',-44.50,'personal',0,0],
+ ['t22','2026-09-19','Harbor House project','Invoice Payment','Juniper Studio checking',1250,'business',0,0],
+ ['t23','2026-09-20','Transfer to rainy day savings','Transfer','Everyday checking',-500,'personal',0,1],
+ ['t24','2026-09-20','Transfer from everyday checking','Transfer','Rainy day savings',500,'personal',0,1],
+ ['t25','2026-09-22','Cloudbox Storage','Software & SaaS','Studio rewards card',-12,'business',1,0],
+ ['t26','2026-09-23','Willow Market','Groceries','Everyday checking',-116.85,'personal',0,0]
+].map(([id,d,name,cat,acct,amt,scope,rec,transfer])=>({id,d,name,cat,acct,amt,scope,rec:!!rec,transfer:!!transfer}));
+const BUDGETS=[['Groceries','personal',550],['Dining & Coffee','personal',220],['Shopping','personal',160],['Entertainment','personal',120],['Transport & Fuel','personal',150],['Subscriptions','personal',45],['Software & SaaS','business',100],['Contractors','business',700]];
+const HIST={keys:['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'],pS:[2576.78,2556.78,2536.78,2576.78,2556.78,2536.78,2576.78,2556.78,2536.78,2576.78,2556.78],bI:[3650,3710,3770,3830,3890,3950,4010,4070,4130,4190,4250]};
+const PRIOR={bRev:43450,bExp:8442.5,ded:{'Contractors':3850,'Studio / Coworking':3080,'Office Supplies':841.5,'Software & SaaS':671},clients:{'Linden Design retainer':[29700,11],'Harbor House project':[13750,11]}};
+const UPCOMING=[['2026-10-01','Maple Court rent','personal',1650],['2026-10-03','The Workshop desk','business',280],['2026-10-07','Streamlight TV','personal',17.99],['2026-10-10','Hearth Internet','personal',65],['2026-10-12','Studio Design Suite','business',49],['2026-10-14','Soundwave Music','personal',10.99],['2026-10-18','Trailside Fitness','personal',35],['2026-10-22','Cloudbox Storage','business',12]];
+const GOALS=[['A softer landing','personal',16200,20000,500,'May 22, 2027'],['A week in Kyoto','personal',2450,6000,300,'Oct 19, 2027'],['Studio upgrade','business',1800,4000,250,'Jul 21, 2027']];
+const TARGET=4200,TAX=.25,AUG_NET={everything:6425.72,personal:2943.22,business:3482.5};
+const CATS={personal:['Groceries','Dining & Coffee','Rent / Mortgage','Utilities','Internet & Phone','Transport & Fuel','Shopping','Health & Fitness','Insurance','Personal Care','Subscriptions','Travel','Kids & Pets','Entertainment'],business:['Software & SaaS','Advertising','Contractors','Office Supplies','Hardware & Equipment','Shipping & Postage','Professional Services','Business Travel','Business Meals','Payment Processing','Studio / Coworking','Other Business']};
+/* Sarah: woodland stream. Cornelious: Zekrom storm (dark) and Reshiram sunfire (light). */
+const AMB={woodland:['/_blob/55500abe80d8505e21a77d94bb9ff3f7','/_blob/e11cc25bab12a944321d615565f52917'],sunfire:['/_blob/0453cd8912e0423510ad98529ce9d8f7','/_blob/f011880bf12ed93b6337dbf790957ed7'],storm:['/_blob/06f732d4ecae4eaf2ffaed2b793f6719','/_blob/b744d976bf900167facbc520e33ba41f']};
+const spark=vals=>{const lo=Math.min(...vals),hi=Math.max(...vals),den=hi-lo||1;const pts=vals.map((v,i)=>[i/(vals.length-1)*600,70-(v-lo)/den*62]);let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=1;i<pts.length;i++){const x=pts[i][0],y=pts[i][1],px=pts[i-1][0],py=pts[i-1][1],m=((x+px)/2).toFixed(1);d+=' C'+m+','+py.toFixed(1)+' '+m+','+y.toFixed(1)+' '+x.toFixed(1)+','+y.toFixed(1);}return{line:d,area:d+' L600,78 L0,78 Z'};};
+const nwOf=s=>ACCOUNTS.filter(a=>s==='everything'||a.scope===s).reduce((t,a)=>t+a.bal,0);
+const NETS_P=HIST.pS.map(v=>r2(5500-v)).concat([3013.72]),NETS_B=HIST.bI.map(v=>r2(v-767.5)).concat([3542.5]);
+const series=s=>{const nets=NETS_P.map((p,i)=>s==='personal'?p:s==='business'?NETS_B[i]:p+NETS_B[i]);const v=new Array(12);v[11]=nwOf(s);for(let i=10;i>=0;i--)v[i]=v[i+1]-nets[i+1];return v;};
+
+class Component extends DCLogic {
+ constructor(...args){super(...args);this.state={layout:null,ln:0,scope:null,n:0,range:12,metric:'spend',bar:null,cat:0,catN:0,moved:{},added:[],undo:null,dark:null,motion:'on',adding:false,form:null,rev:{cloud:null,suite:null}};}
+ componentDidMount(){this.syncVideo();}
+ componentDidUpdate(pp){
+  if(pp.layout!==this.props.layout&&this.state.layout!==null)this.setState({layout:null});
+  if(pp.startScope!==this.props.startScope&&this.props.startScope)this.pick(this.props.startScope);
+  if(pp.dark!==this.props.dark&&this.state.dark!==null)this.setState({dark:null});
+  this.syncVideo();
+ }
+ componentWillUnmount(){clearTimeout(this.undoTimer);}
+ syncVideo(){try{const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;document.querySelectorAll('video.amb-v').forEach(v=>{v.muted=true;v.loop=true;v.playsInline=true;if(this.state.motion==='paused'||reduce){v.pause();}else if(v.paused){const p=v.play();if(p&&p.catch)p.catch(()=>{});}});}catch(e){}}
+ lay(){return this.state.layout||this.props.layout||'sarah';}
+ setLayout(l){if(l===this.lay())return;this.setState({layout:l,ln:this.state.ln+1});}
+ cur(){return this.state.scope||this.props.startScope||'everything';}
+ pick(s){if(s===this.cur())return;this.setState({scope:s,n:this.state.n+1,cat:0,bar:null});}
+ txs(){const m=this.state.moved;return TX.map(t=>m[t.id]?Object.assign({},t,{scope:m[t.id]}):t).concat(this.state.added);}
+ setScopeOf(id,to){if(id.charAt(0)==='n'){this.setState({added:this.state.added.map(x=>x.id===id?Object.assign({},x,{scope:to}):x)});}else{this.setState({moved:Object.assign({},this.state.moved,{[id]:to})});}}
+ flip(t){const to=t.scope==='personal'?'business':'personal';this.setScopeOf(t.id,to);this.flash('Moved '+t.name+' to '+LABEL[to],()=>this.setScopeOf(t.id,t.scope));}
+ flash(text,fn){const k=this.state.undo?this.state.undo.k+1:1;this.setState({undo:{text,fn,k}});clearTimeout(this.undoTimer);this.undoTimer=setTimeout(()=>this.setState({undo:null}),5200);}
+ openAdd(){const s=this.cur()==='everything'?'personal':this.cur();this.setState({adding:true,form:{name:'',amount:'',dir:'out',scope:s,cat:CATS[s][0],err:''}});}
+ setForm(p){this.setState({form:Object.assign({},this.state.form,p)});}
+ submitAdd(){const f=this.state.form;const amt=parseFloat(String(f.amount).replace(/[$,\s]/g,''));if(!f.name.trim())return this.setForm({err:'Enter a name or merchant.'});if(!(amt>0))return this.setForm({err:'Enter an amount greater than zero.'});const t={id:'n'+Date.now(),d:'2026-09-24',name:f.name.trim(),cat:f.dir==='in'?(f.scope==='business'?'Invoice Payment':'Income'):f.cat,acct:'Cash / manual',amt:f.dir==='in'?amt:-amt,scope:f.scope,rec:false,transfer:false};this.setState({added:this.state.added.concat([t]),adding:false});this.flash('Added '+t.name+' to '+LABEL[t.scope],()=>this.setState({added:this.state.added.filter(x=>x.id!==t.id)}));}
+ setRev(k,v){this.setState({rev:Object.assign({},this.state.rev,{[k]:v})});}
+ renderVals(){
+  const st=this.state,S=this.cur(),dark=st.dark!==null?st.dark:!!this.props.dark,L=this.lay(),corn=L==='cornelious';
+  const txs=this.txs(),inS=s=>S==='everything'||s===S,anim=st.n%2?'a':'b';
+  const flows=s=>{let i=0,o=0;txs.forEach(t=>{if(t.transfer)return;if(s!=='everything'&&t.scope!==s)return;if(t.amt>0)i+=t.amt;else o-=t.amt;});return{inc:r2(i),out:r2(o),net:r2(i-o)};};
+  const F={everything:flows('everything'),personal:flows('personal'),business:flows('business')};
+  const tab=(s,word,a,b)=>({sel:String(S===s),pick:()=>this.pick(s),net:money(F[s].net,true),word,sub:a+' '+money(F[s].inc)+' · '+b+' '+money(F[s].out)});
+  const tabs={everything:tab('everything','net in September','In','Out'),personal:tab('personal','saved in September','In','Out'),business:tab('business','profit in September','Revenue','Costs')};
+  const accts=ACCOUNTS.filter(a=>inS(a.scope));
+  const nw=nwOf(S),assets=accts.reduce((s,a)=>s+Math.max(0,a.bal),0),liab=accts.reduce((s,a)=>s-Math.min(0,a.bal),0),cash=accts.filter(a=>a.type==='Checking'||a.type==='Savings').reduce((s,a)=>s+a.bal,0),nwStr=money(nw);
+  const hero={eyebrow:{everything:'Total net worth',personal:'Personal net worth',business:'Business net position'}[S],whole:nwStr.slice(0,-3),cents:nwStr.slice(-3),delta:money(F[S].net,true)+(S==='business'?' profit':' net income')+' in September',assets:money(assets),liab:money(liab),cash:money(cash),acctTitle:S==='everything'?'All accounts':LABEL[S]+' accounts',acctCount:accts.length+' tracked',sparkLabel:'Estimated '+(S==='everything'?'':LABEL[S].toLowerCase()+' ')+'net worth over the last 12 months'};
+  const pO=F.personal.out,bO=F.business.out,tot=pO+bO||1,pSh=Math.round(pO/tot*100),E=F.everything;
+  const split={pW:(pO/tot*100).toFixed(2)+'%',bW:(bO/tot*100).toFixed(2)+'%',pAmt:money(pO),bAmt:money(bO),pPct:pSh+'%',bPct:(100-pSh)+'%',pAria:'Personal spending '+money(pO)+', '+pSh+'%. Switch to Personal',bAria:'Business spending '+money(bO)+', '+(100-pSh)+'%. Switch to Business',goP:()=>this.pick('personal'),goB:()=>this.pick('business')};
+  const io={inc:money(E.inc),out:money(E.out),net:money(E.net),rate:E.inc?(E.net/E.inc*100).toFixed(1)+'%':'—'};
+  const rent=txs.filter(t=>!t.transfer&&t.scope==='personal'&&t.amt<0&&t.cat==='Rent / Mortgage').reduce((s,t)=>s-t.amt,0);
+  const others=new Set(txs.filter(t=>!t.transfer&&t.scope==='personal'&&t.amt<0&&t.cat!=='Rent / Mortgage').map(t=>t.cat)).size;
+  const pNW=nwOf('personal'),dP=F.personal.net-AUG_NET.personal;
+  const per={noRent:money(pO-rent),rent:money(rent),others:String(others),shareW:(pO?(pO-rent)/pO*100:0).toFixed(1)+'%',runway:pO?(pNW/pO).toFixed(1):'—',bal:money(pNW),spend:money(pO),saved:money(F.personal.net),rate:F.personal.inc?(F.personal.net/F.personal.inc*100).toFixed(1)+'%':'—',delta:(dP>=0?'▲ ':'▼ ')+money(Math.abs(dP))+' vs August'};
+  const revTTM=PRIOR.bRev+F.business.inc,expTTM=PRIOR.bExp+bO,ded=Object.assign({},PRIOR.ded);
+  txs.forEach(t=>{if(!t.transfer&&t.scope==='business'&&t.amt<0)ded[t.cat]=(ded[t.cat]||0)-t.amt;});
+  const dedRows=Object.keys(ded).map(k=>({name:k,v:ded[k],amt:money(ded[k])})).sort((a,b)=>b.v-a.v);
+  const clients=Object.keys(PRIOR.clients).map(k=>{let a=PRIOR.clients[k][0],n=PRIOR.clients[k][1];txs.forEach(t=>{if(t.name===k&&t.scope==='business'&&t.amt>0){a+=t.amt;n++;}});return{name:k,ini:initials(k),amt:money(a),n:n+' payments'};});
+  const biz={tax:money(Math.max(0,F.business.net)*TAX),profit:money(F.business.net),taxTTM:money(Math.max(0,revTTM-expTTM)*TAX),dedTotal:money(dedRows.reduce((s,d)=>s+d.v,0)),ded:dedRows.slice(0,4),clients,revTTM:money(revTTM)};
+  const bud=BUDGETS.filter(b=>inS(b[1])).map(([name,scope,limit])=>{const spent=txs.filter(t=>!t.transfer&&t.amt<0&&t.scope===scope&&t.cat===name).reduce((s,t)=>s-t.amt,0);return{name,scope,limit,spent,pct:Math.round(spent/limit*100)};});
+  let plan;
+  if(S==='everything'){const p=Math.round(E.out/TARGET*100);plan={title:'September plan',pctN:p,cap:'of plan',spent:money(E.out),limitLabel:'Monthly plan',limit:money(TARGET),remLabel:'Room left',rem:money(TARGET-E.out)};}
+  else{const lim=bud.reduce((s,b)=>s+b.limit,0),sp=bud.reduce((s,b)=>s+b.spent,0),p=lim?Math.round(sp/lim*100):0;plan={title:LABEL[S]+' budgets',pctN:p,cap:'of budgets',spent:money(sp),limitLabel:'Budgeted',limit:money(lim),remLabel:'Remaining',rem:money(lim-sp)};}
+  plan.pct=plan.pctN+'%';plan.offset=(314.159*(1-Math.min(plan.pctN,100)/100)).toFixed(2);
+  plan.watch=bud.slice().sort((a,b)=>b.pct-a.pct).slice(0,3).map(b=>({name:b.name,scope:b.scope,sub:money(b.spent)+' of '+money(b.limit),pct:b.pct+'%',width:Math.min(100,b.pct)+'%',cls:b.pct>=100?'wpct over':b.pct>=80?'wpct warn':'wpct'}));
+  const months=HIST.keys.map((k,i)=>({k,pS:HIST.pS[i],pI:5500,bS:767.5,bI:HIST.bI[i]})).concat([{k:'2026-09',pS:pO,pI:F.personal.inc,bS:bO,bI:F.business.inc}]);
+  const word=st.metric==='spend'?'spending':'income';
+  const rows=months.slice(-st.range).map(m=>{const p=st.metric==='spend'?m.pS:m.pI,b=st.metric==='spend'?m.bS:m.bI;return Object.assign({},m,{pv:S==='business'?0:p,bv:S==='personal'?0:b});});
+  const max=Math.max(1,...rows.map(r=>r.pv+r.bv)),mName=k=>FULL[+k.slice(5)-1]+' '+k.slice(0,4);
+  const bars=rows.map(r=>({label:MON[+r.k.slice(5)-1],pH:(r.pv/max*100).toFixed(2)+'%',bH:(r.bv/max*100).toFixed(2)+'%',value:money(r.pv+r.bv),sel:String(st.bar===r.k),aria:mName(r.k)+' '+word+' '+money(r.pv+r.bv),pick:()=>this.setState({bar:st.bar===r.k?null:r.k})}));
+  const selRow=rows.find(r=>r.k===st.bar),avg=rows.reduce((s,r)=>s+r.pv+r.bv,0)/rows.length;
+  const chart={word,any:String(!!selRow),footL:selRow?mName(selRow.k)+(selRow.k==='2026-09'?' so far':''):st.range+'-month average',footV:money(selRow?selRow.pv+selRow.bv:avg),ranges:[12,6,3].map(n=>({n:n+'M',p:String(st.range===n),pick:()=>this.setState({range:n,bar:null})})),metrics:[['spend','Spending'],['income','Income']].map(([k,l])=>({l,p:String(st.metric===k),pick:()=>this.setState({metric:k,bar:null})}))};
+  const cm={};txs.forEach(t=>{if(t.transfer||t.amt>=0||!inS(t.scope))return;const key=t.scope+'|'+t.cat;if(!cm[key])cm[key]={name:t.cat,scope:t.scope,amt:0,list:[]};cm[key].amt-=t.amt;cm[key].list.push(t);});
+  const cats=Object.keys(cm).map(k=>cm[k]).sort((a,b)=>b.amt-a.amt),top=cats.slice(0,7),cmax=top.length?top[0].amt:1,sel=Math.min(st.cat,Math.max(0,top.length-1));
+  const bubbles=top.map((c,i)=>{const sz=Math.round(80+Math.sqrt(c.amt/cmax)*88);return{name:c.name,amt:money(c.amt),s:c.scope,size:sz+'px',sel:String(i===sel),aria:c.name+', '+LABEL[c.scope]+', '+money(c.amt),delay:(-(i*1.7)).toFixed(1)+'s',dur:(6+(i%3)*1.4).toFixed(1)+'s',pick:()=>this.setState({cat:i,catN:st.catN+1})};});
+  const c=top[sel],scopeSpend=S==='everything'?E.out:F[S].out;
+  let cd={name:'',scope:'personal',scopeLabel:'',share:'',amt:'',width:'0%',budget:'',n:'',rem:'',items:[]};
+  if(c){const b=BUDGETS.find(x=>x[0]===c.name&&x[1]===c.scope),lim=b?b[2]:null;cd={name:c.name,scope:c.scope,scopeLabel:LABEL[c.scope],share:Math.round(c.amt/scopeSpend*100)+'% of '+(S==='everything'?'all':LABEL[S].toLowerCase())+' spending this month',amt:money(c.amt),width:(lim?Math.min(100,c.amt/lim*100):Math.min(100,c.amt/scopeSpend*100)).toFixed(1)+'%',budget:lim?money(lim):'Not set',n:String(c.list.length),rem:lim?money(lim-c.amt):'—',items:c.list.slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,3).map(t=>({d:day(t.d),name:t.name,amt:money(t.amt)}))};}
+  const recent=txs.slice().sort((a,b)=>b.d.localeCompare(a.d)||b.id.localeCompare(a.id)).filter(t=>inS(t.scope)).slice(0,6).map(t=>{const to=t.scope==='personal'?'business':'personal';return{name:t.name,ini:initials(t.name),sub:(t.transfer?'Transfer':t.cat)+' · '+day(t.d)+' · '+t.acct,amt:(t.amt>0?'+':'')+money(t.amt),cls:t.amt>0&&!t.transfer?'tx-amt pos':'tx-amt',scope:t.scope,scopeLabel:LABEL[t.scope],flipLabel:'Move '+t.name+' to '+LABEL[to],flip:()=>this.flip(t)};});
+  const rv=st.rev;
+  const upAll=UPCOMING.filter(u=>inS(u[2])&&!(u[1]==='Cloudbox Storage'&&rv.cloud==='no')).map(([d,name,scope,amt])=>{let a=amt,note='Monthly';if(name==='Studio Design Suite'){if(rv.suite==='yes')a=54;else if(rv.suite===null)note='Latest charge $54.00 · review';}if(name==='Cloudbox Storage'&&rv.cloud===null)note='Looks recurring · review';return{day:String(+d.slice(8)),mon:'Oct',name,sub:note,amt:money(a),a,scope,scopeLabel:LABEL[scope]};});
+  const reviews=[];
+  if(rv.cloud===null)reviews.push({title:'Cloudbox Storage looks recurring',sub:'$12.00 monthly · Business · Studio rewards card',noL:'Not recurring',yesL:'Track it',no:()=>this.setRev('cloud','no'),yes:()=>this.setRev('cloud','yes')});
+  if(rv.suite===null)reviews.push({title:'Studio Design Suite changed price',sub:'Planned $49.00 · latest charge $54.00 · Business',noL:'Keep $49.00',yesL:'Use $54.00',no:()=>this.setRev('suite','no'),yes:()=>this.setRev('suite','yes')});
+  const goals=GOALS.filter(g=>inS(g[1])).map(([name,scope,saved,target,mo,by])=>({name,scope,scopeLabel:LABEL[scope],pct:Math.round(saved/target*100)+'%',width:(saved/target*100).toFixed(1)+'%',of:money(saved)+' of '+money(target),plan:money(mo).replace('.00','')+' a month · by '+by}));
+  const f=st.form||{name:'',amount:'',dir:'out',scope:'personal',cat:'Groceries',err:''};
+  const form={name:f.name,amount:f.amount,dir:f.dir,cat:f.cat,err:f.err,scope:f.scope,isPer:String(f.scope==='personal'),isBiz:String(f.scope==='business'),cats:CATS[f.scope].map(v=>({v})).concat([{v:'Uncategorized'}]),submitLabel:'Add to '+LABEL[f.scope],
+   setPer:()=>this.setForm({scope:'personal',cat:CATS.personal[0]}),setBiz:()=>this.setForm({scope:'business',cat:CATS.business[0]}),
+   onName:e=>this.setForm({name:e.target.value,err:''}),onAmt:e=>this.setForm({amount:e.target.value,err:''}),onDir:e=>this.setForm({dir:e.target.value}),onCat:e=>this.setForm({cat:e.target.value})};
+  const amb=AMB.woodland,cb=dark?AMB.storm:AMB.sunfire;
+  const pre=corn?(dark?'Cornelious':'Sunfire'):'',lk=(s,a)=>(pre?pre+a:s)+'.dc.html';
+  const links={home:lk('Main','Home'),tx:lk('Transactions','Transactions'),bud:lk('Budgets','Budgets'),mhome:lk('Mobile','Mobile'),mtx:lk('MobileTransactions','MobileTransactions'),mbud:lk('MobileBudgets','MobileBudgets')};
+  return {
+   scope:S,theme:dark?'dark':'light',motion:st.motion,anim,washOn:st.n>0,
+   links,layout:L,isCorn:corn,corn:{src:cb[0],poster:cb[1]},logoSub:corn?'Cornelious':'A little more peace of mind.',lwashOn:st.ln>0,lanim:st.ln%2?'a':'b',
+   design:{sarah:String(!corn),corn:String(corn),toSarah:()=>this.setLayout('sarah'),toCorn:()=>this.setLayout('cornelious')},
+   isAll:S==='everything',isPer:S==='personal',isBiz:S==='business',isDark:dark,isLight:!dark,
+   themeLabel:dark?'Light mode':'Dark mode',toggleTheme:()=>this.setState({dark:!dark}),
+   motionLabel:st.motion==='on'?'Pause animations':'Resume animations',motionPressed:String(st.motion==='paused'),toggleMotion:()=>this.setState({motion:st.motion==='on'?'paused':'on'}),
+   amb:{on:!corn,src:amb[0],poster:amb[1]},
+   tabs,hero,accts:accts.map(a=>({name:a.name,sub:a.type+' · '+LABEL[a.scope],bal:money(a.bal),scope:a.scope,cls:a.bal<0?'num neg':'num'})),spark:spark(series(S)),
+   split,io,per,biz,plan,chart,bars,range:st.range,
+   bubbles,cloudNote:S==='everything'?'Personal and business categories this month · tap to inspect':LABEL[S]+' categories this month · tap to inspect',
+   cdOn:!!c,cd,cdAnim:(st.n+st.catN)%2?'a':'b',
+   recent,undo:{on:!!st.undo,text:st.undo?st.undo.text:'',anim:st.undo&&st.undo.k%2?'a':'b'},undoFn:()=>{const u=this.state.undo;clearTimeout(this.undoTimer);if(u){u.fn();this.setState({undo:null});}},
+   upcoming:upAll.slice(0,6),upNote:'Next 30 days · '+money(upAll.reduce((s,u)=>s+u.a,0))+' expected',
+   reviews,reviewsDone:!reviews.length,reviewNote:reviews.length?reviews.length+' to review':'Done',reviewCount:String(reviews.length),reviewCountOn:reviews.length>0,reviewCountLabel:reviews.length+' to review',
+   goals,goalAddOn:goals.length<3,goalAddLabel:S==='business'?'Add a business goal':'Add a goal',
+   adding:st.adding,openAdd:()=>this.openAdd(),closeAdd:()=>this.setState({adding:false}),submitAdd:()=>this.submitAdd(),form
+  };
+ }
+}
+</script>
+</body>
+</html>

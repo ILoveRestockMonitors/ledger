@@ -2,7 +2,7 @@
 const LedgerDemo = (() => {
   const active = new URLSearchParams(location.search).get('demo') === '1';
   const key = 'ledger-demo-presentation';
-  const allowed = new Set(['theme', 'density', 'home_cards', 'palette', 'font_family', 'accent']);
+  const allowed = new Set(['theme', 'density', 'home_cards', 'palette', 'font_family', 'accent', 'layout']);
   let preferences = {};
   try {
     const saved = JSON.parse(sessionStorage.getItem(key) || '{}');
@@ -42,6 +42,7 @@ const LedgerDemo = (() => {
       }
       if (('theme' in changes && !['light', 'dark', 'system'].includes(changes.theme)) ||
           ('density' in changes && !['compact', 'comfortable'].includes(changes.density)) ||
+          ('layout' in changes && !['new', 'classic'].includes(changes.layout)) ||
           ('home_cards' in changes && (!Array.isArray(changes.home_cards) || changes.home_cards.length > 4 ||
            changes.home_cards.some(k => !['recent', 'upcoming', 'cashflow', 'goals'].includes(k))))) {
         throw new Error('Choose a valid presentation preference.');
