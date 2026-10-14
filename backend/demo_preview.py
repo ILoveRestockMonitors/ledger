@@ -17,7 +17,7 @@ READ_PATHS = frozenset({
     '/config', '/accounts', '/items', '/categories', '/transactions',
     '/summary/overview', '/summary/networth', '/summary/cashflow',
     '/summary/categories', '/summary/heatmap', '/summary/matrix',
-    '/reports/spending', '/budgets', '/subscriptions', '/goals',
+    '/reports/spending', '/budgets', '/budgets/overview', '/subscriptions', '/goals',
     '/business/summary', '/monthly-plan', '/projections/defaults',
     '/export/transactions.csv', '/cancellations', '/cancellations/status',
     '/receipts', '/receipts/transaction', '/sync/status',

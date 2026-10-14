@@ -1,0 +1,20 @@
+/* Design A uses Sarah's existing palette tokens in Sarah color mode.
+   Her background and motion assets remain owned by the unchanged theme files. */
+:root[data-design=a][data-review-mode=custom][data-theme] {
+ --a-ink:var(--text);--a-ink2:var(--muted);--a-ink3:var(--faint);
+ --a-surface:color-mix(in srgb,var(--panel) 90%,transparent);--a-solid:var(--panel);
+ --a-tint:color-mix(in srgb,var(--accent) 8%,transparent);--a-line:color-mix(in srgb,var(--border) 28%,transparent);
+ --a-accent:var(--accent);--a-accent-soft:color-mix(in srgb,var(--accent) 14%,transparent);--a-on-accent:var(--on-accent);
+ --a-per:var(--chart-1);--a-biz:var(--chart-3);--a-per-soft:color-mix(in srgb,var(--chart-1) 14%,transparent);--a-biz-soft:color-mix(in srgb,var(--chart-3) 14%,transparent);
+ --a-pos:var(--green);--a-pos-soft:color-mix(in srgb,var(--green) 14%,transparent);
+ --a-warn:var(--amber);--a-warn-soft:color-mix(in srgb,var(--amber) 14%,transparent);--a-neg:var(--red);--a-neg-soft:color-mix(in srgb,var(--red) 14%,transparent);
+ --a-k1:var(--chart-1);--a-k2:var(--chart-2);--a-k3:var(--chart-3);--a-k4:var(--chart-4);--a-k5:var(--chart-5);
+ --rd-k5:var(--chart-5)!important;--rd-k6:var(--chart-6)!important;--rd-k7:var(--chart-7)!important;--rd-k8:var(--chart-8)!important;
+ --a-font:var(--font);
+}
+:root[data-design=a][data-review-mode=custom][data-layout=new][data-theme=light][data-scope]{--accent:#6f7c38!important;--accent-rgb:111,124,56!important}
+:root[data-design=a][data-review-mode=custom][data-layout=new][data-theme=dark][data-scope]{--accent:#f2b381!important;--accent-rgb:242,179,129!important}
+:root[data-design=a][data-review-mode=custom][data-theme=light] :is(#app,#modal-root,#mobile-nav) .btn-primary,
+:root[data-design=a][data-review-mode=custom][data-theme=light] .a-nav-add{
+ background:linear-gradient(160deg,rgba(169,191,132,.76),rgba(153,178,108,.48))!important;color:#344525!important;border:1px solid rgba(111,140,70,.25)!important;
+}

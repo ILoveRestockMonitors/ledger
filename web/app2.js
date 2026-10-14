@@ -227,6 +227,11 @@ async function saveTxEdit(id, button) {
     if (!body.name) return toast('Enter a name or merchant.', 'err');
     if (!body.posted) return toast('Choose a date.', 'err');
   }
+  if (!cash) {
+    const name = document.getElementById("txe-name").value.trim();
+    if (!name) return toast('Enter a name or merchant.', 'err');
+    if (name !== String(original.display_name || original.merchant || original.name || '').trim()) body.name = name;
+  }
   if (category.value !== (category.dataset.originalValue || "")) body.category_id = category.value || null;
   if (body.recurring) {
     if (body.is_transfer || (body.amount ?? original.amount) >= 0) return toast('Only outgoing purchases can be tracked as subscriptions.', 'err');
