@@ -219,9 +219,9 @@ async function receiptSaveSettings(form) {
 }
 
 function amazonConnectionCard(connection, demo) {
-  return `<div class="amazon-connection"><b>Amazon Business</b><p class="quiet-note">${receiptText(connection.message || 'Connect your account to sync purchase details automatically.')}</p>
+  return `<div class="amazon-connection"><b>Amazon &amp; Amazon Business</b><p class="quiet-note">${receiptText(connection.message || 'Connect your account to sync purchase details automatically.')}</p>
     ${connection.last_sync ? `<p class="small muted">Last synced ${receiptText(new Date(connection.last_sync).toLocaleString())} · ${Number(connection.charges)||0} charges${connection.named_transactions ? ` · ${Number(connection.named_transactions)} purchases named` : ''}</p>` : ''}
-    <button type="button" class="btn btn-sm" data-amazon-action="open" ${demo ? 'disabled' : ''}>${connection.connected ? 'Manage Amazon connection' : 'Connect Amazon Business'}</button></div>`;
+    <button type="button" class="btn btn-sm" data-amazon-action="open" ${demo ? 'disabled' : ''}>${connection.connected ? 'Manage Amazon connection' : 'Connect Amazon'}</button></div>`;
 }
 
 let amazonPoll = null;
@@ -234,13 +234,13 @@ function amazonDialog(connection = {}) {
     ? `<form data-amazon-form="verify"><label class="fld" for="amazon-code">${connection.stage==='otp'?'Amazon verification code':'Characters shown above'}</label><input class="input" id="amazon-code" name="code" required maxlength="64" autocomplete="one-time-code" ${connection.stage==='otp'?'inputmode="numeric"':''}><button class="btn btn-primary" type="submit">Continue sign-in</button></form>`
     : (!connection.connected && !busy && connection.stage !== 'approval' && !csvBlocked ? connectFields : '');
   const csvSection = `<details class="disclosure amazon-report-import" ${!connection.connected || csvBlocked ? 'open' : ''}>
-    <summary>${csvBlocked ? 'Recommended: Import Amazon Business or Order CSV' : 'Import Amazon Business or Order CSV'}</summary>
-    <p class="quiet-note">Works immediately even when Amazon blocks headless server browsers: 1) Open Amazon Business Analytics in your regular browser, 2) Pick <b>Reconciliation</b> or <b>Orders</b> (Past 12 months) and click <b>Download CSV</b>, 3) Select that CSV file below to name both Personal &amp; Business purchases.</p>
-    <div class="row" style="margin:8px 0 10px;gap:8px;flex-wrap:wrap"><a class="btn btn-primary btn-sm" href="https://www.amazon.com/b2b/aba/reports" target="_blank" rel="noopener noreferrer">Open Amazon Business Reports ↗</a></div>
-    <label class="fld" for="amazon-report-file">Amazon Reconciliation or Orders CSV</label>
+    <summary>${csvBlocked ? 'Recommended: Import Amazon CSV (Personal or Business)' : 'Import Amazon CSV (Personal or Business)'}</summary>
+    <p class="quiet-note"><b>Amazon Business:</b> Open Business Analytics → pick <b>Reconciliation</b> or <b>Orders</b> (Past 12 months) → <b>Download CSV</b>.<br><b>Regular Personal Amazon:</b> Open Amazon Privacy Central → request <b>Your Orders</b> → unzip and select <code>Retail.OrderHistory.1.csv</code>.</p>
+    <div class="row" style="margin:8px 0 10px;gap:8px;flex-wrap:wrap"><a class="btn btn-primary btn-sm" href="https://www.amazon.com/b2b/aba/reports" target="_blank" rel="noopener noreferrer">Amazon Business Reports ↗</a><a class="btn btn-ghost btn-sm" href="https://www.amazon.com/hz/privacy-central/data-requests/preview.html" target="_blank" rel="noopener noreferrer">Regular Amazon Order Export ↗</a></div>
+    <label class="fld" for="amazon-report-file">Amazon Reconciliation or Order History CSV</label>
     <input class="input" id="amazon-report-file" type="file" accept=".csv,text/csv" data-amazon-file ${busy?'disabled':''}>
   </details>`;
-  return `<div class="amazon-dialog" data-amazon-dialog><button type="button" class="close-button" data-action="close" aria-label="Close dialog">×</button><h2>Amazon Business</h2><p class="small muted">Match Personal &amp; Business card charges to the actual items you purchased.</p>
+  return `<div class="amazon-dialog" data-amazon-dialog><button type="button" class="close-button" data-action="close" aria-label="Close dialog">×</button><h2>Amazon &amp; Amazon Business</h2><p class="small muted">Match Personal &amp; Business card charges to the actual items you purchased.</p>
     <div class="status-panel" role="status">${receiptText(connection.message || 'Connect your Amazon Business account or import a CSV.')}</div>
     ${connection.captcha_image && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(connection.captcha_image) ? `<img class="amazon-captcha" src="${connection.captcha_image}" alt="Amazon sign-in verification characters">` : ''}
     ${csvBlocked ? csvSection : ''}${form}

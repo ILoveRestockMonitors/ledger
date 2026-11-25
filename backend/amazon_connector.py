@@ -251,7 +251,7 @@ def investigate(job):
     charge, method = amazon_business.select_charge(full_tx, _read('charges.json', []))
     if not charge:
         # Even if item-level tax split is unavailable, check if name_charges can name the purchase.
-        name_charge, name_method = amazon_business.select_charge(full_tx, _read('name_charges.json', []))
+        name_charge, name_method = amazon_business.select_charge(full_tx, _read('name_charges.json', []), allow_cardless=True)
         if name_charge:
             apply_saved_names()
             label = amazon_business.format_purchase_name(name_charge.get('items') or [])

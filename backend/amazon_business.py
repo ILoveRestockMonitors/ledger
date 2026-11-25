@@ -42,7 +42,10 @@ def iso_date(value):
 def card_tail(value):
     value = str(value or '').strip()
     if re.fullmatch(r'\d{4}', value): return value
-    match = re.search(r'(?:ending\s+in|[*xX•]{2,})\s*(\d{4})\b', value, re.I)
+    match = re.search(
+        r'(?:ending\s+in|[*xX•]{2,}|(?:visa|mastercard|amex|american\s+express|discover|debit|credit|card)\s*[-–—:]\s*)\s*(\d{4})\b',
+        value, re.I,
+    )
     return match.group(1) if match else ''
 
 
@@ -117,7 +120,8 @@ def _parse_standard_order_csv(reader, fields):
     """Parse Amazon Business Orders CSVs and consumer Order History CSVs."""
     aliases = {
         "order": ("Order ID", "Amazon Order ID", "Order Number"),
-        "date": ("Payment Date", "Shipment Date", "Ship Date", "Order Date", "Transaction Date"),
+        "date": ("Payment Date", "Shipment Date", "Ship Date"),
+        "order_date": ("Order Date", "Transaction Date"),
         "gross": ("Total Owed", "Total Charged", "Item Total", "Order Item Total", "Line Total (Incl. Tax)"),
         "net": ("Item Subtotal", "Item Net Total", "Shipment Item Subtotal", "Net Total", "Line Item Total"),
         "tax": ("Item Tax", "Shipment Item Subtotal Tax", "Tax", "Sales Tax", "Estimated Tax"),
@@ -130,7 +134,7 @@ def _parse_standard_order_csv(reader, fields):
         "category": ("GL Code", "Product Category", "Commodity"),
     }
     cols = {name: next((fields[key(a)] for a in names if key(a) in fields), None) for name, names in aliases.items()}
-    if not (cols["order"] and cols["date"] and (cols["gross"] or cols["net"]) and cols["title"]):
+    if not (cols["order"] and (cols["date"] or cols["order_date"]) and (cols["gross"] or cols["net"]) and cols["title"]):
         return None
     pretax_only = bool(cols["net"] and not cols["gross"] and not cols["tax"])
     groups, skipped = {}, 0
@@ -153,7 +157,10 @@ def _parse_standard_order_csv(reader, fields):
             if currency != "USD":
                 skipped += 1
                 continue
-            when = iso_date(row["date"])
+            try:
+                when = iso_date(row["date"]) if row["date"] else iso_date(row["order_date"])
+            except ValueError:
+                when = iso_date(row["order_date"])
             card = card_tail(row["card"])
             if not re.fullmatch(r"\d{3}-\d{7}-\d{7}", row["order"]) or not row["title"]:
                 skipped += 1
@@ -344,11 +351,13 @@ def references(tx):
     return refs
 
 
-def select_charge(tx, charges):
+def select_charge(tx, charges, allow_cardless=False):
     amount, posted = cents(str(abs(tx['amount']))), date.fromisoformat(tx['posted'])
     currency = tx.get('currency') or tx.get('iso_currency') or 'USD'
     cards = tx_cards(tx)
     refs = references(tx)
+    order_refs = {r for r in refs if re.fullmatch(r'\d{3}-\d{7}-\d{7}', r)}
+    charge_refs = refs - order_refs
     candidates = []
     for charge in charges:
         if charge['currency'] != currency:
@@ -357,18 +366,30 @@ def select_charge(tx, charges):
             if not (charge.get('pretax_only') and charge['amount_cents'] <= amount <= int(charge['amount_cents'] * 1.12)):
                 continue
         charge_card = charge.get('card_last4') or ''
-        if not cards or not charge_card or charge_card not in cards:
+        if charge_card:
+            if not cards or charge_card not in cards:
+                continue
+        elif not allow_cardless:
             continue
         if abs((date.fromisoformat(charge['posted']) - posted).days) > 7:
             continue
-        exact = bool(charge.get('charge_identifier')) and charge['charge_identifier'] in refs
-        order = bool(refs.intersection(charge.get('orders') or ()))
-        if refs and not (exact or order):
+        cid = charge.get('charge_identifier') or ''
+        corders = charge.get('orders') or ()
+        exact = bool(cid) and cid in charge_refs
+        order = bool(order_refs.intersection(corders))
+        if charge_refs and cid and not exact:
             continue
-        candidates.append((charge, 'charge_identifier' if exact else 'order_id' if order else 'amount_card_date'))
+        if order_refs and corders and not order:
+            continue
+        method = 'charge_identifier' if exact else 'order_id' if order else ('amount_date' if not charge_card else 'amount_card_date')
+        candidates.append((charge, method))
     exact = [row for row in candidates if row[1] == 'charge_identifier']
     if exact:
         candidates = exact
+    else:
+        card_matched = [row for row in candidates if row[1] != 'amount_date']
+        if card_matched:
+            candidates = card_matched
     return candidates[0] if len(candidates) == 1 else (None, 'ambiguous' if candidates else 'missing')
 
 
@@ -394,7 +415,7 @@ def apply_matched_names(conn, charges):
     for tx in rows:
         if tx.get('name_override'):
             continue
-        charge, method = select_charge(tx, charges)
+        charge, method = select_charge(tx, charges, allow_cardless=True)
         if not charge:
             continue
         # Ensure no peer transaction claims the same charge ambiguously.
@@ -404,7 +425,7 @@ def apply_matched_names(conn, charges):
                 continue
             if abs((date.fromisoformat(peer['posted']) - date.fromisoformat(tx['posted'])).days) > 7:
                 continue
-            selected, peer_method = select_charge(peer, [charge])
+            selected, peer_method = select_charge(peer, [charge], allow_cardless=True)
             if selected and (method != 'charge_identifier' or peer_method == 'charge_identifier'):
                 collision = True
                 break

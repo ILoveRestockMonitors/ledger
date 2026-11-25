@@ -248,5 +248,35 @@ class BudgetConsolidationTests(unittest.TestCase):
         self.assertEqual(amazon_business.format_purchase_name(charge["items"]), "Logitech MX Master 3S Wireless Mouse")
 
 
+
+    def test_regular_personal_amazon_order_history_csv(self):
+        retail_csv = (
+            "Website,Order ID,Order Date,Purchase Order Number,Currency,Unit Price,Unit Price Tax,Shipping Charge,Total Discounts,Total Owed,Shipment Item Subtotal,Shipment Item Subtotal Tax,ASIN,Product Condition,Quantity,Payment Instrument Type,Order Status,Shipment Status,Ship Date,Product Name\n"
+            "Amazon.com,114-2223334-5556667,2026-11-12T18:22:10Z,Not Applicable,USD,24.99,2.06,0,0,27.05,24.99,2.06,B001,New,1,Visa - 6104,Closed,Shipped,2026-11-13T09:10:00Z,\"Hydro Flask Wide Mouth Insulated Bottle - Stainless Steel\"\n"
+            "Amazon.com,114-8887776-5554443,2026-11-15T11:05:00Z,Not Applicable,USD,18.99,1.57,0,0,20.56,Not Available,Not Available,B002,New,1,Visa,Closed,Shipped,Not Available,\"Anker Nano USB-C Wall Charger 30W\"\n"
+        )
+        parsed = amazon_business.parse_report(retail_csv)
+        self.assertEqual(len(parsed["charges"]), 1)
+        self.assertEqual(len(parsed["name_charges"]), 2)
+
+        conn = db._conn()
+        with conn:
+            conn.execute("INSERT OR IGNORE INTO accounts(id,name,type,scope,mask,balance,iso_currency,created_at) VALUES('acc-reg','Checking','depository','personal','3297',1000,'USD','2026-11-01')")
+            conn.execute(
+                "INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,category_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                ("tx-reg-1", "acc-reg", "personal", -27.05, "2026-11-14", "AMAZON MKTPL*T29LX9BJ3 FROM CARD#: XXXXXXXXXXX6104", "Amazon", None, "2026-11-14"),
+            )
+            conn.execute(
+                "INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,category_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                ("tx-reg-2", "acc-reg", "personal", -20.56, "2026-11-15", "AMZN Mktp US*Z98K11LM2", "Amazon", None, "2026-11-15"),
+            )
+            named = amazon_business.apply_matched_names(conn, parsed["name_charges"])
+        self.assertEqual(named, 2)
+        r1 = db.q1("SELECT matched_name FROM transactions WHERE id=?", ("tx-reg-1",))["matched_name"]
+        r2 = db.q1("SELECT matched_name FROM transactions WHERE id=?", ("tx-reg-2",))["matched_name"]
+        self.assertIn("Hydro Flask Wide Mouth", r1)
+        self.assertEqual(r2, "Anker Nano USB-C Wall Charger 30W")
+
+
 if __name__ == "__main__":
     unittest.main()
