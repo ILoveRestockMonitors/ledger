@@ -81,6 +81,7 @@
       }
     } catch { netsAt = 0; }
   }
+  window.LedgerRefreshScopeNets = () => { netsAt = 0; return loadNets(true); };
   function syncChrome() {
     const active = on();
     root.dataset.layout = active ? 'new' : 'classic';
@@ -482,8 +483,10 @@
     syncChrome();
   }
 
+  const niceCat = s => { const t = String(s || ''); return t ? t[0].toUpperCase() + t.slice(1) : t; };
+
   /* ---------------- Budgets ---------------- */
-  const budLocal = { editing: null };
+  const budLocal = { editing: null, editBudgetId: null, editBudgetCat: null };
   async function budgetsPage() {
     const month = budgetView.month;
     const [all, ov] = await Promise.all([api('/budgets?month=' + month), api(`/budgets/overview?month=${month}` + scopeQuery('&'))]);
@@ -504,21 +507,40 @@
     const current = month === monthKey();
     const history = ov.months.map(m => ({ ...m }));
     const hmax = Math.max(1, ...history.map(m => m.total));
+
+    const budgetCellMarkup = r => {
+      if (r.budgets.length) {
+        return `<div class="rd-bud-cell">${r.budgets.map(b => {
+          const isEditing = budLocal.editBudgetId === b.id;
+          const scopeTag = r.budgets.length > 1 ? `<small class="rd-bud-scope">${esc(b.scope === 'all' ? 'Both' : LABEL[b.scope] || b.scope)}</small>` : '';
+          if (isEditing) {
+            return `<div class="rd-inline-edit">${scopeTag}<label class="rd-inline"><span class="rd-sr">Monthly budget for ${esc(r.name)}</span><input class="input rd-inline-num" type="number" inputmode="decimal" min="0.01" step="any" value="${esc(String(Number(b.month_limit)))}" data-rd-budget-amt-input="${esc(b.id)}" data-cat="${esc(b.category_id)}" data-scope="${esc(b.scope)}" data-prev="${esc(String(b.month_limit))}"></label><button type="button" class="btn btn-sm btn-primary rd-inline-btn" data-rd-budget-amt-save="${esc(b.id)}" title="Save" aria-label="Save budget">✓</button><button type="button" class="btn btn-sm btn-ghost rd-inline-btn" data-rd-budget-amt-cancel title="Cancel">✕</button></div>`;
+          }
+          return `<button type="button" class="rd-bud-pill" data-rd-budget-amt-edit="${esc(b.id)}" title="Click to adjust ${esc(niceCat(r.name))} budget">${scopeTag}<span>${cash(b.month_limit)}</span><span class="rd-bud-pen" aria-hidden="true">✎</span></button>`;
+        }).join('')}</div>`;
+      }
+      if (budLocal.editBudgetCat === r.id && r.id) {
+        return `<div class="rd-inline-edit"><label class="rd-inline"><span class="rd-sr">Monthly budget for ${esc(r.name)}</span><input class="input rd-inline-num" type="number" inputmode="decimal" min="0.01" step="any" placeholder="$ / mo" data-rd-budget-input="${esc(r.id)}"></label><button type="button" class="btn btn-sm btn-primary rd-inline-btn" data-rd-budget-save="${esc(r.id)}" title="Save" aria-label="Save budget">✓</button><button type="button" class="btn btn-sm btn-ghost rd-inline-btn" data-rd-budget-amt-cancel title="Cancel">✕</button></div>`;
+      }
+      return r.id ? `<button type="button" class="rd-bud-add" data-rd-budget-row-add="${esc(r.id)}">＋ Set</button>` : '<span class="rd-muted">—</span>';
+    };
+
     const rowMarkup = r => {
       const limit = r.budgets.reduce((a, b) => a + b.month_limit, 0), spent = r.budgets.reduce((a, b) => a + b.spent, 0);
       const p = limit ? spent / limit * 100 : 0, st = limit ? statusOf(p) : 'none';
       const scopes = [...new Set(r.budgets.map(b => b.scope))];
+      const cname = niceCat(r.name);
       return `<div class="rd-crow" role="row" data-k="${r.k}">
-        <span role="cell" class="rd-cname"><i></i><span>${r.id ? `<button type="button" class="rd-plain rd-cat-link" data-rd-budget="${esc(r.id)}" data-scope-of="${esc(scope === 'everything' ? '' : scope)}" title="View ${esc(r.name)} transactions"><b>${esc(r.icon || '')} ${esc(r.name)}</b></button>` : `<b>${esc(r.icon || '')} ${esc(r.name)}</b>`}${scope === 'everything' && scopes.length ? `<small>${scopes.map(x => x === 'all' ? 'Both' : LABEL[x]).join(' · ')} budget</small>` : ''}</span></span>
+        <span role="cell" class="rd-cname"><i></i><span>${r.id ? `<button type="button" class="rd-plain rd-cat-link" data-rd-budget="${esc(r.id)}" data-scope-of="${esc(scope === 'everything' ? '' : scope)}" title="View ${esc(cname)} transactions"><b>${esc(cname)}</b></button>` : `<b>${esc(cname)}</b>`}${scope === 'everything' && scopes.length ? `<small>${scopes.map(x => x === 'all' ? 'Both' : LABEL[x]).join(' · ')} budget</small>` : ''}</span></span>
         <span role="cell" class="rd-prog"><span class="rd-track" data-state="${st}"><i style="width:${limit ? Math.min(100, p) : (total ? r.total / total * 100 : 0)}%"></i></span><small>${limit ? `${Math.round(p)}% used · ${cash(Math.max(0, limit - spent))} left${r.pending ? ` · ${cash(r.pending)} pending` : ''}` : `${total ? Math.round(r.total / total * 100) : 0}% of spending`}</small></span>
         <span role="cell" class="rd-num">${cash(limit ? spent : r.total)}</span>
-        <span role="cell" class="rd-num rd-muted">${limit ? cash(limit) : '—'}</span>
+        <span role="cell" class="rd-num rd-bud-col">${budgetCellMarkup(r)}</span>
         <span role="cell" class="rd-status" data-state="${st}">${st === 'over' ? 'Over by ' + cash(spent - limit) : st === 'warn' ? 'Near limit' : st === 'ok' ? 'On track' : 'No budget'}</span>
-        <span role="cell" class="rd-row-btns">${r.budgets.map(b => `<button type="button" class="btn btn-sm btn-ghost" aria-label="Delete ${esc(r.name)} ${esc(b.scope)} budget" onclick="deleteBudget(${esc(JSON.stringify(b.id))})">✕</button>`).join('')}</span>
+        <span role="cell" class="rd-row-btns">${r.budgets.map(b => `<button type="button" class="btn btn-sm btn-ghost rd-del-btn" aria-label="Delete ${esc(cname)} ${esc(b.scope)} budget" title="Delete budget" onclick="deleteBudget(${esc(JSON.stringify(b.id))})">✕</button>`).join('')}</span>
       </div>`;
     };
     return `<div class="rd rd-budgets">
-      <div class="page-intro"><div><h2>Budgets</h2><p>${esc(monthName(month))} · every category, budgeted or not</p></div>
+      <div class="page-intro"><div><h2>Budgets</h2><p>${esc(monthName(month))} · click any budget amount to adjust it</p></div>
         <div class="rd-intro-actions"><label class="rd-month">Month<input aria-label="Budget month" class="input" type="month" min="1900-01" max="${esc(ov.as_of.slice(0, 7))}" value="${esc(month)}" onchange="if(this.value)setBudgetView('month',this.value)"></label><button class="btn btn-primary" type="button" onclick="openBudgetForm()">＋ New budget</button></div></div>
       <div class="rd-grid rd-5-7">
         <section class="card rd-card">
@@ -526,13 +548,13 @@
           <div class="rd-head" style="margin:8px 0 0"><h3>Total spending</h3><span class="rd-note">${s.transaction_count} purchases</span></div>
           <div class="rd-figure rd-figure-m">${cash(total)}</div>
           <div class="rd-parts"><div><small>Posted</small><b>${cash(s.posted)}</b></div><div><small>Pending</small><b>${cash(s.pending)}</b></div><div><small>Categorized</small><b>${cash(s.categorized)}</b></div><div class="rd-gunc" data-zero="${!(s.uncategorized > 0)}"><small>Uncategorized</small><b>${cash(s.uncategorized)}</b></div></div>
-          <p class="rd-note">Total includes pending charges. Transfers and card repayments stay out. Categorized + uncategorized = total spending.${s.refunds ? ` Refunds and credits: ${cash(s.refunds)}, shown separately.` : ''}</p>
+          <p class="rd-note">Total includes pending charges. Transfers and card repayments stay out.${s.refunds ? ` Refunds and credits: ${cash(s.refunds)}, shown separately.` : ''}</p>
         </section>
         <section class="card rd-card">${head('Spending at a glance', '', s.uncategorized > 0 ? `<button type="button" class="btn btn-sm rd-sort" data-rd-sort="${esc(month)}">Sort ${s.uncategorized_count} uncategorized</button>` : `<span class="rd-status" data-state="ok">${icon.check}Everything is categorized</span>`)}${glance(ov)}</section>
       </div>
       <div class="rd-grid rd-8-4">
         <section class="card rd-card rd-list" role="table" aria-label="Every spending category">
-          ${head('Every spending category', 'Includes categories without a budget. Envelope progress uses posted purchases.', `<span class="rd-note">${rows.length} categories</span>`)}
+          ${head('Every spending category', 'Click any dollar amount in the Budget column to edit it right away.', `<span class="rd-note">${rows.length} categories</span>`)}
           <div class="rd-thead" role="row"><span role="columnheader">Category</span><span role="columnheader">Progress</span><span role="columnheader" class="rd-num">Spent</span><span role="columnheader" class="rd-num">Budget</span><span role="columnheader" class="rd-status">Status</span><span></span></div>
           ${unc && unc.total > 0 ? `<div class="rd-crow rd-crow-unc" role="row"><span role="cell" class="rd-cname"><i class="rd-hatch"></i><span><b>Uncategorized</b><small>${s.uncategorized_count} to sort</small></span></span><span role="cell" class="rd-prog"><span class="rd-track" data-state="unc"><i style="width:${(unc.total / total * 100).toFixed(1)}%"></i></span><small>${Math.round(unc.total / total * 100)}% of spending</small></span><span role="cell" class="rd-num">${cash(unc.total)}</span><span role="cell" class="rd-num rd-muted">—</span><span role="cell" class="rd-status" data-state="unc">Needs sorting</span><span role="cell" class="rd-row-btns"><button type="button" class="btn btn-sm" data-rd-sort="${esc(month)}">Sort</button></span></div>` : ''}
           ${rows.map(rowMarkup).join('') || '<p class="rd-note" style="padding:0 20px 20px">No spending or budgets for this month yet.</p>'}
@@ -540,8 +562,8 @@
         <div class="rd-side">
           <section class="card rd-card">${head('Budget health', `${budgets.length} budget${budgets.length === 1 ? '' : 's'}${current ? ` · ${daysLeft()} days left this month` : ''}`)}
             <div class="rd-health"><div><b class="rd-pos">${health.ok}</b><small>On track</small></div><div><b class="rd-warn">${health.warn}</b><small>Near limit</small></div><div><b class="rd-neg">${health.over}</b><small>Over</small></div></div></section>
-          <section class="card rd-card">${head('Spending without a budget', unbudgeted.length ? `${cash(unbudgeted.reduce((a, r) => a + r.total, 0))} across ${unbudgeted.length} categor${unbudgeted.length === 1 ? 'y' : 'ies'}` : 'Every category with spending has a budget.')}
-            ${unbudgeted.map(r => `<div class="rd-ub" data-k="${r.k}"><i></i><span class="rd-grow"><b>${esc(r.name)}</b><small>${cash(r.total)} this month</small></span>${budLocal.editing === r.id ? `<label class="rd-inline"><span class="rd-sr">Monthly budget for ${esc(r.name)}</span><input class="input" inputmode="decimal" placeholder="$ / month" data-rd-budget-input="${esc(r.id)}"></label><button type="button" class="btn btn-sm btn-primary" data-rd-budget-save="${esc(r.id)}">Save</button>` : `<button type="button" class="btn btn-sm" data-rd-budget-edit="${esc(r.id)}">Set budget</button>`}</div>`).join('')}
+          <section class="card rd-card">${head('Spending without a budget', unbudgeted.length ? `${cash(unbudgeted.reduce((a, r) => a + r.total, 0))} across ${unbudgeted.length} categor${unbudgeted.length === 1 ? 'y' : 'ies'}` : 'Every category with spending has a budget.', unbudgeted.length ? `<button type="button" class="btn btn-sm btn-primary rd-cons-btn" data-rd-consolidate-month="${esc(month)}">Consolidate</button>` : '')}
+            ${unbudgeted.map(r => `<div class="rd-ub" data-k="${r.k}"><i></i><span class="rd-grow"><b>${esc(niceCat(r.name))}</b><small>${cash(r.total)} this month</small></span>${budLocal.editing === r.id ? `<label class="rd-inline"><span class="rd-sr">Monthly budget for ${esc(r.name)}</span><input class="input rd-inline-num" type="number" inputmode="decimal" min="0.01" step="any" placeholder="$ / mo" data-rd-budget-input="${esc(r.id)}"></label><button type="button" class="btn btn-sm btn-primary" data-rd-budget-save="${esc(r.id)}">Save</button>` : `<button type="button" class="btn btn-sm" data-rd-budget-edit="${esc(r.id)}">Set budget</button>`}</div>`).join('')}
           </section>
         </div>
       </div>
@@ -594,10 +616,12 @@
   registerPage('budgets', 'Budgets', safe(budgetsPage, classic.budgets));
   registerPage('personal', 'Personal', async () => on() ? homePage() : classic.personal.render());
   registerPage('business', 'Business', async () => on() ? homePage() : classic.business.render());
-  registerPage('settings', 'Settings', async () => {
-    const html = await classic.settings.render();
-    return html.includes('<div class="settings-grid">') ? html.replace('<div class="settings-grid">', '<div class="settings-grid">' + layoutCard()) : layoutCard() + html;
-  });
+  window.LedgerSetLayout = async choice => {
+    await chooseLayout(choice);
+    syncChrome();
+    await navigate(state.page);
+  };
+  registerPage('settings', 'Settings', async () => classic.settings.render());
 
   function afterRender() {
     if (!on() || !SCOPED.has(state.page)) return;
@@ -668,15 +692,36 @@
       if (el.hasAttribute('data-rd-bulk-clear')) { txLocal.selected.clear(); document.querySelectorAll('[data-rd-select]').forEach(c => { c.checked = false; c.closest('tr').dataset.checked = 'false'; }); return renderActionbar(); }
       // Budgets
       if (d.rdSort) { const m = d.rdSort, end = new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(); state.txFilters = { search: '', account_id: '', scope: '', category_id: '', since: m + '-01', until: `${m}-${String(end).padStart(2, '0')}`, offset: 0 }; txLocal.uncOnly = true; return navigate('transactions'); }
-      if (d.rdBudgetEdit) { budLocal.editing = d.rdBudgetEdit; await refresh(); document.querySelector(`[data-rd-budget-input="${CSS.escape(d.rdBudgetEdit)}"]`)?.focus(); return; }
+      if (d.rdConsolidateMonth && window.openConsolidateCategories) {
+        return window.openConsolidateCategories(d.rdConsolidateMonth, scope);
+      }
+      if (d.rdBudgetEdit) { budLocal.editing = d.rdBudgetEdit; budLocal.editBudgetId = null; budLocal.editBudgetCat = null; await refresh(); const inp = document.querySelector(`[data-rd-budget-input="${CSS.escape(d.rdBudgetEdit)}"]`); inp?.focus(); inp?.select?.(); return; }
+      if (d.rdBudgetRowAdd) { budLocal.editBudgetCat = d.rdBudgetRowAdd; budLocal.editBudgetId = null; budLocal.editing = null; await refresh(); const inp = document.querySelector(`[data-rd-budget-input="${CSS.escape(d.rdBudgetRowAdd)}"]`); inp?.focus(); inp?.select?.(); return; }
+      if (d.rdBudgetAmtEdit) { budLocal.editBudgetId = d.rdBudgetAmtEdit; budLocal.editBudgetCat = null; budLocal.editing = null; await refresh(); const inp = document.querySelector(`[data-rd-budget-amt-input="${CSS.escape(d.rdBudgetAmtEdit)}"]`); inp?.focus(); inp?.select?.(); return; }
+      if (el.hasAttribute('data-rd-budget-amt-cancel')) { budLocal.editBudgetId = null; budLocal.editBudgetCat = null; budLocal.editing = null; return refresh(); }
+      if (d.rdBudgetAmtSave) {
+        const input = document.querySelector(`[data-rd-budget-amt-input="${CSS.escape(d.rdBudgetAmtSave)}"]`);
+        const limit = parseFloat(String(input?.value || '').replace(/[$,\s]/g, ''));
+        if (!(limit > 0)) return toast('Enter a monthly amount greater than zero.', 'err');
+        const cid = input.dataset.cat, bscope = input.dataset.scope || 'personal', prevLimit = parseFloat(input.dataset.prev || '0');
+        el.disabled = true;
+        await api('/budgets', { method: 'POST', body: JSON.stringify({ id: d.rdBudgetAmtSave, category_id: cid, scope: bscope, month_limit: limit }) });
+        budLocal.editBudgetId = null;
+        if (prevLimit > 0 && prevLimit !== limit) {
+          undoable(`Budget updated to ${cash(limit)}`, () => api('/budgets', { method: 'POST', body: JSON.stringify({ id: d.rdBudgetAmtSave, category_id: cid, scope: bscope, month_limit: prevLimit }) }));
+        } else {
+          toast(`Budget updated to ${cash(limit)}.`, 'ok');
+        }
+        return refresh();
+      }
       if (d.rdBudgetSave) {
         const input = document.querySelector(`[data-rd-budget-input="${CSS.escape(d.rdBudgetSave)}"]`);
         const limit = parseFloat(String(input?.value || '').replace(/[$,\s]/g, ''));
         if (!(limit > 0)) return toast('Enter a monthly amount greater than zero.', 'err');
         el.disabled = true;
         const saved = await api('/budgets', { method: 'POST', body: JSON.stringify({ category_id: d.rdBudgetSave, scope: scope === 'everything' ? 'all' : scope, month_limit: limit }) });
-        budLocal.editing = null;
-        undoable('Budget set', () => api('/budgets?id=' + encodeURIComponent(saved.id), { method: 'DELETE' }));
+        budLocal.editing = null; budLocal.editBudgetCat = null;
+        undoable(`Budget set to ${cash(limit)}`, () => api('/budgets?id=' + encodeURIComponent(saved.id), { method: 'DELETE' }));
         return refresh();
       }
       // Settings
@@ -729,6 +774,9 @@
   document.addEventListener('keydown', event => {
     const el = event.target;
     if (event.key === 'Enter' && el.matches?.('[data-rd-search]') && on()) { state.txFilters.search = el.value; state.txFilters.offset = 0; txLocal.uncOnly = false; refresh(); }
+    if (event.key === 'Enter' && el.matches?.('[data-rd-budget-amt-input]') && on()) { event.preventDefault(); document.querySelector(`[data-rd-budget-amt-save="${CSS.escape(el.dataset.rdBudgetAmtInput)}"]`)?.click(); }
+    if (event.key === 'Enter' && el.matches?.('[data-rd-budget-input]') && on()) { event.preventDefault(); document.querySelector(`[data-rd-budget-save="${CSS.escape(el.dataset.rdBudgetInput)}"]`)?.click(); }
+    if (event.key === 'Escape' && el.matches?.('[data-rd-budget-amt-input], [data-rd-budget-input]') && on()) { event.preventDefault(); budLocal.editBudgetId = null; budLocal.editBudgetCat = null; budLocal.editing = null; refresh(); }
   });
 
   syncChrome();

@@ -25,10 +25,10 @@ function applyComfort(config) {
   localStorage.setItem('ledger-theme', state.theme);
   const themeButton = document.getElementById('btn-theme');
   const darkMode = document.documentElement.dataset.theme === 'dark';
-  const themeIcon = themeButton.querySelector('.sidebar-button-icon');
-  const themeLabel = themeButton.querySelector('.sidebar-button-label');
+  const themeIcon = themeButton?.querySelector('.sidebar-button-icon');
+  const themeLabel = themeButton?.querySelector('.sidebar-button-label');
   if (themeIcon && themeLabel) { themeIcon.textContent = darkMode ? '☀' : '☾'; themeLabel.textContent = darkMode ? 'Light mode' : 'Dark mode'; }
-  else themeButton.textContent = darkMode ? '☀ Light mode' : '☾ Dark mode';
+  else if (themeButton) themeButton.textContent = darkMode ? '☀ Light mode' : '☾ Dark mode';
   document.getElementById('demo-banner').hidden = !c.demo;
   document.getElementById('sidebar-mode').textContent = c.demo ? 'A safe space to explore' : 'Your private Ledger';
   document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();

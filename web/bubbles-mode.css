@@ -1,0 +1,182 @@
+/* Clean theme: crisp white (light) & pure black (dark) with subtle multi-color fading bubbles. */
+:root[data-review-mode=bubbles][data-theme=light] {
+  --bg: #ffffff !important;
+  --bg-soft: #f6f7f9 !important;
+  --panel: rgba(255, 255, 255, 0.88) !important;
+  --panel-2: #f1f3f6 !important;
+  --text: #111318 !important;
+  --ink: #0c0e12 !important;
+  --muted: #5c6370 !important;
+  --faint: #8c94a3 !important;
+  --border: rgba(17, 24, 39, 0.09) !important;
+  --border-soft: rgba(17, 24, 39, 0.07) !important;
+  --accent: #2563eb !important;
+  --accent-2: #3b82f6 !important;
+  --accent-rgb: 37, 99, 235 !important;
+  --on-accent: #ffffff !important;
+  --soft-accent: rgba(37, 99, 235, 0.10) !important;
+  --tint: 17, 24, 39 !important;
+  --hi: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04) !important;
+  --a-surface: rgba(255, 255, 255, 0.88) !important;
+  --a-solid: #ffffff !important;
+  --a-ink: #111318 !important;
+  --a-ink2: #5c6370 !important;
+  --a-ink3: #8c94a3 !important;
+  --a-line: rgba(17, 24, 39, 0.09) !important;
+  --a-tint: rgba(17, 24, 39, 0.04) !important;
+  --a-accent: #2563eb !important;
+  --a-on-accent: #ffffff !important;
+  --a-per: #059669 !important;
+  --a-biz: #4f46e5 !important;
+  --a-k1: #2563eb !important;
+  --a-k2: #0891b2 !important;
+  --a-k3: #059669 !important;
+  --a-k4: #d97706 !important;
+  --a-k5: #7c3aed !important;
+}
+
+:root[data-review-mode=bubbles][data-theme=dark] {
+  --bg: #000000 !important;
+  --bg-soft: #0c0e12 !important;
+  --panel: rgba(16, 18, 24, 0.86) !important;
+  --panel-2: #171a22 !important;
+  --text: #f3f4f6 !important;
+  --ink: #ffffff !important;
+  --muted: #9aa1ae !important;
+  --faint: #676e7d !important;
+  --border: rgba(255, 255, 255, 0.09) !important;
+  --border-soft: rgba(255, 255, 255, 0.07) !important;
+  --accent: #3b82f6 !important;
+  --accent-2: #60a5fa !important;
+  --accent-rgb: 59, 130, 246 !important;
+  --on-accent: #ffffff !important;
+  --soft-accent: rgba(59, 130, 246, 0.16) !important;
+  --tint: 255, 255, 255 !important;
+  --hi: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px rgba(0, 0, 0, 0.55) !important;
+  --a-surface: rgba(16, 18, 24, 0.86) !important;
+  --a-solid: #111319 !important;
+  --a-ink: #f3f4f6 !important;
+  --a-ink2: #9aa1ae !important;
+  --a-ink3: #676e7d !important;
+  --a-line: rgba(255, 255, 255, 0.10) !important;
+  --a-tint: rgba(255, 255, 255, 0.05) !important;
+  --a-accent: #3b82f6 !important;
+  --a-on-accent: #ffffff !important;
+  --a-per: #34d399 !important;
+  --a-biz: #818cf8 !important;
+  --a-k1: #60a5fa !important;
+  --a-k2: #22d3ee !important;
+  --a-k3: #34d399 !important;
+  --a-k4: #fbbf24 !important;
+  --a-k5: #a78bfa !important;
+}
+
+:root[data-review-mode=bubbles] body {
+  background: var(--bg) !important;
+  background-image: none !important;
+}
+:root[data-review-mode=bubbles] #app {
+  position: relative;
+  z-index: 1;
+}
+:root[data-review-mode=bubbles] #sidebar {
+  background: color-mix(in srgb, var(--a-solid) 92%, transparent) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--a-line) !important;
+}
+:root[data-review-mode=bubbles] #sidebar .nav-link.active {
+  background: var(--soft-accent) !important;
+  color: var(--accent) !important;
+  box-shadow: inset 2px 0 var(--accent) !important;
+}
+:root[data-review-mode=bubbles] .card,
+:root[data-review-mode=bubbles] .a-card {
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+:root[data-review-mode=bubbles] .rd-switch {
+  background: var(--a-surface) !important;
+  border: 1px solid var(--a-line) !important;
+}
+
+/* Hide any Pokemon / Sarah video or background layers when Clean mode is active */
+:root[data-review-mode=bubbles] .corn-video-bg,
+:root[data-review-mode=bubbles] .sarah-video-bg,
+:root[data-review-mode=bubbles] .zekrom-video-bg,
+:root[data-review-mode=bubbles] .reshiram-video-bg,
+:root[data-review-mode=bubbles] video[data-bg-video] {
+  display: none !important;
+}
+
+/* Subtle multi-color fading bubbles canvas */
+.bubbles-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+}
+:root[data-review-mode=bubbles] .bubbles-bg {
+  display: block;
+}
+
+.bubbles-orb {
+  position: absolute;
+  left: var(--bx);
+  top: var(--by);
+  width: var(--bs);
+  height: var(--bs);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    hsla(var(--bh), var(--bsat, 82%), var(--blight, 62%), var(--balpha, 0.34)) 0%,
+    hsla(var(--bh), var(--bsat, 82%), var(--blight, 58%), calc(var(--balpha, 0.34) * 0.42)) 48%,
+    hsla(var(--bh), var(--bsat, 82%), var(--blight, 55%), 0) 74%
+  );
+  opacity: 0;
+  transform: translate3d(-50%, -50%, 0) scale(0.84);
+  animation: bubblesBreathe var(--bdur, 14s) ease-in-out var(--bdelay, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+:root[data-review-mode=bubbles][data-theme=light] .bubbles-orb {
+  --bsat: 80%;
+  --blight: 66%;
+  --balpha: 0.30;
+}
+:root[data-review-mode=bubbles][data-theme=dark] .bubbles-orb {
+  --bsat: 86%;
+  --blight: 58%;
+  --balpha: 0.24;
+}
+
+@keyframes bubblesBreathe {
+  0%, 100% {
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(0.82);
+  }
+  22% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bdx, 14px)), calc(-50% + var(--bdy, -18px)), 0) scale(1.08);
+  }
+  78% {
+    opacity: 0.58;
+  }
+}
+
+html[data-motion-paused=true] .bubbles-orb,
+html.bubbles-hidden .bubbles-orb {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubbles-orb {
+    animation: none !important;
+    opacity: 0.55;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+}

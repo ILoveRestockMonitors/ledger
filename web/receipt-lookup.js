@@ -88,7 +88,7 @@ function receiptSettingsCard(summary = {}, config = {}) {
       <label class="setting-row receipt-toggle" for="receipt-enabled"><span><b>Look up unclear purchases</b><small>Amazon Business uses your saved connection.</small></span><input id="receipt-enabled" name="enabled" type="checkbox" ${enabled ? "checked" : ""} ${demo ? "disabled" : ""}></label>
       <label class="setting-row receipt-toggle" for="receipt-auto-apply"><span><b>Apply clear splits automatically</b><small>Turn this off to review every clear match; uncertain matches always ask.</small></span><input id="receipt-auto-apply" name="auto_apply" type="checkbox" ${autoApply ? "checked" : ""} ${demo ? "disabled" : ""}></label>
       <label class="setting-row" for="receipt-daily-limit"><span><b>Daily lookup limit</b><small>Limit how many purchases the assistant looks up each day.</small></span><input class="input receipt-limit" id="receipt-daily-limit" name="daily_limit" type="number" min="1" max="30" step="1" value="${dailyLimit}" ${demo ? "disabled" : ""}></label>
-      <p class="receipt-worker-note ${worker.ready ? "ready" : ""}">${receiptText(demo ? "Sample mode keeps purchase lookups off." : message)}</p>
+      ${(!demo && message && message === (summary.amazon || {}).message) ? "" : `<p class="receipt-worker-note ${worker.ready ? "ready" : ""}">${receiptText(demo ? "Sample mode keeps purchase lookups off." : message)}</p>`}
       ${guidance ? `<details class="disclosure"><summary>Setup guidance</summary><p class="quiet-note">${receiptText(guidance)}</p></details>` : ""}
       <div class="receipt-settings-actions"><button class="btn btn-primary btn-sm" type="submit" ${demo ? "disabled" : ""}>Save purchase settings</button></div>
     </form>

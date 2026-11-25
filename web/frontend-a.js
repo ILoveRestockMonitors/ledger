@@ -17,6 +17,7 @@
 
   /* ---------------- Formatting ---------------- */
   const cash = n => fmtMoney(Number(n) || 0, { decimals: 2 });
+  const niceCat = s => { const t = String(s || ''); return t ? t[0].toUpperCase() + t.slice(1) : t; };
   const whole = n => fmtMoney(Math.round(Number(n) || 0), { decimals: 0 });
   const signed = n => (Number(n) > 0 ? '+' : '') + cash(n);
   const signedWhole = n => (Number(n) > 0 ? '+' : '') + whole(n);
@@ -367,7 +368,7 @@
     });
     consPreviewState = p;
     const keptNote = p.kept_budgeted_categories?.length
-      ? `<p class="a-note a-cons-kept"><b>Already budgeted (staying as-is):</b> ${esc(p.kept_budgeted_categories.join(', '))}.</p>`
+      ? `<p class="a-note a-cons-kept"><b>Already budgeted (staying as-is):</b> ${esc(p.kept_budgeted_categories.map(niceCat).join(', '))}.</p>`
       : '';
     const missingScopesNote = p.missing_budget_scopes?.length
       ? `<p class="a-note a-warn">No ${esc(p.missing_budget_scopes.map(s => LABEL[s] || s).join(' or '))} budgets are set yet — add a budget on the Budgets tab first to consolidate those purchases.</p>`
@@ -476,8 +477,8 @@
             <div class="a-label">Spent in ${esc(new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long' }))}</div>
             <div class="a-fig a-fig-m">${split(total)}</div>
             <div class="a-stack" role="img" aria-label="Spending by category">${segs.map(x => `<i data-k="${x.k}" style="flex:${x.total.toFixed(2)}"></i>`).join('')}</div>
-            <div class="a-legend">${named.slice(0, 4).map((x, i) => `<button type="button" class="a-leg" data-k="${tones[i]}" data-a-catf="${esc(x.id)}" aria-pressed="${f.category_id === x.id}"><i></i><span>${esc(x.name)}</span><b>${whole(x.total)}</b></button>`).join('')}${s.uncategorized > 0 ? `<button type="button" class="a-leg" data-k="unc" data-a-unc aria-pressed="${txA.uncOnly}"><i></i><span>Uncategorized</span><b>${whole(s.uncategorized)}</b></button>` : ''}</div>
-            <div class="a-glance-foot"><button type="button" class="btn btn-primary btn-sm a-cons-cta" data-a-consolidate>${ico('target', 'a-i a-btn-i')}Consolidate categories</button>${named.length > 4 ? `<button type="button" class="a-link a-glance-more" data-rd-page="budgets">All ${named.length} categories</button>` : ''}</div>
+            <div class="a-legend">${named.slice(0, 4).map((x, i) => `<button type="button" class="a-leg" data-k="${tones[i]}" data-a-catf="${esc(x.id)}" aria-pressed="${f.category_id === x.id}"><i></i><span>${esc(niceCat(x.name))}</span><b>${whole(x.total)}</b></button>`).join('')}${s.uncategorized > 0 ? `<button type="button" class="a-leg" data-k="unc" data-a-unc aria-pressed="${txA.uncOnly}"><i></i><span>Uncategorized</span><b>${whole(s.uncategorized)}</b></button>` : ''}</div>
+            <div class="a-glance-foot"><button type="button" class="btn btn-primary btn-sm a-cons-cta" data-a-consolidate>${ico('target', 'a-i a-btn-i')}Consolidate</button>${named.length > 4 ? `<button type="button" class="a-link a-glance-more" data-rd-page="budgets">All ${named.length} categories</button>` : ''}</div>
           </section>`;
     return `<div class="rd a-activity">
       <div class="a-pagehead"><div><h2>Activity</h2><p>${esc(new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))} · ${LABEL[scope]}</p></div>${action('add-cash-tx', '＋ Cash', '', 'btn btn-primary btn-sm')}</div>
@@ -526,7 +527,7 @@
     const cur = pool.find(c => c.id === current);
     return [...(cur ? [cur] : []), ...ranked.filter(c => c.id !== current)];
   }
-  const catGrid = (target, list, current) => `<div class="a-cats" role="group" aria-label="Category">${list.map(c => `<button type="button" class="a-cat" data-a-set="${target}" data-v="${esc(c.id)}" data-name="${esc(c.name.toLowerCase())}" aria-pressed="${c.id === current}">${ico(catIcon(c.name))}<span>${esc(c.name)}</span></button>`).join('')}</div>`;
+  const catGrid = (target, list, current) => `<div class="a-cats" role="group" aria-label="Category">${list.map(c => `<button type="button" class="a-cat" data-a-set="${target}" data-v="${esc(c.id)}" data-name="${esc(c.name.toLowerCase())}" aria-pressed="${c.id === current}">${ico(catIcon(c.name))}<span>${esc(niceCat(c.name))}</span></button>`).join('')}</div>`;
 
   window.openTxEdit = async function (id) {
     const f = state.txFilters;
@@ -699,8 +700,32 @@
           if (result.batch_id) state.lastCategoryBatch = result.batch_id;
           consPreviewState = null;
           closeModal();
-          toast(`Consolidated ${result.changed} purchase${result.changed === 1 ? '' : 's'} into your budgeted categories. You can undo this change.`, 'ok', 6500);
+          globalThis.LedgerHomeCache?.clear();
+          window.LedgerRefreshScopeNets?.();
           await navigate(state.page);
+          document.querySelector('.rd-undo')?.remove();
+          const bar = document.createElement('div');
+          bar.className = 'rd-undo';
+          bar.setAttribute('role', 'status');
+          bar.innerHTML = `<span>Consolidated ${result.changed} purchase${result.changed === 1 ? '' : 's'} into your budgets</span>${result.batch_id ? '<button type="button" class="rd-undo-btn" data-cons-undo>Undo</button>' : ''}`;
+          document.body.append(bar);
+          const undoTimer = setTimeout(() => bar.remove(), 10000);
+          bar.querySelector('[data-cons-undo]')?.addEventListener('click', async btnEv => {
+            clearTimeout(undoTimer);
+            const btn = btnEv.currentTarget;
+            btn.disabled = true;
+            try {
+              await api('/transactions/category-undo', { method: 'POST', body: { batch_id: result.batch_id } });
+              bar.remove();
+              globalThis.LedgerHomeCache?.clear();
+              window.LedgerRefreshScopeNets?.();
+              toast('Consolidation undone.', 'ok');
+              await navigate(state.page);
+            } catch (err) {
+              btn.disabled = false;
+              toast(err.message || 'Could not undo consolidation.', 'err');
+            }
+          });
         } finally { setPending(el, false); }
         return;
       }
@@ -732,7 +757,7 @@
       }
       if (el.hasAttribute('data-a-rentfree')) {
         const detail = LedgerSarahBudget.totals(homeState.data.cats);
-        return showModal(`${modalTitle('This month · without rent')}<p class="sub">Posted expenses only. Transfers, pending payments, and the Rent / Mortgage category are excluded.</p><div class="setting-row"><span>Spending outside rent</span><b>${cash(detail.spent)}</b></div>${detail.categories.map(c => `<div class="setting-row"><span>${esc(c.name)}</span><b>${cash(c.amt)}</b></div>`).join('') || '<p class="quiet-note">No spending outside rent recorded yet.</p>'}<div class="modal-actions">${action('close', 'Close')}</div>`);
+        return showModal(`${modalTitle('This month · without rent')}<p class="sub">Posted expenses only. Transfers, pending payments, and the Rent / Mortgage category are excluded.</p><div class="setting-row"><span>Spending outside rent</span><b>${cash(detail.spent)}</b></div>${detail.categories.map(c => `<div class="setting-row"><span>${esc(niceCat(c.name))}</span><b>${cash(c.amt)}</b></div>`).join('') || '<p class="quiet-note">No spending outside rent recorded yet.</p>'}<div class="modal-actions">${action('close', 'Close')}</div>`);
       }
       if (el.hasAttribute('data-a-history')) return showModal(`${modalTitle('Net worth history')}<p class="sub">Estimated from current balances and recorded transactions.</p>${lineChart(homeState.data.nw.map(p => ({ label: p.month, v: p.balance })))}<div class="modal-actions">${action('close', 'Close')}${action('page', 'Your future', 'future', 'btn btn-primary')}</div>`);
       if (d.aGoal) { const g = homeState.data.goals.find(x => x.id === d.aGoal); if (g) contribute(g.id, g.name, Math.max(0, g.target - g.saved)); return; }

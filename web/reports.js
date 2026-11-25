@@ -91,7 +91,7 @@ registerPage("reports", "Reports", async () => {
       <div class="grid cols-2 report-patterns">
         <section><h3>Spend heatmap <span class="h3-extra">Last 26 weeks</span></h3>${heatMap(heat)}</section>
         <section><h3>Income sources <span class="h3-extra">Last 180 days</span></h3>
-          ${catsIn.length ? catsIn.map(row => `<div class="row-between small report-source"><span>${esc(row.icon || '')} ${esc(row.name)}</span><span class="report-source-values"><b>${fmtMoney(row.amt, {decimals: 2})}</b><small>${row.n} payments</small></span></div>`).join("") : '<p class="quiet-note">No income recorded in this period.</p>'}
+          ${catsIn.length ? catsIn.map(row => `<div class="row-between small report-source"><span>${esc(row.icon || '')} ${esc(row.name)}</span><span class="report-source-values"><b>${fmtMoney(row.amt, {decimals: 2})}</b><small>${row.n} payment${row.n === 1 ? '' : 's'}</small></span></div>`).join("") : '<p class="quiet-note">No income recorded in this period.</p>'}
           <h3 class="report-expense-heading">Top expense categories <span class="h3-extra">Last 180 days</span></h3>
           ${catsOut.slice(0, 8).map(row => `<div class="row-between small report-source"><span>${esc(row.icon || '')} ${esc(row.name)}</span><span class="report-source-values"><b>${fmtMoney(row.amt, {decimals: 2})}</b><small>${row.pct}% of spending</small></span></div>`).join("") || '<p class="quiet-note">No spending recorded in this period.</p>'}
         </section>
