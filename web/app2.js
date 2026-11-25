@@ -267,7 +267,7 @@ async function previewCategoryBatch(id, categoryId) {
       <p class="sub">This purchase is saved. ${p.count === 1 ? 'This other' : p.count ? `These ${p.count} other` : 'No other'} ${esc(p.scope)} ${p.count === 1 ? 'purchase' : 'purchases'} named <b>${esc(p.label)}</b> ${p.count ? 'will change' : 'need changing'} to <b>${esc(p.category_name)}</b>.</p>
       ${p.count ? `<div class="category-batch-list" role="region" aria-label="Purchases that will change" tabindex="0">${p.transactions.map(t => `
         <div class="category-batch-row">
-          <div><b>${esc(t.name_override ? t.name : t.merchant || t.name)}</b><div class="small muted">${fmtDate(t.posted)} · ${esc(t.account_name)}${t.account_mask ? ` ••${esc(t.account_mask)}` : ''}${t.pending ? ' · Pending' : ''}</div><div class="small">${esc(t.category_name || 'Uncategorized')} → ${esc(p.category_name)}${t.category_override ? ' · Previously chosen manually' : ''}</div></div>
+          <div><b>${esc(t.display_name || (t.name_override ? t.name : (t.matched_name || t.merchant || t.name)))}</b><div class="small muted">${fmtDate(t.posted)} · ${esc(t.account_name)}${t.account_mask ? ` ••${esc(t.account_mask)}` : ''}${t.pending ? ' · Pending' : ''}</div><div class="small">${esc(t.category_name || 'Uncategorized')} → ${esc(p.category_name)}${t.category_override ? ' · Previously chosen manually' : ''}</div></div>
           <strong>${fmtMoney(t.amount,{decimals:2})}</strong>
         </div>`).join('')}</div>` : ''}
       ${p.skipped_splits ? `<p class="small muted">${p.skipped_splits} matching purchases have item splits and are left unchanged.</p>` : ''}

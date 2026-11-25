@@ -176,7 +176,7 @@ registerPage("overview", "Overview", async () => {
       <div class="table-wrap"><table class="tbl">
         ${recent.rows.map(t => `<tr>
           <td class="muted small" style="white-space:nowrap">${fmtDate(t.posted)}</td>
-          <td>${t.cat_icon ? t.cat_icon + " " : ""}<b>${esc(t.merchant || t.name)}</b></td>
+          <td>${t.cat_icon ? t.cat_icon + " " : ""}<b>${esc(t.display_name || t.matched_name || t.merchant || t.name)}</b></td>
           <td>${scopeTag(t.scope)}</td>
           <td class="num ${t.amount>0?"amt-pos":""}">${fmtMoney(t.amount,{decimals:2})}</td>
         </tr>`).join("") || `<tr><td colspan="4" class="muted">No transactions yet — load demo data in Settings.</td></tr>`}

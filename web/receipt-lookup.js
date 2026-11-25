@@ -235,7 +235,7 @@ function amazonDialog(connection = {}) {
     : (!connection.connected && !busy && connection.stage !== 'approval' && !csvBlocked ? connectFields : '');
   const csvSection = `<details class="disclosure amazon-report-import" ${!connection.connected || csvBlocked ? 'open' : ''}>
     <summary>${csvBlocked ? 'Recommended: Import Amazon CSV (Personal or Business)' : 'Import Amazon CSV (Personal or Business)'}</summary>
-    <p class="quiet-note"><b>Amazon Business:</b> Open Business Analytics → pick <b>Reconciliation</b> or <b>Orders</b> (Past 12 months) → <b>Download CSV</b>.<br><b>Regular Personal Amazon:</b> Open Amazon Privacy Central → request <b>Your Orders</b> → unzip and select <code>Retail.OrderHistory.1.csv</code>.</p>
+    <p class="quiet-note"><b>Amazon Business:</b> Open Business Analytics → pick <b>Reconciliation</b> or <b>Orders</b> (Past 12 months or custom earlier years — multiple CSVs merge automatically) → <b>Download CSV</b>.<br><b>Regular Personal Amazon:</b> Open Amazon Privacy Central → request <b>Your Orders</b> → unzip and select <code>Retail.OrderHistory.1.csv</code>.</p>
     <div class="row" style="margin:8px 0 10px;gap:8px;flex-wrap:wrap"><a class="btn btn-primary btn-sm" href="https://www.amazon.com/b2b/aba/reports" target="_blank" rel="noopener noreferrer">Amazon Business Reports ↗</a><a class="btn btn-ghost btn-sm" href="https://www.amazon.com/hz/privacy-central/data-requests/preview.html" target="_blank" rel="noopener noreferrer">Regular Amazon Order Export ↗</a></div>
     <label class="fld" for="amazon-report-file">Amazon Reconciliation or Order History CSV</label>
     <input class="input" id="amazon-report-file" type="file" accept=".csv,text/csv" data-amazon-file ${busy?'disabled':''}>

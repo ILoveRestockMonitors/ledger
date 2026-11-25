@@ -33,6 +33,7 @@ import category_rules
 import category_model
 import category_picker
 import amazon_connector
+import tx_names
 import budget_consolidation
 from db import q, q1, ex
 
@@ -738,6 +739,8 @@ def main():
             ex("""UPDATE receipt_jobs SET status='dismissed', message='Handled as subscription merchant.'
                   WHERE provider='amazon' AND status IN ('queued','needs_user')
                     AND transaction_id IN (SELECT id FROM transactions WHERE lower(COALESCE(merchant,''))='blink')""")
+            with db._conn() as _c:
+                tx_names.repair_submerchants(_c)
             amazon_connector.apply_saved_names()
         except Exception:
             pass

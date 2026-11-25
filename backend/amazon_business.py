@@ -62,7 +62,7 @@ def tx_cards(tx):
         if tail:
             cards.add(tail)
     raw_name = str(tx.get('name') or '')
-    for match in re.findall(r'(?:from\s+card\s*#?\s*:?\s*[*xX•-]*|card\s*#?\s*:?\s*[*xX•]{2,}|ending\s+in\s+)(\d{4})\b', raw_name, re.I):
+    for match in re.findall(r'(?:from\s+card\s*#?\s*:?\s*[*xX•-]*|card\s*#?\s*:?\s*[*xX•]{2,}|ending\s+in\s+|\bwa\s+usa\s+)(\d{4})\b', raw_name, re.I):
         cards.add(match)
     return cards
 
@@ -408,7 +408,6 @@ def apply_matched_names(conn, charges):
         SELECT t.*, a.mask account_mask, a.iso_currency, COALESCE(a.archived, 0) archived
         FROM transactions t LEFT JOIN accounts a ON a.id = t.account_id
         WHERE t.amount < 0 AND COALESCE(t.pending, 0) = 0 AND COALESCE(t.is_transfer, 0) = 0
-          AND COALESCE(a.archived, 0) = 0
           AND (lower(t.name) LIKE '%amazon%' OR lower(t.name) LIKE '%amzn%' OR lower(COALESCE(t.merchant, '')) = 'amazon')
     """).fetchall()]
     updated = 0

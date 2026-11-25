@@ -122,6 +122,19 @@ def init_schema(conn):
     repair_submerchants(conn)
 
 
+
+_GENERIC_AMAZON_RE = re.compile(
+    r"^(?:amazon(?:\.com)?|amazon\s+marke?t?place(?:\s+n|\s+na(?:\s*-)?)?|amzn\s*mktp(?:\s+us)?|amazon\s+mktplace\s+pmts)$"
+    r"|(?:amzn\.com/bill|amazon\s+mktpl\*|amazon\.com\*|amzn\s*mktp\*|amazon\s+mktplace\s+pmts|amazon\s+marketplace\s+namzn)",
+    re.I,
+)
+
+
+def is_generic_amazon_descriptor(name):
+    text = " ".join(str(name or "").split()).strip()
+    return bool(text and _GENERIC_AMAZON_RE.search(text))
+
+
 def repair_submerchants(conn):
     """Relabel generic Amazon merchant rows when bank text names a distinct subscription."""
     rows = conn.execute(
@@ -136,6 +149,20 @@ def repair_submerchants(conn):
                 "UPDATE transactions SET bank_merchant=COALESCE(bank_merchant, merchant), merchant=? WHERE id=?",
                 (sub, row["id"]),
             )
+    # Historical bank/Rocket imports stamped name_override=1 onto raw Amazon bank descriptors
+    # (e.g. 'Amazon Marketplace N', 'AMAZON MKTPL*... Amzn.com/bill WA USA 6104'). Clear
+    # name_override only on those raw descriptors while keeping custom user names intact.
+    ov_rows = conn.execute(
+        "SELECT id, name, merchant FROM transactions WHERE amount < 0 AND COALESCE(name_override, 0) = 1 "
+        "AND (lower(name) LIKE '%amazon%' OR lower(name) LIKE '%amzn%' OR lower(COALESCE(merchant, '')) = 'amazon')"
+    ).fetchall()
+    for orow in ov_rows:
+        rid, rname, rmerch = orow[0], orow[1], orow[2]
+        if str(rname or "").strip().lower() == "blink":
+            if rmerch != "Blink":
+                conn.execute("UPDATE transactions SET merchant='Blink' WHERE id=?", (rid,))
+        elif is_generic_amazon_descriptor(rname):
+            conn.execute("UPDATE transactions SET name_override=0, merchant='Amazon' WHERE id=?", (rid,))
 
 
 def aliases(conn):

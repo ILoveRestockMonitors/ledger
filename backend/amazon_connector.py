@@ -203,17 +203,36 @@ def apply_saved_names():
         conn.close()
 
 
+def _charge_key(c):
+    return (c.get('charge_identifier') or '', tuple(c.get('orders') or ()), c.get('amount_cents'), c.get('posted'), c.get('card_last4') or '')
+
+
+def _merge_charge_lists(primary, existing):
+    merged = list(primary or [])
+    seen = {_charge_key(c) for c in merged}
+    for old in (existing or []):
+        k = _charge_key(old)
+        if k not in seen:
+            merged.append(old)
+            seen.add(k)
+    return merged
+
+
 def _save_report(parsed, direct_charges=None):
-    charges = list(parsed.get('charges') or [])
-    name_charges = list(parsed.get('name_charges') or charges)
-    seen_keys = {(c.get('charge_identifier'), tuple(c.get('orders') or ()), c.get('amount_cents'), c.get('posted')) for c in name_charges}
+    prev_charges = _read('charges.json', [])
+    prev_names = _read('name_charges.json', prev_charges)
+    charges = _merge_charge_lists(parsed.get('charges') or [], prev_charges)
+    name_charges = _merge_charge_lists(parsed.get('name_charges') or parsed.get('charges') or [], prev_names)
+    seen_keys = {_charge_key(c) for c in name_charges}
+    seen_reconciled = {_charge_key(c) for c in charges}
     for extra in (direct_charges or []):
-        ekey = (extra.get('charge_identifier'), tuple(extra.get('orders') or ()), extra.get('amount_cents'), extra.get('posted'))
+        ekey = _charge_key(extra)
         if ekey not in seen_keys:
             name_charges.append(extra)
             seen_keys.add(ekey)
-            if extra.get('card_last4') and sum(i.get('amount_cents', 0) for i in extra.get('items', [])) == extra.get('amount_cents'):
-                charges.append(extra)
+        if ekey not in seen_reconciled and extra.get('card_last4') and sum(i.get('amount_cents', 0) for i in extra.get('items', [])) == extra.get('amount_cents'):
+            charges.append(extra)
+            seen_reconciled.add(ekey)
     _write('charges.json', charges)
     _write('name_charges.json', name_charges)
     named = apply_saved_names()
@@ -260,8 +279,7 @@ def investigate(job):
         return {'payload': {'status':'needs_user', 'message':message}, 'verified':False}
     # A shared charge reference must also identify a single bank record.
     peers = db.q('''SELECT t.*,a.mask account_mask,a.iso_currency FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id
-                    WHERE t.id<>? AND t.pending=0 AND t.is_transfer=0 AND t.amount<0 AND COALESCE(a.archived,0)=0
-                      AND t.amount=? AND ABS(julianday(t.posted)-julianday(?))<=7''', (tx['id'],tx['amount'],tx['posted']))
+                    WHERE t.id<>? AND t.pending=0 AND t.is_transfer=0 AND t.amount<0                       AND t.amount=? AND ABS(julianday(t.posted)-julianday(?))<=7''', (tx['id'],tx['amount'],tx['posted']))
     for peer in peers:
         selected, peer_method = amazon_business.select_charge(peer, [charge])
         if selected and (method != 'charge_identifier' or peer_method == 'charge_identifier'):

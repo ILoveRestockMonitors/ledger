@@ -278,5 +278,49 @@ class BudgetConsolidationTests(unittest.TestCase):
         self.assertEqual(r2, "Anker Nano USB-C Wall Charger 30W")
 
 
+
+    def test_previous_transactions_on_archived_accounts_and_multi_year_csv_merge(self):
+        import tx_names, amazon_connector
+        conn = db._conn()
+        with conn:
+            conn.execute("INSERT OR IGNORE INTO accounts(id,name,type,scope,mask,balance,iso_currency,archived,created_at) VALUES('acc-arch-amex','Platinum','credit','personal','3000',0,'USD',1,'2024-01-01')")
+            conn.execute("INSERT OR IGNORE INTO accounts(id,name,type,scope,mask,balance,iso_currency,archived,created_at) VALUES('acc-arch-com','Comerica','depository','business','3297',0,'USD',1,'2024-01-01')")
+            # Historical Rocket-imported rows with name_override=1 on raw descriptors + one real custom name
+            conn.execute(
+                "INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,name_override,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                ("tx-2025-amex", "acc-arch-amex", "personal", -42.10, "2025-06-14", "Amazon Marketplace N", "Amazon", 1, "2025-06-14"),
+            )
+            conn.execute(
+                "INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,name_override,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                ("tx-2025-com", "acc-arch-com", "business", -64.50, "2025-08-20", "AMAZON MKTPL*2N7555HC Amzn.com/bill WA USA 6104", "AMAZON MKTPL*2N7555HC Amzn.com/bill WA USA 6104", 1, "2025-08-20"),
+            )
+            conn.execute(
+                "INSERT INTO transactions(id,account_id,scope,amount,posted,name,merchant,name_override,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                ("tx-2025-custom", "acc-arch-amex", "personal", -271.86, "2025-09-10", "Giant air conditioner", "Amazon", 1, "2025-09-10"),
+            )
+            tx_names.repair_submerchants(conn)
+
+        # Import 2025 CSV first, then 2026 CSV — verify 2025 charges remain merged and archived rows get named while custom name stays untouched
+        csv_2025 = (
+            "Order Date,Order ID,Title,Item Total,Payment Instrument Type,Currency\n"
+            "2025-06-13,111-1111111-1111111,\"Sony WH-CH520 Wireless Headphones\",42.10,Amex ending in 3000,USD\n"
+            "2025-08-19,111-2222222-2222222,\"Brother TN760 High Yield Toner\",64.50,Visa - 6104,USD\n"
+            "2025-09-10,111-3333333-3333333,\"Midea U Inverter Window Air Conditioner\",271.86,Amex ending in 3000,USD\n"
+        )
+        csv_2026 = (
+            "Order Date,Order ID,Title,Item Total,Payment Instrument Type,Currency\n"
+            "2026-11-01,111-4444444-4444444,\"USB-C Braided Cable 2-Pack\",14.99,Visa - 6104,USD\n"
+        )
+        amazon_connector.command("import", {"csv": csv_2025})
+        st = amazon_connector.command("import", {"csv": csv_2026})
+        self.assertEqual(st["charges"], 4)
+
+        rows = receipt_store.decorate_transactions(db.q("SELECT * FROM transactions WHERE id IN ('tx-2025-amex','tx-2025-com','tx-2025-custom')"))
+        by_id = {r["id"]: r for r in rows}
+        self.assertEqual(by_id["tx-2025-amex"]["display_name"], "Sony WH-CH520 Wireless Headphones")
+        self.assertEqual(by_id["tx-2025-com"]["display_name"], "Brother TN760 High Yield Toner")
+        self.assertEqual(by_id["tx-2025-custom"]["display_name"], "Giant air conditioner")
+
+
 if __name__ == "__main__":
     unittest.main()
