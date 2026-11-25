@@ -231,6 +231,7 @@ async function saveTxEdit(id, button) {
     const name = document.getElementById("txe-name").value.trim();
     if (!name) return toast('Enter a name or merchant.', 'err');
     if (name !== String(original.display_name || original.merchant || original.name || '').trim()) body.name = name;
+    if (body.name && document.getElementById('txe-remember-name')?.checked) body.remember_name = true;
   }
   if (category.value !== (category.dataset.originalValue || "")) body.category_id = category.value || null;
   if (body.recurring) {
@@ -765,6 +766,12 @@ function loadPlaidScript() {
   });
 }
 
+function bankDataAge(iso) {
+  const seen = new Date(iso || '');
+  if (isNaN(seen)) return null;
+  return { label: seen.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), stale: Date.now() - seen >= 3 * 864e5 };
+}
+
 async function openPlaidLink(linkToken, scope, receivedRedirectUri=null, updateItem=null) {
   await loadPlaidScript();
   sessionStorage.setItem('ledger-link',JSON.stringify({token:linkToken,scope,updateItem}));
@@ -776,15 +783,21 @@ async function openPlaidLink(linkToken, scope, receivedRedirectUri=null, updateI
           const inst=metadata?.institution?.name||'Linked bank';
           await api('/plaid/exchange',{method:'POST',body:{public_token,institution:inst,scope,item_id:updateItem||null}});
           toast(`${inst} connected. Your bank is preparing the first transactions.`);
-        } else { await api('/items/refresh',{method:'POST',body:{item_id:updateItem}}); toast('Your connection is refreshed.'); }
+        } else {
+          const result = await api('/items/refresh',{method:'POST',body:{item_id:updateItem}});
+          const age = bankDataAge(result?.bank_updated_at);
+          if (age?.stale) toast(`Done. Plaid's newest bank data is still from ${age.label}. If you just signed in, give it a few hours.`, 'err', 9000);
+          else toast(age ? `Connected. No login was needed. Bank data is current as of ${age.label}.` : 'Your connection is refreshed.', 'ok', 6000);
+        }
         sessionStorage.removeItem('ledger-link');
         history.replaceState(null,'',location.pathname+'#accounts');
         state.accounts=await api('/accounts');
         await navigate('accounts');
+        if (updateItem) document.querySelector(`[data-action="relink"][data-id="${CSS.escape(updateItem)}"]`)?.scrollIntoView({block:'center'});
       } catch(e){toast(e.message,'err',6500);}
       finally{plaidHandler?.destroy();}
     },
-    onExit: err=>{if(err)toast(err.display_message||'Your bank connection needs another try.','err');plaidHandler?.destroy();}
+    onExit: err=>{if(err)toast(err.display_message||'Your bank connection needs another try.','err');else if(updateItem)toast('Reconnect closed. Nothing changed.');plaidHandler?.destroy();}
   });
   plaidHandler.open();
 }
@@ -933,7 +946,7 @@ function applyTheme(theme) {
 
 window.addEventListener("hashchange", () => {
   const p = location.hash.replace("#", "");
-  if (p && p !== state.page) navigate(p);
+  if (p && p !== state.page) { closeModal(); navigate(p); }
 });
 
 

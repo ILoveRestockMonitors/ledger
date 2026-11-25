@@ -6,6 +6,7 @@ import time
 import db
 import receipt_store
 import receipt_worker
+import amazon_connector
 
 _lock = threading.Lock()
 _last_scan = 0.0
@@ -46,15 +47,15 @@ def save_settings(data, demo=False):
 def status(demo=False):
     if demo or disabled():
         return {"ready": False, "message": "Purchase lookups are off in this preview. Your merchant accounts are never opened here."}
-    return {**receipt_worker.status(), "instructions":
-            "Sign in to Codex and the merchant in Ledger’s dedicated browser on your home lab. "
-            "Your normal phone or laptop browser has a separate login. "
-            "Setup steps are in docs/INSTALL.md under Purchase details assistant."}
+    amazon = amazon_connector.status()
+    return {"ready": amazon['ready'], "message": amazon['message'], "codex_required": False,
+            "instructions": "Connect Amazon Business in Settings. Its charge and item matching runs directly on Ledger without Codex. Apple and Google use the separate legacy purchase worker."}
 
 
 def listing(demo=False):
     result = receipt_store.listing()
-    return {**result, "settings": settings(), "worker": status(demo), "demo": bool(demo or disabled())}
+    amazon = {"connected":False,"ready":False,"stage":"disconnected","message":"Amazon connection is off in sample mode."} if demo or disabled() else amazon_connector.status()
+    return {**result, "settings": settings(), "worker": status(demo), "amazon":amazon, "demo": bool(demo or disabled())}
 
 
 def run_once():
@@ -67,11 +68,14 @@ def run_once():
         if now - _last_scan >= 60:
             receipt_store.scan()
             _last_scan = now
-        job = receipt_store.claim_next()
+        if settings()['enabled']: amazon_connector.tick()
+        amazon = amazon_connector.status()
+        job = receipt_store.claim_next(providers=['amazon']) if amazon['ready'] else None
+        if not job: job = receipt_store.claim_next(providers=['apple','google'])
         if not job:
             return None
         try:
-            result = receipt_worker.investigate(job)
+            result = amazon_connector.investigate(job) if job['provider'] == 'amazon' else receipt_worker.investigate(job)
         except Exception:
             # Raw provider/model failures can contain private receipt text.
             result = {"verified": False, "payload": {

@@ -3,5 +3,13 @@
 .receipt-edit-context{margin:12px 0 4px;padding:11px 12px;border:var(--rule-width,1px) solid var(--border-soft);border-radius:10px;background:var(--bg-soft)}.receipt-edit-context .micro-label{display:block;margin-bottom:5px}.receipt-edit-allocation{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:9px;padding:6px 0;border-top:var(--rule-width,1px) solid var(--border-soft);font-size:11px}.receipt-edit-allocation span:nth-child(2){color:var(--muted)}.receipt-edit-allocation strong{font-variant-numeric:tabular-nums;white-space:nowrap}.receipt-edit-warning{margin:8px 0 0;color:var(--muted);font-size:11px;line-height:1.45}.receipt-worker-guidance{margin:0 0 14px}
 
 .receipt-category-select{max-width:170px;min-height:34px;padding:5px 7px;font-size:11px}.receipt-item>span:first-child{overflow-wrap:anywhere}
+.amazon-connection{padding:12px;margin:12px 0;border:1px solid var(--border);border-radius:10px}
+:root[data-design=a] #modal-root .modal:has(.amazon-dialog){background:rgb(from var(--a-solid) r g b / 1)!important}
+.amazon-dialog form{display:grid;gap:8px;margin:14px 0}.amazon-dialog .input{box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px}
+.amazon-dialog{position:relative}.amazon-dialog h2{padding-right:44px}:root[data-design=a] .amazon-dialog>.close-button{top:0!important;right:0!important}
+.amazon-remember{display:flex;align-items:center;gap:9px;font-size:13px;min-height:44px}.amazon-remember input{width:20px;height:20px;flex:none}
+.amazon-dialog .amazon-actions{display:flex;gap:8px;flex-wrap:wrap}.amazon-dialog .amazon-actions .btn{min-height:44px}
+.amazon-captcha{display:block;max-width:100%;height:auto;margin:12px auto}.amazon-report-import{margin-top:14px}.amazon-report-import summary{min-height:44px;cursor:pointer}
+.amazon-dialog .status-panel,.amazon-dialog .quiet-note{overflow-wrap:anywhere}.amazon-dialog input[type=file]{font-size:13px;padding:8px!important}
 [data-palette=paper] .receipt-review-drawer,[data-palette=paper] .receipt-proposal,[data-palette=paper] .receipt-current{border-radius:7px}
 @media(max-width:700px){.receipt-category-select{grid-column:1/-1;order:3;max-width:none;width:100%}}

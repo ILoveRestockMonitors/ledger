@@ -48,12 +48,13 @@ def match(tx, conn=None):
         if own: c.close()
 
 
-def _rows(c):
+def _rows(c, ids=None):
     return [dict(r) for r in c.execute('''SELECT t.*,COALESCE(a.name,'Cash / manual') account_name,a.mask account_mask,
         COALESCE(a.archived,0) archived,cat.name category_name,
         EXISTS(SELECT 1 FROM receipt_allocations ra WHERE ra.transaction_id=t.id AND ra.active=1) has_split
         FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id
-        LEFT JOIN categories cat ON cat.id=t.category_id''')]
+        LEFT JOIN categories cat ON cat.id=t.category_id''' +
+        (' WHERE t.id IN (' + ','.join('?' for _ in ids) + ')' if ids else ''), ids or [])]
 
 
 def _fingerprint(row):
@@ -97,6 +98,32 @@ def preview(transaction_id, category_id):
     finally:c.close()
 
 
+def preview_selection(ids, category_id):
+    """Preview only explicitly selected purchases, without expanding merchant rules."""
+    if not isinstance(ids, list) or not 1 <= len(ids) <= 1000 or any(not isinstance(i, str) or not i for i in ids):
+        raise ValueError('Select between 1 and 1000 purchases.')
+    ids = list(dict.fromkeys(ids))
+    import receipt_store
+    receipt_store.init_schema()
+    init_schema()
+    c = db._conn()
+    try:
+        cat = c.execute("SELECT id,name FROM categories WHERE id=? AND kind='expense'", (category_id,)).fetchone()
+        if not cat: raise ValueError('Choose a spending category.')
+        rows = _rows(c, ids)
+        if len(rows) != len(ids): raise ValueError('A selected purchase is no longer available. Select your purchases again.')
+        if any(r['amount'] >= 0 or r['is_transfer'] or r['archived'] or r['has_split'] for r in rows):
+            raise ValueError('Select purchases in active accounts without receipt splits. Review transfers, income and split purchases separately.')
+        payload = {'selection': True, 'category_id': category_id, 'name_key': '', 'scope': '',
+                   'rows': [{'id': r['id'], 'fingerprint': _fingerprint(r)} for r in rows]}
+        token = secrets.token_hex(24)
+        c.execute('DELETE FROM category_edit_previews WHERE expires_at<?', (time.time(),))
+        c.execute('INSERT INTO category_edit_previews VALUES(?,?,?)', (token, json.dumps(payload), time.time()+900))
+        c.commit()
+        return {'preview_id': token, 'count': len(rows), 'category_name': cat['name']}
+    finally: c.close()
+
+
 def apply(preview_id, remember=False):
     if type(remember) is not bool: raise ValueError('Choose whether to remember this category.')
     init_schema()
@@ -105,10 +132,17 @@ def apply(preview_id, remember=False):
         c.execute('BEGIN IMMEDIATE')
         saved=c.execute('SELECT * FROM category_edit_previews WHERE id=?',(preview_id,)).fetchone()
         if not saved or saved['expires_at']<time.time():raise ValueError('This preview expired. Reopen the purchase to review it again.')
-        p=json.loads(saved['payload']);rows={r['id']:r for r in _rows(c)}
-        anchor=rows.get(p['anchor_id'])
-        if not anchor or _fingerprint(anchor)!=p['anchor_fingerprint']:
-            raise ValueError('The original purchase changed. Reopen it to review a fresh preview.')
+        p=json.loads(saved['payload'])
+        if p.get('selection') and remember: raise ValueError('Selected purchases do not create future merchant rules.')
+        if not c.execute("SELECT 1 FROM categories WHERE id=? AND kind='expense'", (p['category_id'],)).fetchone():
+            raise ValueError('This category changed. Choose a spending category again.')
+        ids = [item['id'] for item in p['rows']]
+        if not p.get('selection'): ids.append(p['anchor_id'])
+        rows={r['id']:r for r in _rows(c, ids)}
+        if not p.get('selection'):
+            anchor=rows.get(p['anchor_id'])
+            if not anchor or _fingerprint(anchor)!=p['anchor_fingerprint']:
+                raise ValueError('The original purchase changed. Reopen it to review a fresh preview.')
         old=[]
         for item in p['rows']:
             row=rows.get(item['id'])
@@ -143,7 +177,8 @@ def undo(batch_id):
         for old in p['before']:
             current=c.execute('SELECT category_id,category_override FROM transactions WHERE id=?',(old['id'],)).fetchone()
             split=c.execute('SELECT 1 FROM receipt_allocations WHERE transaction_id=? AND active=1',(old['id'],)).fetchone()
-            if not current or split or current['category_id']!=p['category_id'] or current['category_override']!=1:
+            expected_cat = old.get('target_category_id') or p['category_id']
+            if not current or split or current['category_id']!=expected_cat or current['category_override']!=1:
                 skipped+=1;continue
             c.execute('UPDATE transactions SET category_id=?,category_override=? WHERE id=?',(old['category_id'],old['category_override'],old['id']));restored+=1
         if p['rule_changed']:

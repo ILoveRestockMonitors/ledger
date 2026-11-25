@@ -9,8 +9,6 @@ const state = {
 };
 
 async function api(path, opts = {}) {
-  const changesData = !['GET', 'HEAD'].includes((opts.method || 'GET').toUpperCase());
-  if (changesData) window.LedgerHomeCache?.clear();
   if (LedgerDemo.active && path === '/config' && (opts.method || 'GET').toUpperCase() === 'POST') {
     return LedgerDemo.savePreferences(opts.body);
   }
@@ -18,16 +16,39 @@ async function api(path, opts = {}) {
   const payload = body === undefined || body === null ? undefined
     : typeof body === "string" ? body            // already serialized
     : JSON.stringify(body);                      // plain object
-  const res = await fetch(LedgerDemo.url(path), {
-    headers: { "Content-Type": "application/json", "X-Ledger-Request": "1" },
-    ...rest,
-    body: payload,
-  });
-  if (changesData) window.LedgerHomeCache?.clear();
-  const ct = res.headers.get("content-type") || "";
-  const data = ct.includes("json") ? await res.json() : await res.text();
-  if (!res.ok) throw new Error((data && data.error) || `HTTP ${res.status}`);
-  return path === "/config" ? LedgerDemo.config(data) : data;
+  const controller = new AbortController();
+  const external = rest.signal;
+  const abort = () => controller.abort();
+  if (external?.aborted) abort();
+  external?.addEventListener('abort', abort, { once: true });
+  const method = (rest.method || 'GET').toUpperCase();
+  // Clear before and after writes so reads during a write cannot survive it.
+  const invalidate = () => globalThis.LedgerHomeCache?.clear();
+  if (method !== 'GET') invalidate();
+  const timer = setTimeout(abort, method === 'GET' ? 15000 : 60000);
+  try {
+    const res = await fetch(LedgerDemo.url(path), {
+      headers: { "Content-Type": "application/json", "X-Ledger-Request": "1" },
+      ...rest, body: payload, signal: controller.signal,
+    });
+    const ct = res.headers.get("content-type") || "";
+    const data = ct.includes("json") ? await res.json() : await res.text();
+    if (!res.ok) {
+      const error = new Error((data && data.error) || `HTTP ${res.status}`);
+      error.status = res.status;
+      throw error;
+    }
+    return path === "/config" ? LedgerDemo.config(data) : data;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error(method === 'GET'
+      ? 'Ledger did not respond in time. Check the connection and try again.'
+      : 'Ledger did not confirm the change. Check your records before another attempt.');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    external?.removeEventListener('abort', abort);
+    if (method !== 'GET') invalidate();
+  }
 }
 
 function fmtDate(iso) {
@@ -84,7 +105,9 @@ async function navigate(page) {
     document.querySelectorAll(".nav-link").forEach(a => a.setAttribute("aria-current", a.dataset.page === page ? "page" : "false"));
   } catch (e) {
     if (state.renderToken !== token) return;
-    view.innerHTML = `<div class="empty"><div class="big">⚠️</div>${esc(e.message)}</div>`;
+    if (e.status === 401) { await bootLedger(); return; }
+    view.innerHTML = `<div class="empty" role="alert">${esc(e.message)}<p><button class="btn" type="button" id="retry-page">Try again</button></p></div>`;
+    document.getElementById('retry-page').onclick = () => navigate(state.page);
   }
   window.scrollTo(0, 0);
 }

@@ -62,7 +62,8 @@ function showModal(html) {
   document.getElementById('mobile-add').inert = true;
   document.body.style.overflow = 'hidden';
   root.querySelector("#modal-backdrop").addEventListener("click", e => { if (e.target.id === "modal-backdrop") closeModal(); });
-  requestAnimationFrame(()=> (modal.querySelector('[autofocus]')||modal.querySelector('input, select')||modal.querySelector('button')||modal).focus());
+  const touch = matchMedia('(pointer: coarse)').matches;
+  requestAnimationFrame(()=> (modal.querySelector('[autofocus]')||(touch ? modal : modal.querySelector('input, select')||modal.querySelector('button')||modal)).focus({preventScroll:true}));
 }
 function closeModal() {
   document.getElementById("modal-root").innerHTML = "";

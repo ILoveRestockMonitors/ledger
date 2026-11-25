@@ -89,7 +89,7 @@
     bar.hidden = !scoped;
     root.dataset.scope = scoped ? scope : 'everything';
     bar.querySelectorAll('[data-rd-scope]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.rdScope === scope)));
-    if (scoped) loadNets();
+    if (scoped && comfort.config.owner_name !== undefined && !document.getElementById('auth-screen')) loadNets();
   }
 
   function wash(origin) {
@@ -431,6 +431,7 @@
           <button class="btn btn-sm btn-ghost" type="button" data-rd-clear>Clear</button>
         </div>
         <span class="small muted tx-result-count">${data.total} transaction${data.total === 1 ? '' : 's'}${txLocal.uncOnly ? ' · uncategorized' : ''}</span>
+        <button class="btn btn-sm" type="button" data-rd-consolidate>Consolidate categories</button>
         ${state.lastCategoryBatch ? '<button class="btn btn-sm" onclick="undoCategoryBatch(this)">Undo last category batch</button>' : ''}
       </div>
       <div id="rd-actionbar">${prompt ? promptMarkup(prompt) : ''}</div>
@@ -640,6 +641,7 @@
       if (d.rdScopeSet) { if (d.rdScopeSet === d.from) return; el.closest('.rd-seg2')?.setAttribute('data-s', d.rdScopeSet); return moveScope(d.id, d.rdScopeSet, d.from, d.name); }
       if (el.hasAttribute('data-rd-unc')) { txLocal.uncOnly = !txLocal.uncOnly; state.txFilters.category_id = ''; state.txFilters.offset = 0; return refresh(); }
       if (d.rdCatFilter) { state.txFilters.category_id = state.txFilters.category_id === d.rdCatFilter ? '' : d.rdCatFilter; state.txFilters.offset = 0; txLocal.uncOnly = false; return refresh(); }
+      if (el.hasAttribute('data-rd-consolidate') && window.openConsolidateCategories) { const m = (state.txFilters.since || '').slice(0, 7) || monthKey(); return window.openConsolidateCategories(m, scope); }
       if (el.hasAttribute('data-rd-clear')) { state.txFilters = { search: '', account_id: '', scope: '', category_id: '', since: '', until: '', offset: 0 }; txLocal.uncOnly = false; return refresh(); }
       if (d.rdPageStep) { state.txFilters.offset = Math.max(0, (state.txFilters.offset || 0) + Number(d.rdPageStep) * txLocal.limit); return refresh(); }
       if (d.rdPrompt) {

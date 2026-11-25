@@ -7,6 +7,7 @@ applies only allocations which reconcile exactly to the bank transaction.
 import hashlib
 import json
 import math
+import re
 import uuid
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -117,6 +118,9 @@ def init_schema():
         if "original_category_override" not in cols:
             c.execute("ALTER TABLE receipt_jobs ADD COLUMN original_category_override INTEGER")
         c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_receipt_order ON receipt_jobs(provider,receipt_order_id) WHERE receipt_order_id IS NOT NULL AND receipt_order_id <> ''")
+        tx_cols = {r[1] for r in c.execute("PRAGMA table_info(transactions)")}
+        if "matched_name" not in tx_cols:
+            c.execute("ALTER TABLE transactions ADD COLUMN matched_name TEXT")
         c.commit()
     finally:
         c.close()
@@ -130,6 +134,9 @@ def _ensure():
 
 def detect_provider(tx):
     """Return a supported provider for a conservative merchant/name match."""
+    raw_name = str(tx.get("name") or "")
+    if re.search(r"^\s*blink\b", raw_name, re.I) or str(tx.get("merchant") or "").strip().lower() == "blink":
+        return None
     text = " ".join(str(tx.get(k) or "") for k in ("merchant", "name")).upper()
     if any(token in text for token in ("AMAZON", "AMZN", "AMAZON.COM", "AMAZON MKTPLACE")):
         return "amazon"
@@ -363,7 +370,7 @@ def scan():
         c.close()
 
 
-def claim_next():
+def claim_next(providers=None):
     _ensure()
     c = db._conn()
     try:
@@ -373,7 +380,13 @@ def claim_next():
         if _daily_used(c) >= limit:
             c.commit()
             return None
-        row = c.execute("SELECT j.*,t.amount,t.posted,t.name,t.merchant,t.scope,t.account_id,t.pending,t.is_transfer,a.iso_currency,a.mask account_mask FROM receipt_jobs j JOIN transactions t ON t.id=j.transaction_id LEFT JOIN accounts a ON a.id=t.account_id WHERE j.status='queued' ORDER BY j.created_at LIMIT 1").fetchone()
+        provider_where, provider_args = '', []
+        if providers is not None:
+            if not providers or any(p not in ('amazon','apple','google') for p in providers):
+                c.commit(); return None
+            provider_where = ' AND j.provider IN (' + ','.join('?' for _ in providers) + ')'
+            provider_args = list(providers)
+        row = c.execute("SELECT j.*,t.amount,t.posted,t.name,t.merchant,t.scope,t.account_id,t.pending,t.is_transfer,a.iso_currency,a.mask account_mask FROM receipt_jobs j JOIN transactions t ON t.id=j.transaction_id LEFT JOIN accounts a ON a.id=t.account_id WHERE j.status='queued'" + provider_where + " ORDER BY j.created_at LIMIT 1", provider_args).fetchone()
         if not row:
             c.commit()
             return None
@@ -398,6 +411,13 @@ def claim_next():
         c.close()
 
 
+def _receipt_key(provider, receipt):
+    charge = str(receipt.get('charge_identifier') or '').upper()
+    if provider == 'amazon' and receipt.get('source') == 'amazon-business' and re.fullmatch(r'[A-Z0-9]{6,32}', charge):
+        return 'charge:' + charge
+    return str(receipt.get('order_id') or '')
+
+
 def _apply(c, job, proposal, *, require_categories=False, manual_categories=False):
     tx = _tx(c, job["transaction_id"])
     if financial_fingerprint(tx) != job["source_fingerprint"]:
@@ -408,7 +428,7 @@ def _apply(c, job, proposal, *, require_categories=False, manual_categories=Fals
         raise ValueError("choose a category for every receipt item before accepting")
     if not _receipt_identity_matches(clean.get("receipt") or {}, tx):
         raise ValueError("receipt identity does not match the account or transaction")
-    order_id = str((clean.get("receipt") or {}).get("order_id") or "")
+    order_id = _receipt_key(job['provider'], clean.get('receipt') or {})
     duplicate = c.execute("SELECT id FROM receipt_jobs WHERE provider=? AND receipt_order_id=? AND id<>?", (job["provider"], order_id, job["id"])).fetchone()
     if duplicate:
         raise ValueError("receipt order is already attached to another transaction")
@@ -419,6 +439,9 @@ def _apply(c, job, proposal, *, require_categories=False, manual_categories=Fals
                      VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (_id("alloc"), job["id"], tx["id"], item["line_key"], item["description"], item["amount_cents"], item.get("category_id"), item.get("confidence"), int(bool(manual_categories)), now, now))
     # Child allocations become the explicit classification.  Keep the
     # original parent category in the job so undo can restore it.
+    label = (clean.get("description") or "").strip()[:300]
+    if label:
+        c.execute("UPDATE transactions SET matched_name=? WHERE id=? AND COALESCE(name_override,0)=0", (label, tx["id"]))
     c.execute("UPDATE transactions SET category_override=NULL WHERE id=?", (tx["id"],))
     c.execute("UPDATE receipt_jobs SET status='applied',proposal=?,source_fingerprint=?,verified=1,receipt_order_id=?,original_category_id=?,original_category_override=?,message=?,updated_at=? WHERE id=?", (_json(clean), financial_fingerprint(tx), order_id, tx.get("category_id"), tx.get("category_override"), "Receipt applied.", now, job["id"]))
 
@@ -427,8 +450,11 @@ def _receipt_identity_matches(receipt, tx):
     try:
         if receipt.get("currency") and receipt["currency"].upper() != str(tx.get("iso_currency") or db.get_config().get("currency", "USD")).upper():
             return False
-        if receipt.get("card_last4") and tx.get("account_mask") and receipt["card_last4"] != str(tx["account_mask"]):
-            return False
+        if receipt.get("card_last4"):
+            import amazon_business
+            cards = amazon_business.tx_cards(tx)
+            if cards and receipt["card_last4"] not in cards:
+                return False
         if receipt.get("purchased_on"):
             purchased = date.fromisoformat(str(receipt["purchased_on"]))
             posted = date.fromisoformat(str(tx["posted"]))
@@ -473,7 +499,7 @@ def finish(job_id, payload, verified=False, expected_attempt=None):
         tx = _tx(c, job["transaction_id"])
         clean = _validate_payload(payload, tx)
         status = clean["status"]
-        order_id = str((clean["proposal"].get("receipt") or {}).get("order_id") or "")
+        order_id = _receipt_key(job['provider'], clean['proposal'].get('receipt') or {})
         duplicate_order = c.execute("SELECT id FROM receipt_jobs WHERE provider=? AND receipt_order_id=? AND id<>?", (job["provider"], order_id, job_id)).fetchone() if order_id else None
         if status == "matched" and verified and _high_confidence(clean["proposal"], tx) and db.get_config().get("receipt_auto_apply", True) and not duplicate_order:
             _apply(c, job, clean["proposal"])
@@ -481,11 +507,15 @@ def finish(job_id, payload, verified=False, expected_attempt=None):
             public_status = "review" if status == "matched" else ("needs_user" if status == "needs_user" else "failed")
             proposal = clean["proposal"]
             message = clean["message"] or ("Receipt requires review." if status == "matched" else "")
-            order_id = str((proposal.get("receipt") or {}).get("order_id") or "")
+            order_id = _receipt_key(job['provider'], proposal.get('receipt') or {})
             duplicate = c.execute("SELECT id FROM receipt_jobs WHERE provider=? AND receipt_order_id=? AND id<>?", (job["provider"], order_id, job_id)).fetchone() if order_id else None
             if duplicate:
                 public_status, message = "needs_user", "Receipt order is already attached to another transaction."
                 order_id = None
+            elif status == "matched" and verified and _receipt_identity_matches(proposal.get("receipt") or {}, tx):
+                label = (proposal.get("description") or "").strip()[:300]
+                if label and (job["provider"] == "amazon" or tx.get("account_mask")):
+                    c.execute("UPDATE transactions SET matched_name=? WHERE id=? AND COALESCE(name_override,0)=0", (label, tx["id"]))
             c.execute("UPDATE receipt_jobs SET status=?,payload=?,proposal=?,verified=?,receipt_order_id=?,message=?,updated_at=? WHERE id=?", (public_status, _json(payload), _json(proposal), int(bool(verified)), order_id or None, message, _now(), job_id))
         c.commit()
         return _public_job(c.execute("SELECT * FROM receipt_jobs WHERE id=?", (job_id,)).fetchone())
@@ -663,8 +693,9 @@ def decorate_transactions(rows):
             chosen = job or latest
             proposal = _loads(chosen["proposal"], {}) if chosen else {}
             description = proposal.get("description") if job and isinstance(proposal, dict) else None
+            matched_name = row.get("matched_name")
             row.update({
-                "display_name": description or (row.get("name") if row.get("name_override") else row.get("merchant") or row.get("name")),
+                "display_name": row.get("name") if row.get("name_override") else (description or matched_name or row.get("merchant") or row.get("name")),
                 "receipt_status": "applied" if job else (latest["status"] if latest and latest["status"] != "applied" else None),
                 "receipt_job_id": chosen["id"] if chosen and (job or latest["status"] != "applied") else None,
                 "receipt_provider": chosen["provider"] if chosen and (job or latest["status"] != "applied") else detect_provider(row),

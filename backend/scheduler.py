@@ -160,6 +160,11 @@ def sync_all():
                 _set_item(item_id, "ok", finished=item_finished, added=added, error=None)
                 results.append({"item_id": item_id, "status": "ok", "added": added})
                 successes += 1
+                try:
+                    if plaid_client.request_refresh_if_stale(item_id) is True:
+                        print(f"Asked Plaid to re-check stale connection {item_id}", flush=True)
+                except Exception as exc:  # A refused request must not fail the sync.
+                    print(f"Plaid re-check not available for {item_id}: {_error_message(exc)}", flush=True)
             except Exception as exc:  # Plaid errors must not stop other Items.
                 item_finished = _now()
                 message = _error_message(exc)
@@ -174,6 +179,11 @@ def sync_all():
                 except ImportError:  # ``python backend/server.py`` entry point.
                     import subscriptions
                 scan = subscriptions.scan()
+                try:
+                    import amazon_connector
+                    amazon_connector.apply_saved_names()
+                except Exception:
+                    pass
             except Exception as exc:  # Scan failure is visible but sync remains valid.
                 scan = {"status": "error", "error": _error_message(exc)}
         failed = sum(1 for row in results if row["status"] == "error")

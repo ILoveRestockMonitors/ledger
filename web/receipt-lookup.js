@@ -39,15 +39,15 @@ function receiptCategory(categoryId) {
 }
 function receiptDisplayName(transaction) {
   if (transaction?.name_override) return transaction.name || transaction.display_name || "Purchase";
-  return transaction?.receipt_status === "applied" && transaction?.display_name
-    ? transaction.display_name
-    : transaction?.merchant || transaction?.name || "Purchase";
+  if (transaction?.receipt_status === "applied" && transaction?.display_name) return transaction.display_name;
+  if (transaction?.matched_name) return transaction.matched_name;
+  return transaction?.merchant || transaction?.name || "Purchase";
 }
 function receiptCandidateTransaction(candidate) {
   return candidate?.transaction || candidate || {};
 }
 function receiptOriginalName(transaction) {
-  if (transaction?.receipt_status !== "applied") return "";
+  if (transaction?.receipt_status !== "applied" && !transaction?.matched_name) return "";
   const display = receiptDisplayName(transaction);
   const original = transaction?.name || transaction?.merchant || "";
   return original && original !== display ? `<span class="receipt-original">Original charge: ${receiptText(original)}</span>` : "";
@@ -82,9 +82,10 @@ function receiptSettingsCard(summary = {}, config = {}) {
   const guidance = worker.instructions || worker.handoff || worker.setup;
   return `<section class="card receipt-settings-card">
     <h3>Purchase details assistant</h3>
-    <p class="small muted">Find the items inside an unclear Amazon, Apple, or Google charge, then place each item in the right budget.</p>
+    <p class="small muted">Match Amazon Business charge references to purchased items and their categories. Amazon sync runs independently of Codex.</p>
+    ${amazonConnectionCard(summary.amazon || {}, demo)}
     <form data-receipt-settings-form>
-      <label class="setting-row receipt-toggle" for="receipt-enabled"><span><b>Look up unclear purchases</b><small>Runs on the dedicated home-lab browser.</small></span><input id="receipt-enabled" name="enabled" type="checkbox" ${enabled ? "checked" : ""} ${demo ? "disabled" : ""}></label>
+      <label class="setting-row receipt-toggle" for="receipt-enabled"><span><b>Look up unclear purchases</b><small>Amazon Business uses your saved connection.</small></span><input id="receipt-enabled" name="enabled" type="checkbox" ${enabled ? "checked" : ""} ${demo ? "disabled" : ""}></label>
       <label class="setting-row receipt-toggle" for="receipt-auto-apply"><span><b>Apply clear splits automatically</b><small>Turn this off to review every clear match; uncertain matches always ask.</small></span><input id="receipt-auto-apply" name="auto_apply" type="checkbox" ${autoApply ? "checked" : ""} ${demo ? "disabled" : ""}></label>
       <label class="setting-row" for="receipt-daily-limit"><span><b>Daily lookup limit</b><small>Limit how many purchases the assistant looks up each day.</small></span><input class="input receipt-limit" id="receipt-daily-limit" name="daily_limit" type="number" min="1" max="30" step="1" value="${dailyLimit}" ${demo ? "disabled" : ""}></label>
       <p class="receipt-worker-note ${worker.ready ? "ready" : ""}">${receiptText(demo ? "Sample mode keeps purchase lookups off." : message)}</p>
@@ -216,6 +217,86 @@ async function receiptSaveSettings(form) {
   receiptState.summary = { ...(receiptState.summary || {}), settings: summary.settings || summary };
   toast("Purchase settings saved.", "ok");
 }
+
+function amazonConnectionCard(connection, demo) {
+  return `<div class="amazon-connection"><b>Amazon Business</b><p class="quiet-note">${receiptText(connection.message || 'Connect your account to sync purchase details automatically.')}</p>
+    ${connection.last_sync ? `<p class="small muted">Last synced ${receiptText(new Date(connection.last_sync).toLocaleString())} · ${Number(connection.charges)||0} charges${connection.named_transactions ? ` · ${Number(connection.named_transactions)} purchases named` : ''}</p>` : ''}
+    <button type="button" class="btn btn-sm" data-amazon-action="open" ${demo ? 'disabled' : ''}>${connection.connected ? 'Manage Amazon connection' : 'Connect Amazon Business'}</button></div>`;
+}
+
+let amazonPoll = null;
+function amazonDialog(connection = {}) {
+  const busy = !!connection.busy;
+  const challenge = ['otp','captcha'].includes(connection.stage);
+  const csvBlocked = connection.stage === 'csv_required';
+  const connectFields = `<form data-amazon-form="connect" autocomplete="on"><label class="fld" for="amazon-email">Amazon Business email or phone</label><input class="input" id="amazon-email" name="email" type="text" autocomplete="username" required maxlength="254"><label class="fld" for="amazon-password">Amazon password</label><input class="input" id="amazon-password" name="password" type="password" autocomplete="current-password" required maxlength="1024"><label class="amazon-remember"><input type="checkbox" name="remember" checked> Remember sign-in for automatic reconnect</label><p class="quiet-note">Saved credentials are encrypted on your Ledger server. Enter Amazon verification codes here when requested.</p><button class="btn btn-primary" type="submit">Connect Amazon Business</button></form>`;
+  const form = challenge
+    ? `<form data-amazon-form="verify"><label class="fld" for="amazon-code">${connection.stage==='otp'?'Amazon verification code':'Characters shown above'}</label><input class="input" id="amazon-code" name="code" required maxlength="64" autocomplete="one-time-code" ${connection.stage==='otp'?'inputmode="numeric"':''}><button class="btn btn-primary" type="submit">Continue sign-in</button></form>`
+    : (!connection.connected && !busy && connection.stage !== 'approval' && !csvBlocked ? connectFields : '');
+  const csvSection = `<details class="disclosure amazon-report-import" ${!connection.connected || csvBlocked ? 'open' : ''}>
+    <summary>${csvBlocked ? 'Recommended: Import Amazon Business or Order CSV' : 'Import Amazon Business or Order CSV'}</summary>
+    <p class="quiet-note">Works immediately even when Amazon blocks headless server browsers: 1) Open Amazon Business Analytics in your regular browser, 2) Pick <b>Reconciliation</b> or <b>Orders</b> (Past 12 months) and click <b>Download CSV</b>, 3) Select that CSV file below to name both Personal &amp; Business purchases.</p>
+    <div class="row" style="margin:8px 0 10px;gap:8px;flex-wrap:wrap"><a class="btn btn-primary btn-sm" href="https://www.amazon.com/b2b/aba/reports" target="_blank" rel="noopener noreferrer">Open Amazon Business Reports ↗</a></div>
+    <label class="fld" for="amazon-report-file">Amazon Reconciliation or Orders CSV</label>
+    <input class="input" id="amazon-report-file" type="file" accept=".csv,text/csv" data-amazon-file ${busy?'disabled':''}>
+  </details>`;
+  return `<div class="amazon-dialog" data-amazon-dialog><button type="button" class="close-button" data-action="close" aria-label="Close dialog">×</button><h2>Amazon Business</h2><p class="small muted">Match Personal &amp; Business card charges to the actual items you purchased.</p>
+    <div class="status-panel" role="status">${receiptText(connection.message || 'Connect your Amazon Business account or import a CSV.')}</div>
+    ${connection.captcha_image && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(connection.captcha_image) ? `<img class="amazon-captcha" src="${connection.captcha_image}" alt="Amazon sign-in verification characters">` : ''}
+    ${csvBlocked ? csvSection : ''}${form}
+    ${csvBlocked && !busy ? `<details class="disclosure" style="margin-top:10px"><summary>Try direct server sign-in again</summary>${connectFields}</details>` : ''}
+    ${connection.stage==='approval' ? '<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-amazon-action="refresh">I approved it · Check again</button><button type="button" class="btn btn-ghost" data-amazon-action="disconnect">Start over</button></div>' : ''}
+    ${connection.last_sync ? `<p class="quiet-note">${Number(connection.charges)||0} matched charges${connection.named_transactions ? ` · ${Number(connection.named_transactions)} purchases named` : ''} · last synced ${receiptText(new Date(connection.last_sync).toLocaleString())}${connection.rejected_charges ? ` · ${Number(connection.rejected_charges)} incomplete skipped` : ''}</p>` : ''}
+    ${connection.connected ? `<div class="modal-actions">${busy ? '' : '<button type="button" class="btn btn-primary" data-amazon-action="sync">Sync now</button><button type="button" class="btn btn-ghost" data-amazon-action="disconnect">Disconnect</button>'}</div><p class="quiet-note">Checks for new report data every six hours. Exact reference matches can categorize automatically; uncertain categories stay for review.</p>` : ''}
+    ${busy ? '<p class="quiet-note" aria-live="polite">Working… you can close this window.</p>' : ''}
+    ${!csvBlocked ? csvSection : ''}
+    <div class="modal-actions">${action('close','Close')}</div></div>`;
+}
+async function amazonOpen() {
+  const connection=await api('/amazon/status');
+  showModal(amazonDialog(connection));
+  if(connection.busy) amazonWatch();
+}
+function amazonWatch() {
+  clearTimeout(amazonPoll);
+  amazonPoll=setTimeout(async()=>{
+    if(!document.querySelector('[data-amazon-dialog]'))return;
+    try {
+      const connection=await api('/amazon/status');
+      if(!document.querySelector('[data-amazon-dialog]'))return;
+      showModal(amazonDialog(connection));
+      if(connection.busy)amazonWatch();
+    } catch(error){toast(error.message||'Could not refresh the Amazon connection.','err');}
+  },1500);
+}
+async function amazonRun(command,body={}) {
+  clearTimeout(amazonPoll);
+  const connection=await api('/amazon/'+command,{method:'POST',body});
+  showModal(amazonDialog(connection));
+  if(connection.busy)amazonWatch();
+}
+document.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-amazon-action]');if(!button||button.disabled)return;
+  event.preventDefault();button.disabled=true;
+  try{if(button.dataset.amazonAction==='open')await amazonOpen();else await amazonRun(button.dataset.amazonAction);}
+  catch(error){toast(error.message||'Amazon connection could not be updated.','err');}
+  finally{if(button.isConnected)button.disabled=false;}
+});
+document.addEventListener('submit',async event=>{
+  const form=event.target.closest('[data-amazon-form]');if(!form)return;
+  event.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;
+  const values=new FormData(form), command=form.dataset.amazonForm;
+  const body=command==='connect'?{email:values.get('email').trim(),password:values.get('password'),remember:values.get('remember')==='on'}:{code:values.get('code').trim()};
+  const password=form.querySelector('[name=password]');if(password)password.value='';
+  try{await amazonRun(command,body);}catch(error){toast(error.message||'Amazon sign-in could not be completed.','err');}
+  finally{delete body.password;delete body.code;if(submit.isConnected)submit.disabled=false;}
+});
+document.addEventListener('change',async event=>{
+  if(!event.target.matches('[data-amazon-file]'))return;
+  const file=event.target.files?.[0];if(!file)return;
+  try{if(file.size>12_000_000)throw Error('Choose a reconciliation CSV smaller than 12 MB.');await amazonRun('import',{csv:await file.text()});}
+  catch(error){toast(error.message||'Amazon report could not be imported.','err');}
+});
 
 document.addEventListener("click", async event => {
   const button = event.target.closest("[data-receipt-action]");

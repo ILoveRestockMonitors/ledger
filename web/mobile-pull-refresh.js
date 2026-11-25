@@ -79,6 +79,7 @@
     label.textContent = 'Refreshing Home…';
     icon.textContent = '↻';
     try {
+      globalThis.LedgerHomeCache?.clear();
       if (typeof navigate === 'function') await navigate('overview');
     } finally {
       busy = false;

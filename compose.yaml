@@ -1,5 +1,6 @@
 services:
   ledger:
+    image: ${LEDGER_IMAGE:-ledger:local}
     build:
       context: .
       dockerfile: Dockerfile

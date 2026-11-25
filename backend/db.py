@@ -205,11 +205,20 @@ def init_db():
     c = _conn()
     c.executescript(SCHEMA)
     cols = {r[1] for r in c.execute("PRAGMA table_info(transactions)")}
-    for name, definition in (("is_transfer", "INTEGER NOT NULL DEFAULT 0"), ("pending_transaction_id", "TEXT"), ("is_transfer_override", "INTEGER"), ("scope_override", "TEXT"), ("category_override", "INTEGER"), ("name_override", "INTEGER")):
+    for name, definition in (("bank_category_primary", "TEXT"), ("bank_category_detailed", "TEXT"), ("bank_category_confidence", "TEXT"), ("is_transfer", "INTEGER NOT NULL DEFAULT 0"), ("pending_transaction_id", "TEXT"), ("is_transfer_override", "INTEGER"), ("scope_override", "TEXT"), ("category_override", "INTEGER"), ("name_override", "INTEGER"), ("bank_merchant", "TEXT"), ("matched_name", "TEXT")):
         if name not in cols: c.execute(f"ALTER TABLE transactions ADD COLUMN {name} {definition}")
+    account_cols = {r[1] for r in c.execute("PRAGMA table_info(accounts)")}
+    if "balance_source" not in account_cols: c.execute("ALTER TABLE accounts ADD COLUMN balance_source TEXT")
+    item_cols = {r[1] for r in c.execute("PRAGMA table_info(items)")}
+    if "bank_updated_at" not in item_cols: c.execute("ALTER TABLE items ADD COLUMN bank_updated_at TEXT")
+    if "bank_refresh_requested_at" not in item_cols: c.execute("ALTER TABLE items ADD COLUMN bank_refresh_requested_at TEXT")
     seed_categories(c)
     from category_consolidation import consolidate
     consolidate(c)
+    import bank_accounts
+    bank_accounts.init_schema(c)
+    import tx_names
+    tx_names.init_schema(c)
     c.commit()
     c.close()
 

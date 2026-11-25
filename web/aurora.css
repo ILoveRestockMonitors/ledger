@@ -238,3 +238,26 @@ button.owner-avatar:active,button.icon-button:active,
   display:block;width:80%;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font:10px/1.3 ui-monospace,monospace;color:var(--muted);
 }
+
+/* Every month shares one baseline, even when 12 months exceed a phone's width.
+   Keep labels intact and scroll only the chart, never the whole page. */
+.ar-bars {
+  overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;
+  padding:28px 0 6px;box-sizing:content-box;
+  scrollbar-color:var(--muted) var(--bg-soft);
+}
+.ar-bar { display:grid;grid-template-rows:minmax(0,1fr) 20px; }
+.ar-track { height:100%; }
+.ar-bar:first-child .ar-chip { left:0;transform:none; }
+.ar-bar:last-child .ar-chip { left:auto;right:0;transform:none; }
+.ar-bar[aria-pressed=true] .ar-column { transform:none; }
+.ar-bar>span:last-child {
+  white-space:nowrap;overflow-wrap:normal;word-break:normal;
+  font:500 11px/20px var(--font);color:var(--muted);text-align:center;
+}
+.ar-scroll-hint { display:none; }
+@media(max-width:700px) {
+  .ar-bars[data-range="12"]+.ar-scroll-hint {
+    display:block;margin:-12px 0 16px;font-size:11px;color:var(--muted);
+  }
+}

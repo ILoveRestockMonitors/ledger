@@ -13,9 +13,11 @@ import uuid
 from datetime import datetime, timezone
 
 import db
+import tx_names
 
 
 UNCATEGORIZED = {"uncategorized", "uncategorised"}
+CLEAR_BANK = 0.90  # HIGH or VERY_HIGH bank confidence.
 
 
 def _key(value):
@@ -62,7 +64,7 @@ _TRANSFER_NAME = re.compile(
 
 def _protected(tx, categories, receipts):
     pfc = tx.get("personal_finance_category") or {}
-    primary = pfc.get("primary", "") if isinstance(pfc, dict) else pfc
+    primary = (pfc.get("primary", "") if isinstance(pfc, dict) else pfc) or tx.get("bank_category_primary") or ""
     provider_protected = str(primary).upper().startswith(("TRANSFER_IN", "TRANSFER_OUT", "LOAN_PAYMENTS", "INCOME"))
     return (bool(tx.get("category_override")) or not _unassigned(tx, categories)
             or float(tx.get("amount") or 0) >= 0 or bool(tx.get("is_transfer"))
@@ -93,9 +95,16 @@ def _context(conn, categories=None):
         FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id
         WHERE t.category_override=1 AND t.category_id IS NOT NULL
           AND COALESCE(a.archived,0)=0
-          AND t.amount<0 AND COALESCE(t.is_transfer,0)=0""")]
+          AND t.amount<0 AND COALESCE(t.is_transfer,0)=0
+        ORDER BY t.posted, t.id""")]
     history = [t for t in history if t["id"] not in receipt_ids and not t.get("split_scope") and t.get("split_amount") is None]
     return categories, history, receipt_ids, tables
+
+
+def _identity(t):
+    if "_identity" not in t:
+        t["_identity"] = tx_names.identity(t)
+    return t["_identity"]
 
 
 def _learned(tx, categories, history):
@@ -109,22 +118,39 @@ def _learned(tx, categories, history):
         # A renamed item often describes the purchase, not the whole merchant.
         matching = [t for t in scoped if not t.get("name_override") and _key(t.get("merchant")) == merchant]
         label = "merchant"
-    choices = {t.get("category_id") for t in matching}
+    if not matching:
+        # The same store spelled another way by the bank ("Grocery Outlet Salinsalinas",
+        # "In-shape 058 Sal Club Fees 26010"). Walk-forward on owner history 2026-11-07:
+        # 158 right and 2 wrong, against 146 right and 2 wrong for exact names only.
+        ident = tx_names.identity(tx)
+        matching = [t for t in scoped if tx_names.same_store(_identity(t), ident)]
+        label = "store"
+    # Only recent choices count, so a changed habit is not blocked forever by
+    # one old purchase. Measured: as accurate as all history, with more coverage.
+    recent = matching[-5:]
+    choices = {t.get("category_id") for t in recent}
     if len(choices) != 1 or not choices.issubset(allowed):
         return None, bool(matching)
-    return _result(next(iter(choices)), "Matches your previous category for this " + label + " in " + _scope(tx) + ".", "learned", 0.98), True
+    result = _result(next(iter(choices)), "Matches your previous category for this " + label + " in " + _scope(tx) + ".", "learned", 0.98)
+    result["examples"] = len(recent)
+    return result, True
 
 
 # Specialist merchants only. Token boundaries prevent, for example, Shell
 # being matched inside a different shop name. No generic Apple/Amazon/PayPal.
 _MERCHANTS = (
     (r"\b(?:pirate ship|usps|united states postal service|fedex|ups store)\b", "shipping"),
+    (r"\b(?:squarespace|sqsp|manychat|heygen|inventorylab)\b", "software"),
+    (r"\bincfile\b", "professional"),
+    (r"\bpay by space\b", "parking"),
     (r"\b(?:anthropic|claude(?:\.ai)?|openrouter|openai|chatgpt|higgsfield|klingai|elevenlabs|reel\.farm|cursor ai|cursor, ai|adobe|canva|dropbox|notion)\b", "software"),
     (r"\b(?:netflix|spotify|hulu|disney\s*\+|disney plus|youtube premium|youtube music)\b", "subscription"),
-    (r"\b(?:safeway|trader joe'?s|whole foods|kroger|sprouts farmers market|aldi)\b", "groceries"),
+    (r"\b(?:safeway|trader joe'?s|whole foods|kroger|sprouts farmers market|aldi|local shoppe)\b", "groceries"),
     (r"\b(?:starbucks|dunkin|chipotle|mcdonald'?s|burger king|taco bell|doordash|uber eats|grubhub)\b", "dining"),
-    (r"\b(?:chevron|shell|arco|exxon|mobil|texaco|valero|sunoco)\b", "fuel"),
-    (r"\b(?:planet fitness|24 hour fitness|anytime fitness|la fitness|crunch fitness)\b", "gym"),
+    (r"\b(?:aromas|chevron|shell|arco|exxon|mobil|texaco|valero|sunoco)\b", "fuel"),
+    # Owner 2026-11-07: thrift stores are Shopping.
+    (r"\b(?:goodwill|grey bears|savers|salvation army|value village|thrift|st\.? vincent de paul|habitat for humanity restore)\b", "shopping"),
+    (r"\b(?:in-shape|in shape|planet fitness|24 hour fitness|anytime fitness|la fitness|crunch fitness)\b", "gym"),
     (r"\b(?:comcast|xfinity|verizon|t mobile|t-mobile|at&t)\b", "internet"),
     (r"\b(?:southwest airlines|united airlines|delta air lines|american airlines|alaska airlines|airbnb)\b", "travel"),
 )
@@ -154,11 +180,14 @@ def _names(group, scope):
         "shopping": ["Shopping (other)", "Shopping"],
         "fees": ["debt repayment (and fees)", "Bank Fees & Interest"],
         "pets": ["Kids & Pets"],
+        "professional": ["Professional Services"],
     }.get(group, [])
 
 
 _PFC_DETAIL = {
     "FOOD_AND_DRINK_GROCERIES": "groceries",
+    "GENERAL_MERCHANDISE_CONVENIENCE_STORES": "dining",
+    "GENERAL_MERCHANDISE_DISCOUNT_STORES": "shopping",
     "TRANSPORTATION_GAS": "fuel",
     "TRANSPORTATION_PARKING": "parking",
     "TRANSPORTATION_AUTOMOTIVE": "car",
@@ -172,6 +201,7 @@ _PFC_DETAIL = {
     "RENT_AND_UTILITIES_SEWAGE_AND_WASTE_MANAGEMENT": "utilities",
     "GENERAL_SERVICES_INSURANCE": "insurance",
     "GENERAL_MERCHANDISE_PET_SUPPLIES": "pets",
+    "GENERAL_SERVICES_CONSULTING_AND_LEGAL": "professional",
 }
 _PFC_PRIMARY = {
     "FOOD_AND_DRINK": "dining", "MEDICAL": "health", "ENTERTAINMENT": "fun",
@@ -184,19 +214,32 @@ def _provider(tx, categories):
     pfc = tx.get("personal_finance_category") or {}
     if isinstance(pfc, str):
         pfc = {"detailed": pfc}
-    primary = str(pfc.get("primary") or tx.get("category_primary") or "").upper()
-    detailed = str(pfc.get("detailed") or tx.get("category_detailed") or "").upper()
-    confidence = str(pfc.get("confidence_level") or "").upper()
-    if confidence and confidence not in ("HIGH", "VERY_HIGH"):
+    primary = str(pfc.get("primary") or tx.get("category_primary") or tx.get("bank_category_primary") or "").upper()
+    detailed = str(pfc.get("detailed") or tx.get("category_detailed") or tx.get("bank_category_detailed") or "").upper()
+    confidence = str(pfc.get("confidence_level") or tx.get("bank_category_confidence") or "").upper()
+    # Owner's habit (2026-11-07 history): food the bank is unsure about (small
+    # markets, delis, cafes coded LOW, even as groceries) was set to Eat out
+    # every time. Big grocers are coded MEDIUM or higher and stay Groceries.
+    low_food = (confidence == "LOW" and primary == "FOOD_AND_DRINK"
+                and detailed != "FOOD_AND_DRINK_VENDING_MACHINES")
+    if confidence and confidence not in ("MEDIUM", "HIGH", "VERY_HIGH") and not low_food:
         return None
-    group = _PFC_DETAIL.get(detailed) or _PFC_PRIMARY.get(primary)
+    if low_food:
+        cid = _category(categories, _names("dining", _scope(tx)))
+        return _result(cid, "Bank thinks this is food (" + detailed.replace("_", " ").lower() + ", low confidence); small food shops are usually Eat out for you.", "bank", 0.75)
+    group = _PFC_DETAIL.get(detailed)
+    # A generic "other" code says little about the purchase. On real history these
+    # were mostly wrong at HIGH (AI tools coded as other entertainment).
+    if not group and "_OTHER_" in detailed and confidence != "VERY_HIGH":
+        return None
+    group = group or _PFC_PRIMARY.get(primary)
     # This is an explicit provider taxonomy, never a substring in a store name.
     if not group:
         group = next((v for k, v in _PFC_PRIMARY.items() if detailed.startswith(k + "_")), None)
     if not group:
         return None
     cid = _category(categories, _names(group, _scope(tx)))
-    return _result(cid, "Bank category: " + (detailed or primary).replace("_", " ").lower() + ".", "bank", 0.94 if confidence == "VERY_HIGH" else 0.90)
+    return _result(cid, "Bank category: " + (detailed or primary).replace("_", " ").lower() + ".", "bank", {"VERY_HIGH": 0.94, "MEDIUM": 0.80}.get(confidence, 0.90))
 
 
 def _choose(tx, conn, context):
@@ -219,19 +262,27 @@ def _choose(tx, conn, context):
     ambiguous = bool(_AMBIGUOUS.search(key) or _AMBIGUOUS.search(str(tx.get("merchant") or "")))
     if not ambiguous:
         learned, has_history = _learned(tx, categories, history)
+        bank = _provider(tx, categories)
+        clear_bank = bank if bank and bank["confidence"] >= CLEAR_BANK else None
         if learned:
+            # One earlier purchase may have been a different kind of purchase.
+            if learned["examples"] == 1 and clear_bank and clear_bank["category_id"] != learned["category_id"]:
+                return clear_bank
             return learned
-        # Conflicting manual choices carry more weight than any default guess.
+        # Conflicting manual choices outrank default merchant guesses, not a
+        # clear bank category for this specific purchase.
         if has_history:
-            return None
+            return clear_bank
         for pattern, group in _MERCHANTS:
             if re.search(pattern, key, re.I):
                 cid = _category(categories, _names(group, _scope(tx)))
                 if cid:
                     return _result(cid, "Recognized specialist merchant: " + key + ".", "merchant", 0.92)
     # A useful detailed bank code can identify a mixed merchant's purchase;
-    # general merchandise alone deliberately cannot.
-    return _provider(tx, categories)
+    # general merchandise alone deliberately cannot. Mixed retailers need a
+    # clear bank category, since MEDIUM is a weak signal for them.
+    bank = _provider(tx, categories)
+    return bank if not ambiguous or (bank and bank["confidence"] >= CLEAR_BANK) else None
 
 
 def choose(tx, categories=None, conn=None):
@@ -262,8 +313,11 @@ def init_schema(conn=None):
             conn.close()
 
 
-def backfill(dry_run=True):
-    """Preview/apply suggestions; preserves manual choices and receipt splits."""
+def backfill(dry_run=True, sources=None):
+    """Preview/apply suggestions; preserves manual choices and receipt splits.
+
+    ``sources`` optionally limits results, for example to ("merchant", "bank", "rule").
+    """
     conn = db._conn()
     try:
         conn.execute("BEGIN" if dry_run else "BEGIN IMMEDIATE")
@@ -278,7 +332,7 @@ def backfill(dry_run=True):
         candidates = []
         for tx in rows:
             suggestion = _choose(tx, conn, context)
-            if suggestion:
+            if suggestion and (sources is None or suggestion["source"] in sources):
                 candidates.append(dict(suggestion, transaction_id=tx["id"], name=tx.get("name"),
                     posted=tx.get("posted"), scope=_scope(tx), amount=tx["amount"],
                     previous_category_id=tx.get("category_id"),

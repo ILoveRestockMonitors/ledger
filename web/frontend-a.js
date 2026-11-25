@@ -13,7 +13,7 @@
   if (read('ledger-design') === 'current') { root.dataset.design = 'current'; return; }
   root.dataset.design = 'a';
   // Boot can start rendering before this file loads; if it did, render again with these pages.
-  const bootedEarly = !/Opening your space/.test(view?.textContent || '');
+  const bootedEarly = document.readyState !== 'loading' && !/Opening your space/.test(view?.textContent || '');
 
   /* ---------------- Formatting ---------------- */
   const cash = n => fmtMoney(Number(n) || 0, { decimals: 2 });
@@ -265,7 +265,7 @@
     const coming = card('upcoming', 'Coming up', `<div class="a-rows">${upcoming.map(s => { const d = new Date(s.next_due + 'T12:00:00'); return `<button type="button" class="a-row" data-action="edit-sub" data-id="${esc(s.id)}"><span class="a-date"><b>${d.getDate()}</b><small>${d.toLocaleDateString('en-US', { month: 'short' })}</small></span><span class="a-rt"><b>${esc(s.merchant)}</b><small>${when(s)}</small></span><span class="a-ra"><b class="a-amt">${cash(s.amount)}</b><small>${scopeDot(s.scope)}</small></span></button>`; }).join('') || '<p class="a-empty">No tracked payments coming up.</p>'}</div>`, link('All bills', 'data-rd-page="subscriptions"'));
 
     // 6. Recent activity
-    const recentCard = card('recent', 'Recent activity', `<div class="a-rows">${recent.rows.map(txRow).join('') || '<p class="a-empty">No recent activity.</p>'}</div>`, link('See all', 'data-rd-page="transactions"'));
+    const recentCard = card('recent', 'Recent activity', `<div class="a-rows">${recent.rows.map(t => txRow(t)).join('') || '<p class="a-empty">No recent activity.</p>'}</div>`, link('See all', 'data-rd-page="transactions"'));
 
     // 7. Monthly spending
     const chart = card('monthly-chart', 'Monthly spending', `<div id="a-bars">${chartMarkup()}</div>`, link('Reports', 'data-rd-page="reports"'));
@@ -285,15 +285,154 @@
   }
 
   /* ---------------- Activity ---------------- */
-  const txA = { uncOnly: false, limit: 40, filtersOpen: false };
-  function txRow(t) {
+  const txA = { uncOnly: false, limit: 40, filtersOpen: false, selecting: false, selected: new Set(), rows: [], key: '' };
+  const canSelectTx = t => t.amount < 0 && !t.is_transfer && !t.allocations?.length && !t.bulkArchived;
+  function txRow(t, selectable = false) {
     const name = receiptDisplayName(t);
     const cat = t.is_transfer ? 'Transfer' : t.allocations?.length > 1 ? 'Split purchase' : t.cat_name || '';
     const acct = t.account_id ? (t.acct_mask ? '…' + t.acct_mask : t.acct_name || 'Account') : 'Cash';
-    const meta = cat ? `${esc(cat)} · ${esc(acct)}` : `<span class="a-addcat">+ Add category</span>`;
+    const storePrefix = !t.name_override && (t.matched_name || t.receipt_status === 'applied') && t.merchant && t.merchant.toLowerCase() !== String(name).toLowerCase() ? `${esc(t.merchant)} · ` : '';
+    const meta = cat ? `${storePrefix}${esc(cat)} · ${esc(acct)}` : `${storePrefix}<span class="a-addcat">+ Add category</span> <span class="a-addcat-acct">· ${esc(acct)}</span>`;
     const right = t.pending ? '<span class="a-pill">Pending</span>' : scopeDot(t.scope);
-    return row({ icon: txIcon(t), tone: txTone(t), title: esc(name), meta, amount: signed(t.amount), amountCls: t.amount > 0 && !t.is_transfer ? 'a-pos' : '', right, attrs: `data-rd-tx="${esc(t.id)}"` });
+    const selecting = selectable && txA.selecting;
+    const markup = row({ icon: txIcon(t), tone: txTone(t), title: esc(name), meta, amount: signed(t.amount), amountCls: t.amount > 0 && !t.is_transfer ? 'a-pos' : '', right, attrs: selecting ? '' : `data-rd-tx="${esc(t.id)}"`, tag: selecting ? 'div' : 'button' });
+    if (!selecting) return markup;
+    const allowed = canSelectTx(t);
+    const reason = t.bulkArchived ? 'Archived account' : t.allocations?.length ? 'Review receipt split separately' : 'Select purchases only';
+    return `<label class="a-bulk-row" data-checked="${txA.selected.has(t.id)}"><input type="checkbox" data-a-select="${esc(t.id)}" ${txA.selected.has(t.id) ? 'checked' : ''} ${allowed ? '' : 'disabled'} aria-label="Select ${esc(name)}${allowed ? '' : ' · ' + reason}">${markup}${allowed ? '' : `<span class="a-bulk-reason">${reason}</span>`}</label>`;
   }
+
+  function selectionBar() {
+    const eligible = txA.rows.filter(canSelectTx), count = txA.selected.size;
+    return `<div class="a-selection" role="region" aria-label="Selected purchases">
+      <div class="a-selection-line"><b aria-live="polite">${count} selected</b><button type="button" class="a-link" data-a-select-page ${eligible.length ? '' : 'disabled'}>${eligible.length && eligible.every(t => txA.selected.has(t.id)) ? 'Deselect this page' : 'Select this page'}</button><button type="button" class="a-link" data-a-select-done>Cancel</button></div>
+      <button type="button" class="btn btn-primary" data-a-select-category ${count ? '' : 'disabled'}>Choose category${count ? ' · ' + count : ''}</button>
+      <small>Purchases on this page only. Transfers, income, archived accounts and receipt splits are excluded.</small>
+    </div>`;
+  }
+  function syncSelection() {
+    const bar = document.getElementById('a-selection');
+    if (bar) bar.innerHTML = selectionBar();
+    document.querySelectorAll('[data-a-select]').forEach(input => {
+      input.checked = txA.selected.has(input.dataset.aSelect);
+      input.closest('.a-bulk-row').dataset.checked = String(input.checked);
+    });
+  }
+  function chooseSelectionCategory() {
+    const selected = txA.rows.filter(t => txA.selected.has(t.id));
+    if (!selected.length) return;
+    showModal(`<div class="a-sheet"><button type="button" class="close-button" data-action="close" aria-label="Close dialog">${ico('plus', 'a-i a-x')}</button><h2>Categorize ${selected.length} purchases</h2>
+      <p class="a-note">Apply one category to these selected purchases.</p>
+      <details class="a-selected-list"><summary>Review ${selected.length} selected · ${cash(-selected.reduce((sum, t) => sum + t.amount, 0))}</summary>${selected.map(t => `<div class="setting-row"><span>${esc(receiptDisplayName(t))}<small>${esc(t.posted)} · ${esc(t.cat_name || 'Uncategorized')}</small></span><b>${signed(t.amount)}</b></div>`).join('')}</details>
+      <div class="a-fldrow"><span class="fld">Category</span><span class="a-cur" data-a-cur="a-bulk-cat">Choose a category</span></div>
+      <label class="a-field a-field-s">${ico('search')}<span class="rd-sr">Find a category</span><input type="search" placeholder="Find a category" data-a-catsearch autocomplete="off"></label>
+      ${catGrid('a-bulk-cat', quickCats('expense', null), null)}<input type="hidden" id="a-bulk-cat" value="">
+      <div class="modal-actions">${action('close', 'Cancel')}<button type="button" class="btn btn-primary" data-a-select-apply>Apply category</button></div></div>`);
+  }
+
+  let consPreviewState = null;
+  function updateConsolidateSummary() {
+    const p = consPreviewState;
+    if (!p) return;
+    const checks = [...document.querySelectorAll('[data-cons-check]')];
+    const activeKeys = new Set(checks.filter(c => c.checked).map(c => c.dataset.consCheck));
+    const chosenGroups = (p.groups || []).filter(g => activeKeys.has(g.group_key));
+    const txCount = chosenGroups.reduce((sum, g) => sum + g.count, 0);
+    const totalAmt = chosenGroups.reduce((sum, g) => sum + g.total, 0);
+    const targetCount = new Set(chosenGroups.map(g => document.querySelector(`[data-cons-target="${CSS.escape(g.group_key)}"]`)?.value || g.target_category_id)).size;
+    const summaryEl = document.getElementById('a-cons-summary');
+    if (summaryEl) {
+      summaryEl.innerHTML = txCount
+        ? `Confirm before applying: move <b>${txCount} purchase${txCount === 1 ? '' : 's'}</b> (<b>${cash(totalAmt)}</b>) across <b>${chosenGroups.length} unbudgeted categor${chosenGroups.length === 1 ? 'y' : 'ies'}</b> into <b>${targetCount} budgeted categor${targetCount === 1 ? 'y' : 'ies'}</b>?`
+        : `No categories selected. Check at least one category below to consolidate, or click Cancel.`;
+    }
+    const applyBtn = document.querySelector('[data-cons-apply]');
+    if (applyBtn) {
+      applyBtn.disabled = txCount === 0;
+      applyBtn.textContent = txCount ? `Confirm & consolidate (${txCount})` : 'Confirm & consolidate';
+    }
+    checks.forEach(c => {
+      const cardEl = c.closest('.a-cons-group');
+      if (cardEl) cardEl.dataset.unchecked = String(!c.checked);
+    });
+  }
+
+  window.openConsolidateCategories = async function (overrideMonth, overrideScope) {
+    const f = state.txFilters || {};
+    const month = overrideMonth || (f.since || '').slice(0, 7) || monthKey();
+    const scope = overrideScope || getScope();
+    const p = await api('/transactions/consolidate-budgeted/preview', {
+      method: 'POST',
+      body: { month, scope },
+    });
+    consPreviewState = p;
+    const keptNote = p.kept_budgeted_categories?.length
+      ? `<p class="a-note a-cons-kept"><b>Already budgeted (staying as-is):</b> ${esc(p.kept_budgeted_categories.join(', '))}.</p>`
+      : '';
+    const missingScopesNote = p.missing_budget_scopes?.length
+      ? `<p class="a-note a-warn">No ${esc(p.missing_budget_scopes.map(s => LABEL[s] || s).join(' or '))} budgets are set yet — add a budget on the Budgets tab first to consolidate those purchases.</p>`
+      : '';
+    const uncNote = p.skipped_uncategorized
+      ? `<p class="a-note">${p.skipped_uncategorized} uncategorized purchase${p.skipped_uncategorized === 1 ? ' is' : 's are'} left in Needs category so you can sort them first.</p>`
+      : '';
+
+    if (!p.groups?.length) {
+      showModal(`<div class="a-sheet a-cons-sheet">
+        <button type="button" class="close-button" data-action="close" aria-label="Close dialog">${ico('plus', 'a-i a-x')}</button>
+        <h2>Consolidate categories · ${esc(p.month_label)}</h2>
+        <p class="a-sub" style="margin-top:4px">Every categorized purchase in ${esc(p.month_label)} (${esc(LABEL[p.scope] || 'All')}) is already in a category with a budget.</p>
+        ${keptNote}${missingScopesNote}${uncNote}
+        <div class="modal-actions">${action('close', 'Close', '', 'btn btn-primary')}</div>
+      </div>`);
+      document.querySelector('.modal')?.classList.add('a-modal');
+      return;
+    }
+
+    const renderScopeSection = (secScope, title) => {
+      const items = p.groups.filter(g => g.scope === secScope);
+      if (!items.length) return '';
+      return `<section class="a-cons-section">
+        <div class="a-cons-sec-head">${scopeDot(secScope)}<small>${esc(title)}</small></div>
+        <div class="a-cons-list">
+          ${items.map(g => `<div class="a-cons-group" data-unchecked="false">
+            <div class="a-cons-top">
+              <label class="a-cons-check">
+                <input type="checkbox" data-cons-check="${esc(g.group_key)}" checked aria-label="Consolidate ${esc(g.source_category_name)}">
+                <span class="a-cons-from">${esc(g.source_category_name)}</span>
+              </label>
+              <span class="a-cons-arrow" aria-hidden="true">→</span>
+              <select class="input a-cons-select" data-cons-target="${esc(g.group_key)}" aria-label="Budgeted target category for ${esc(g.source_category_name)}">
+                ${g.available_targets.map(t => `<option value="${esc(t.id)}" ${t.id === g.target_category_id ? 'selected' : ''}>${esc(t.name)} (${whole(t.month_limit)}/mo)</option>`).join('')}
+              </select>
+              <span class="a-cons-stat"><b>${cash(g.total)}</b><small>${g.count} purchase${g.count === 1 ? '' : 's'}</small></span>
+            </div>
+            <details class="a-cons-details">
+              <summary>Show ${g.count} exact transaction${g.count === 1 ? '' : 's'} moving</summary>
+              <div class="a-cons-txs">
+                ${g.transactions.map(t => `<div class="setting-row a-cons-tx"><span><b>${esc(t.display_name)}</b><small>${esc(t.posted)} · ${esc(t.account_name)}${t.account_mask ? ' …' + esc(t.account_mask) : ''}${t.pending ? ' · Pending' : ''}</small></span><b>${signed(t.amount)}</b></div>`).join('')}
+              </div>
+            </details>
+          </div>`).join('')}
+        </div>
+      </section>`;
+    };
+
+    showModal(`<div class="a-sheet a-cons-sheet">
+      <button type="button" class="close-button" data-action="close" aria-label="Close dialog">${ico('plus', 'a-i a-x')}</button>
+      <h2>Consolidate categories · ${esc(p.month_label)}</h2>
+      <div class="status-panel a-cons-banner" id="a-cons-summary" role="status"></div>
+      ${keptNote}${missingScopesNote}${uncNote}
+      ${renderScopeSection('personal', 'Personal unbudgeted → Personal budgets')}
+      ${renderScopeSection('business', 'Business unbudgeted → Business budgets')}
+      <div class="modal-actions">
+        ${action('close', 'Cancel')}
+        <button type="button" class="btn btn-primary" data-cons-apply="${esc(p.preview_id)}">Confirm & consolidate (${p.total_count})</button>
+      </div>
+    </div>`);
+    document.querySelector('.modal')?.classList.add('a-modal');
+    updateConsolidateSummary();
+  };
+
   const dayLabel = iso => { const n = dayDiff(iso); return n === 0 ? 'Today' : n === -1 ? 'Yesterday' : new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', ...(iso.slice(0, 4) === isoToday().slice(0, 4) ? {} : { year: 'numeric' }) }); };
 
   async function activityA() {
@@ -317,28 +456,35 @@
     }
     receiptState.summary = receipts;
     const accounts = [...active, ...archived];
+    const key = JSON.stringify([scope, txA.uncOnly, f]);
+    if (key !== txA.key) txA.selected.clear();
+    txA.key = key;
+    txA.rows = data.rows.map(t => ({ ...t, bulkArchived: accounts.some(a => a.id === t.account_id && a.archived) }));
+    txA.selected = new Set([...txA.selected].filter(id => txA.rows.some(t => t.id === id && canSelectTx(t))));
     const nFilters = [f.account_id, f.category_id, f.since, f.until].filter(Boolean).length;
+    // While searching or filtering, results come first on a phone.
+    const narrowed = Boolean(f.search || nFilters || txA.uncOnly);
     const s = ov.summary, total = s.total || 0;
     const named = ov.categories.filter(x => x.id !== null && x.total > 0);
     const tones = ['k1', 'k2', 'k3', 'k4'];
     const segs = named.slice(0, 4).map((x, i) => ({ k: tones[i], total: x.total })).concat([{ k: 'k5', total: named.slice(4).reduce((a, x) => a + x.total, 0) }, { k: 'unc', total: s.uncategorized || 0 }]).filter(x => x.total > 0);
     const activeCat = state.categories.find(x => x.id === f.category_id);
     const groups = [];
-    for (const t of data.rows) { const g = groups.at(-1); if (g && g.day === t.posted) g.rows.push(t); else groups.push({ day: t.posted, rows: [t] }); }
+    for (const t of txA.rows) { const g = groups.at(-1); if (g && g.day === t.posted) g.rows.push(t); else groups.push({ day: t.posted, rows: [t] }); }
     const dayTotal = rows => rows.filter(t => !t.is_transfer).reduce((a, t) => a + t.amount, 0);
     const glanceCard = `<section class="card a-card a-glance">
             <div class="a-label">Spent in ${esc(new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long' }))}</div>
             <div class="a-fig a-fig-m">${split(total)}</div>
             <div class="a-stack" role="img" aria-label="Spending by category">${segs.map(x => `<i data-k="${x.k}" style="flex:${x.total.toFixed(2)}"></i>`).join('')}</div>
             <div class="a-legend">${named.slice(0, 4).map((x, i) => `<button type="button" class="a-leg" data-k="${tones[i]}" data-a-catf="${esc(x.id)}" aria-pressed="${f.category_id === x.id}"><i></i><span>${esc(x.name)}</span><b>${whole(x.total)}</b></button>`).join('')}${s.uncategorized > 0 ? `<button type="button" class="a-leg" data-k="unc" data-a-unc aria-pressed="${txA.uncOnly}"><i></i><span>Uncategorized</span><b>${whole(s.uncategorized)}</b></button>` : ''}</div>
-            ${named.length > 4 ? `<button type="button" class="a-link a-glance-more" data-rd-page="budgets">All ${named.length} categories</button>` : ''}
+            <div class="a-glance-foot"><button type="button" class="btn btn-primary btn-sm a-cons-cta" data-a-consolidate>${ico('target', 'a-i a-btn-i')}Consolidate categories</button>${named.length > 4 ? `<button type="button" class="a-link a-glance-more" data-rd-page="budgets">All ${named.length} categories</button>` : ''}</div>
           </section>`;
     return `<div class="rd a-activity">
       <div class="a-pagehead"><div><h2>Activity</h2><p>${esc(new Date(month + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))} · ${LABEL[scope]}</p></div>${action('add-cash-tx', '＋ Cash', '', 'btn btn-primary btn-sm')}</div>
       <div class="a-act-grid">
         <div class="a-act-main">
           <div class="a-search" role="search" aria-label="Transaction filters">
-            <label class="a-field">${ico('search')}<span class="rd-sr">Search transactions</span><input id="tx-search" data-a-search type="search" placeholder="Search merchant or note" value="${esc(f.search)}" autocomplete="off"></label>
+            <label class="a-field">${ico('search')}<span class="rd-sr">Search transactions</span><input id="tx-search" data-a-search type="search" enterkeyhint="search" placeholder="Search merchant or note" value="${esc(f.search)}" autocomplete="off"></label>
             <button type="button" class="a-iconbtn" data-a-filters aria-expanded="${txA.filtersOpen}" aria-controls="a-filters" aria-label="Filters${nFilters ? ', ' + nFilters + ' active' : ''}">${ico('sliders')}${nFilters ? `<span class="a-badge">${nFilters}</span>` : ''}</button>
           </div>
           <div class="a-filters" id="a-filters" ${txA.filtersOpen ? '' : 'hidden'}>
@@ -353,10 +499,12 @@
             <button type="button" class="a-chip" data-a-cash aria-pressed="${f.account_id === '__cash__'}">Cash</button>
             ${activeCat ? `<button type="button" class="a-chip" aria-pressed="true" data-a-catf="${esc(activeCat.id)}">${esc(activeCat.name)} ✕</button>` : ''}
             ${f.search ? `<button type="button" class="a-chip" aria-pressed="true" data-a-clear-search>“${esc(f.search)}” ✕</button>` : ''}
+          <div class="a-selection-tools"><button type="button" class="btn btn-sm" data-a-select-start aria-pressed="${txA.selecting}">${txA.selecting ? 'Done selecting' : 'Select purchases'}</button>${state.lastCategoryBatch ? '<button type="button" class="a-link" data-a-select-undo>Undo last category change</button>' : ''}</div>
           </div>
-          <div class="a-glance-phone">${glanceCard}</div>
-          ${(() => { const r = receiptSummaryMarkup(receipts); return r.includes('Nothing needs a closer look') ? '' : r; })()}
-          ${groups.map(g => `<div class="card a-list"><div class="a-day"><span>${esc(dayLabel(g.day))}</span><b>${signed(dayTotal(g.rows))}</b></div>${g.rows.map(txRow).join('')}</div>`).join('') || `<div class="card a-list"><p class="a-empty">${txA.uncOnly ? 'Nothing uncategorized this month.' : 'No transactions match.'}</p></div>`}
+          ${narrowed ? '' : `<div class="a-glance-phone">${glanceCard}</div>`}
+          ${narrowed ? '' : (() => { const r = receiptSummaryMarkup(receipts); return r.includes('Nothing needs a closer look') ? '' : r; })()}
+          ${txA.selecting ? `<div id="a-selection">${selectionBar()}</div>` : ''}
+          ${groups.map(g => `<div class="card a-list"><div class="a-day"><span>${esc(dayLabel(g.day))}</span><b>${signed(dayTotal(g.rows))}</b></div>${g.rows.map(t => txRow(t, true)).join('')}</div>`).join('') || `<div class="card a-list"><p class="a-empty">${txA.uncOnly ? 'Nothing uncategorized this month.' : 'No transactions match.'}</p></div>`}
           ${txA.uncOnly ? '' : `<div class="a-pager"><button type="button" class="btn btn-sm" data-a-step="-1" ${data.offset > 0 ? '' : 'disabled'}>Newer</button><span>${data.rows.length ? data.offset + 1 : 0}–${data.offset + data.rows.length} of ${data.total}</span><button type="button" class="btn btn-sm" data-a-step="1" ${data.offset + data.limit < data.total ? '' : 'disabled'}>Older</button></div>`}
         </div>
         <aside class="a-act-side">
@@ -398,7 +546,7 @@
       <button type="button" class="close-button" data-action="close" aria-label="Close dialog">${ico('plus', 'a-i a-x')}</button>
       <h2>${isCash ? 'Edit cash entry' : esc(name)}</h2>
       <p class="a-meta"><b class="${t.amount > 0 && !t.is_transfer ? 'a-pos' : ''}">${signed(t.amount)}</b> · ${fmtDate(t.posted)} · ${esc(t.account_id ? (t.acct_name || 'Account') + (t.acct_mask ? ' …' + t.acct_mask : '') : 'Cash / manual')}${t.pending ? ' · Pending' : ''}</p>
-      <label class="fld" for="txe-name">Name / merchant</label><input class="input" id="txe-name" value="${esc(t.display_name || t.merchant || t.name)}" maxlength="200">
+      <label class="fld" for="txe-name">Name / merchant</label><input class="input" id="txe-name" value="${esc(t.display_name || t.merchant || t.name)}" maxlength="200">${isCash ? '' : `<label class="a-check"><input type="checkbox" id="txe-remember-name"><span>Use this name for every purchase from this store</span></label>`}
       ${isCash ? `
         <span class="fld">Type</span>${seg('txe-kind', kind, [['expense', 'Out'], ['income', 'In'], ['transfer-out', 'Xfer out'], ['transfer-in', 'Xfer in']], 'Type')}<input type="hidden" id="txe-kind" value="${kind}">
         <div class="form-pair"><div><label class="fld" for="txe-amount">Amount</label><input class="input" id="txe-amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${Math.abs(t.amount)}"></div><div><label class="fld" for="txe-posted">Date</label><input class="input" id="txe-posted" type="date" max="${todayISO()}" value="${esc(t.posted)}"></div></div>`
@@ -423,7 +571,22 @@
       <div class="modal-actions a-actions"><button type="button" class="btn btn-primary a-save" onclick="saveTxEdit(${esc(JSON.stringify(t.id))}, this)">Save</button></div>
     </div>`);
     document.querySelector('.modal')?.classList.add('a-modal');
+    if (!t.category_id && !t.is_transfer && t.amount < 0) showCategoryGuess(t.id);
   };
+
+  // Suggestion only: moves likely categories to the front. Nothing saves until Save.
+  async function showCategoryGuess(id) {
+    let found;
+    try { found = (await api('/transactions/category-suggestions?id=' + encodeURIComponent(id))).suggestions; } catch { return; }
+    const buttons = document.querySelectorAll('[data-a-set="txe-cat"]');
+    const grid = buttons[0]?.parentElement;
+    if (!grid || !found?.length || document.getElementById('txe-cat')?.value) return;
+    [...found].reverse().forEach(s => { const b = [...buttons].find(x => x.dataset.v === s.category_id); if (b) grid.prepend(b); });
+    if (grid.firstElementChild?.dataset.v === found[0].category_id) {
+      grid.firstElementChild.classList.add('a-cat-guess');
+      grid.firstElementChild.insertAdjacentHTML('beforeend', '<small>Best guess</small>');
+    }
+  }
 
   openAddTx = async function (options = {}) {
     state.accounts = await api('/accounts');
@@ -455,7 +618,7 @@
     if (base) registerPage(id, base.title, async () => transform(await base.render()));
   }
   wrapPage('subscriptions', html => html
-    .replace(/>Monthly commitment</g, '>Per month<').replace(/>A year at this pace</g, '>Per year<').replace(/>Details</g, '>Edit<').replace(/>Cancel subscription</g, '>Cancel it<').replace(/>Mark as canceled</g, '>Mark canceled<')
+    .replace(/>Monthly commitment</g, '>Per month<').replace(/>A year at this pace</g, '>Per year<').replace(/>Details</g, '>Edit<').replace(/>Cancel subscription</g, '>Cancel it<').replace(/>Mark as canceled</g, '>Mark canceled<').replace(/<small>monthly · [^<]*<\/small>/g, '<small>monthly</small>')
     .replace(/Next ([A-Z][a-z]{2} \d{1,2}, \d{4})/g, (m, d) => new Date(d) < new Date(isoToday() + 'T00:00:00') ? `<span class="a-overdue">Overdue · ${d.replace(/, \d{4}$/, '')}</span>` : 'Next ' + d.replace(/, \d{4}$/, '')));
   wrapPage('settings', html => html.replace(/`([^`<]{1,80})`/g, '<code>$1</code>'));
   // One icon language: drop emoji category icons from page text (budgets, subscriptions, reports).
@@ -499,6 +662,65 @@
     if (!el || root.dataset.design !== 'a') return;
     const d = el.dataset;
     try {
+      if (el.hasAttribute('data-a-select-start') || el.hasAttribute('data-a-select-done')) {
+        txA.selecting = el.hasAttribute('data-a-select-start') && !txA.selecting;
+        txA.selected.clear();
+        await rerender();
+        document.querySelector(txA.selecting ? '[data-a-select-page]' : '[data-a-select-start]')?.focus();
+        return;
+      }
+      if (el.hasAttribute('data-a-select-page')) {
+        const eligible = txA.rows.filter(canSelectTx), all = eligible.every(t => txA.selected.has(t.id));
+        eligible.forEach(t => all ? txA.selected.delete(t.id) : txA.selected.add(t.id));
+        syncSelection(); return;
+      }
+      if (el.hasAttribute('data-a-consolidate')) {
+        const prevHtml = el.innerHTML;
+        if (!setPending(el, true, 'Checking…')) return;
+        try { await window.openConsolidateCategories(); }
+        finally { setPending(el, false); el.innerHTML = prevHtml; }
+        return;
+      }
+      if (el.hasAttribute('data-cons-apply')) {
+        const preview_id = el.dataset.consApply;
+        const selections = {};
+        document.querySelectorAll('[data-cons-check]:checked').forEach(c => {
+          const gkey = c.dataset.consCheck;
+          const target = document.querySelector(`[data-cons-target="${CSS.escape(gkey)}"]`)?.value;
+          if (gkey && target) selections[gkey] = target;
+        });
+        if (!Object.keys(selections).length) return toast('Keep at least one category checked to consolidate.', 'err');
+        if (!setPending(el, true, 'Consolidating…')) return;
+        try {
+          const result = await api('/transactions/consolidate-budgeted/apply', {
+            method: 'POST',
+            body: { preview_id, selections },
+          });
+          if (result.batch_id) state.lastCategoryBatch = result.batch_id;
+          consPreviewState = null;
+          closeModal();
+          toast(`Consolidated ${result.changed} purchase${result.changed === 1 ? '' : 's'} into your budgeted categories. You can undo this change.`, 'ok', 6500);
+          await navigate(state.page);
+        } finally { setPending(el, false); }
+        return;
+      }
+      if (el.hasAttribute('data-a-select-category')) return chooseSelectionCategory();
+      if (el.hasAttribute('data-a-select-undo')) return undoCategoryBatch(el);
+      if (el.hasAttribute('data-a-select-apply')) {
+        const category_id = document.getElementById('a-bulk-cat')?.value;
+        if (!category_id) return toast('Choose a category first.', 'err');
+        if (!setPending(el, true, 'Applying…')) return;
+        try {
+          const ids = [...txA.selected];
+          const p = await api('/transactions/category-selection-preview', { method: 'POST', body: JSON.stringify({ ids, category_id }) });
+          const result = await api('/transactions/category-apply', { method: 'POST', body: JSON.stringify({ preview_id: p.preview_id, remember: false }) });
+          state.lastCategoryBatch = result.batch_id;
+          txA.selected.clear(); txA.selecting = false; closeModal();
+          toast(`${result.changed} purchases categorized. You can undo this change.`, 'ok');
+          await navigate(state.page);
+        } finally { setPending(el, false); }
+        return;
+      }
       if (d.aSet) {
         const input = document.getElementById(d.aSet);
         if (!input) return;
@@ -537,6 +759,14 @@
   });
   document.addEventListener('change', event => {
     const el = event.target;
+    if (el.matches?.('[data-cons-check], [data-cons-target]')) {
+      updateConsolidateSummary(); return;
+    }
+    if (el.matches?.('[data-a-select]')) {
+      const t = txA.rows.find(t => t.id === el.dataset.aSelect);
+      if (t && canSelectTx(t)) el.checked ? txA.selected.add(t.id) : txA.selected.delete(t.id);
+      syncSelection(); return;
+    }
     if (el.matches?.('[data-a-acct]')) {
       syncTransactionAccountScope(el);
       const v = document.getElementById('f-transaction-scope')?.value;

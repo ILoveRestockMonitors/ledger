@@ -178,11 +178,11 @@ registerPage('accounts','Accounts',async()=>{
  const connectionLabel = i=>i?.has_token ? Number(i.n_active_accounts)>0 ? 'Connected' : 'Updates paused' : i?.env_label==='demo' ? 'Sample data' : 'Disconnected';
  const syncMessage = comfort.config.demo ? 'Sample accounts stay separate from live banks.' : canSync ? sync.message : items.some(i=>i.has_token) ? 'Bank updates are paused. Archived history remains available.' : items.length ? 'Bank connections are disconnected. Saved history remains available.' : 'Connect a bank or track balances manually.';
  return `<div class="page-intro"><div><h2>Your money, together.</h2><p>Connected accounts and the balances you track yourself.</p></div>${action('manual-account','＋ Manual account','','btn btn-primary')}</div>
- <div class="account-manual-bar"><span class="sync-indicator">${esc(syncMessage)}</span><div class="row">${action('link','Connect a bank')}${canSync?action('sync','Sync now'):''}</div></div>
+ <div class="account-manual-bar"><span class="sync-indicator">${esc(items.some(i=>i.has_token&&Number(i.n_active_accounts)>0&&bankDataAge(i.bank_updated_at)?.stale)?'A bank has not sent new data lately. See Connections below.':syncMessage)}</span><div class="row">${action('link','Connect a bank')}${canSync?action('sync','Sync now'):''}</div></div>
  <div class="grid cols-2">${accounts.map(a=>`<section class="card"><div class="row-between"><span class="merchant-avatar">${a.type==='investment'?'↗':a.type==='credit'||a.type==='loan'?'−':'▣'}</span>${scopeTag(a.scope)}</div><h3 style="margin-top:19px">${esc(a.name)}</h3><div class="stat-value">${dollars(a.balance)}</div><div class="card-footer"><span>${a.item_id?connectionLabel(items.find(i=>i.id===a.item_id)):'Manual'} · ${esc(a.type)}${a.mask?' · '+esc(a.mask):''}</span><span class="row">${!a.item_id?action('manual-account','Update balance',a.id,'link-button'):action('account-scope',a.scope==='personal'?'Make business':'Make personal',a.id,'link-button')}${action('archive-account','Archive',a.id,'link-button')}</span></div></section>`).join('')||quietEmpty(archived.length?'No active accounts. Your archived history is available below.':'Start wherever is easiest. You can add banks later.')}</div>
  ${items.length?`<div class="card mt"><h3>Connections</h3>${items.map(i=>{
    const lastSync = sync.items?.find(r=>r.item_id===i.id);
-   return `<div class="setting-row"><div><b>${esc(i.institution)}</b><div class="small muted">${esc(i.env_label)} · ${connectionLabel(i)} · ${Number(i.n_active_accounts)||0} active account(s)${lastSync?.finished_at?' · Checked '+esc(lastSync.finished_at.replace('T',' ').slice(0,16)):''}${i.has_token && Number(i.n_active_accounts)>0 && lastSync?.error?' · '+esc(lastSync.error):''}</div></div><div class="row">${i.has_token && Number(i.n_active_accounts)>0?action('relink','Reconnect',i.id):''}${i.has_token?action('unlink','Disconnect',i.id,'btn btn-sm btn-ghost'):''}</div></div>`;
+   return `<div class="setting-row"><div><b>${esc(i.institution)}</b><div class="small muted">${esc(i.env_label)} · ${connectionLabel(i)} · ${Number(i.n_active_accounts)||0} active account(s)${lastSync?.finished_at?' · Checked '+esc(lastSync.finished_at.replace('T',' ').slice(0,16)):''}${i.has_token&&Number(i.n_active_accounts)>0?(a=>a?(a.stale?` · <span class="a-overdue">Bank data ${esc(a.label)}</span>`:` · Bank data ${esc(a.label)}`):'')(bankDataAge(i.bank_updated_at)):''}${i.has_token && Number(i.n_active_accounts)>0 && lastSync?.error?' · '+esc(lastSync.error):''}</div></div><div class="row">${i.has_token && Number(i.n_active_accounts)>0?action('relink','Reconnect',i.id):''}${i.has_token?action('unlink','Disconnect',i.id,'btn btn-sm btn-ghost'):''}</div></div>`;
  }).join('')}</div>`:''}
  ${archived.length?`<section class="card mt" aria-labelledby="archived-accounts-title"><h3 id="archived-accounts-title">Archived accounts <span class="h3-extra">${archived.length}</span></h3><p class="quiet-note">Updates are stopped and these accounts are excluded from current balances. All transactions, categories, notes, and report history are preserved.</p>${archived.map(a=>{
    const item = items.find(i=>i.id===a.item_id);
@@ -231,7 +231,7 @@ const actions = {
  'restore-account':id=>restoreAcct(id),
  'archive-account':id=>archiveAcct(id),
  link:()=>{if(comfort.config.demo)return toast('Real bank linking is off in this preview.');return startLinkFlow();},
- relink:async id=>{const r=await post('/plaid/link-token',{item_id:id});await loadPlaidScript();await openPlaidLink(r.link_token,'personal',null,id);},
+ relink:async id=>{toast('Checking with your bank…');const r=await post('/plaid/link-token',{item_id:id});await loadPlaidScript();await openPlaidLink(r.link_token,'personal',null,id);},
  unlink:id=>unlinkItem(id),
  sync:async()=>{const result=await post('/sync');toast(result.message||'Your accounts have been checked.');state.accounts=await api('/accounts');await navigate(state.page);},
  export:()=>exportCSV(),logout:async()=>{await post('/auth/logout');location.reload();},
@@ -245,7 +245,7 @@ document.addEventListener('submit',async e=>{
  const data=Object.fromEntries(new FormData(form));
  try{
   switch(form.dataset.form){
-   case 'auth':await post('/auth/'+form.dataset.mode,{password:data.password});document.getElementById('auth-screen').remove();await bootLedger();return;
+   case 'auth':await post('/auth/'+form.dataset.mode,{password:data.password});await bootLedger();return;
    case 'transaction': {const amount=Number(data.amount)*(data.kind==='income'||data.kind==='transfer-in'?1:-1);await post('/transactions',{transaction:{...data,account_id:data.account_id||null,amount,is_transfer:data.kind.startsWith('transfer'),category_id:data.category_id||null}});if(data.account_id)localStorage.setItem('ledger-last-account',data.account_id);else localStorage.removeItem('ledger-last-account');state.accounts=await api('/accounts');break;}
    case 'manual-account':{const r=await post('/accounts/manual',{...data,balance:Number(data.balance),...(form.dataset.id?{id:form.dataset.id}:{})});state.accounts=await api('/accounts');localStorage.setItem('ledger-last-account',r.id);if(form.dataset.thenAdd==='true'){closeModal();await openAddTx();return;}break;}
    case 'subscription':await post('/subscriptions',{...data,...(form.dataset.id?{id:form.dataset.id}:{}),amount:Number(data.amount),account_id:data.account_id||null,management_url:data.management_url||null,custom_interval_days:Number(data.custom_interval_days||30)});break;
@@ -260,8 +260,9 @@ document.addEventListener('submit',async e=>{
 
 async function bootLedger(){
  const status=await api('/auth/status');
- if(!status.authenticated){const mode=status.configured?'login':'setup';document.body.insertAdjacentHTML('beforeend',`<div class="auth-page" id="auth-screen"><div class="auth-card"><span class="ledger-mark" role="img" aria-label="Ledger"></span><h1>${status.configured?'Welcome back.':'Make yourself at home.'}</h1><p>${status.configured?'Your money deserves a quiet, private space.':'Choose a password for your private Ledger. You only need to do this once, on your home-lab computer.'}</p><form data-form="auth" data-mode="${mode}">${field('password',status.configured?'Your password':'Create a password','','password',`required minlength="${status.configured?1:12}" autocomplete="${status.configured?'current-password':'new-password'}"`)}${!status.configured?'<p class="form-help">At least 12 characters. A few memorable words work well.</p>':''}<p class="auth-error" role="alert" data-form-error></p><button type="submit" class="btn btn-primary">${status.configured?'Open my Ledger':'Create my space'}</button></form></div></div>`);document.getElementById('f-password').focus();return;}
+ if(!status.authenticated){if(document.getElementById('auth-screen'))return;const mode=status.configured?'login':'setup';document.body.insertAdjacentHTML('beforeend',`<div class="auth-page" id="auth-screen"><div class="auth-card"><span class="ledger-mark" role="img" aria-label="Ledger"></span><h1>${status.configured?'Welcome back.':'Make yourself at home.'}</h1><p>${status.configured?'Your money deserves a quiet, private space.':'Choose a password for your private Ledger. You only need to do this once, on your home-lab computer.'}</p><form data-form="auth" data-mode="${mode}">${field('password',status.configured?'Your password':'Create a password','','password',`required minlength="${status.configured?1:12}" autocomplete="${status.configured?'current-password':'new-password'}" autocapitalize="off" autocorrect="off" spellcheck="false"`)}<button type="button" class="link-button password-toggle" data-toggle-password aria-controls="f-password" aria-pressed="false" style="display:block;margin-top:8px">Show password</button>${!status.configured?'<p class="form-help">At least 12 characters. A few memorable words work well.</p>':''}<p class="auth-error" role="alert" data-form-error></p><button type="submit" class="btn btn-primary">${status.configured?'Open my Ledger':'Create my space'}</button></form></div></div>`);document.getElementById('f-password').focus();return;}
  const [c,categories,accounts]=await Promise.all([api('/config'),api('/categories'),api('/accounts')]);applyComfort(c);state.categories=categories;state.accounts=accounts;
+ document.getElementById('auth-screen')?.remove();
  await navigate(location.hash.slice(1)||'overview');
  if(!LedgerDemo.active && new URLSearchParams(location.search).has('oauth_state_id')){const saved=JSON.parse(sessionStorage.getItem('ledger-link')||'null');if(saved)await openPlaidLink(saved.token,saved.scope,location.href,saved.updateItem);else toast('The bank return session expired. Connect the bank again from Accounts.','err');}
 }
@@ -282,4 +283,13 @@ document.getElementById('btn-export').onclick=exportCSV;
  moreSummary?.addEventListener('click',event=>{if(!root.classList.contains('sidebar-collapsed'))return;event.preventDefault();setCollapsed(false);more.open=true;});
  more?.querySelectorAll('.nav-link').forEach(link=>link.addEventListener('click',()=>{if(root.classList.contains('sidebar-collapsed'))setCollapsed(false);}));
 })();
-bootLedger().catch(e=>{document.getElementById('view').innerHTML=quietEmpty(esc(e.message));});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-toggle-password]');if(!b)return;e.preventDefault();const i=document.getElementById('f-password');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Hide password':'Show password';b.setAttribute('aria-pressed',String(show));i.focus();});
+function startLedger() {
+ bootLedger().catch(e=>{
+  document.getElementById('view').innerHTML=quietEmpty(esc(e.message), '<p><button class="btn" type="button" id="retry-start">Try again</button></p>');
+  document.getElementById('retry-start').onclick=startLedger;
+ });
+}
+// Wait for every page and theme script before the first request or render.
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startLedger,{once:true});
+else startLedger();

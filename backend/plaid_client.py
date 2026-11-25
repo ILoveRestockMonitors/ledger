@@ -9,6 +9,9 @@ import db
 import receipt_store
 import transaction_repair
 import category_picker
+import datetime as _datetime
+import bank_accounts
+import tx_names
 
 ENVS = {"sandbox": "https://sandbox.plaid.com", "production": "https://production.plaid.com"}
 TIMEOUT = 30
@@ -49,6 +52,54 @@ def configured():
     cfg = db.get_config()
     return bool(cfg.get("plaid_client_id") and cfg.get("plaid_secret"))
 
+STALE_BANK_DAYS = 3
+REFRESH_MIN_HOURS = 24
+
+
+def _record_bank_status(item):
+    """Store when Plaid last got data from the bank. Never fails a sync."""
+    try:
+        body = _post("/item/get", {"access_token": item["access_token"]}, item.get("env"))
+        when = ((body.get("status") or {}).get("transactions") or {}).get("last_successful_update")
+        if when:
+            db.ex("UPDATE items SET bank_updated_at=? WHERE id=?", (when, item["id"]))
+        return when or item.get("bank_updated_at")
+    except Exception:
+        return item.get("bank_updated_at")
+
+
+def _bank_stale(item):
+    try:
+        seen = _datetime.datetime.fromisoformat(str(item.get("bank_updated_at")).replace("Z", "+00:00"))
+        return (_datetime.datetime.now(_datetime.timezone.utc) - seen).days >= STALE_BANK_DAYS
+    except (TypeError, ValueError):
+        return False
+
+
+def request_refresh_if_stale(item_id):
+    """Ask Plaid to re-check a stale bank, at most once a day per connection.
+
+    The answer arrives later and the next scheduled sync saves it. The attempt is
+    recorded first, so a failing call cannot repeat every sync, since Plaid may
+    charge per call.
+    """
+    item = db.q1("SELECT * FROM items WHERE id=?", (item_id,))
+    if not item or not item.get("access_token") or not _bank_stale(item):
+        return False
+    if not db.q1("SELECT 1 x FROM accounts WHERE item_id=? AND archived=0", (item_id,)):
+        return False
+    now = _datetime.datetime.now(_datetime.timezone.utc)
+    try:
+        last = _datetime.datetime.fromisoformat(str(item.get("bank_refresh_requested_at")).replace("Z", "+00:00"))
+        if now - last < _datetime.timedelta(hours=REFRESH_MIN_HOURS):
+            return False
+    except (TypeError, ValueError):
+        pass
+    db.ex("UPDATE items SET bank_refresh_requested_at=? WHERE id=?", (now.isoformat(timespec="seconds"), item_id))
+    _post("/transactions/refresh", {"access_token": item["access_token"]}, item.get("env"))
+    return True
+
+
 def create_link_token(scope_hint=None, item_id=None):
     payload = {"client_name":"Ledger", "country_codes":["US"], "language":"en", "user":{"client_user_id":"ledger-owner"}}
     cfg = db.get_config()
@@ -56,6 +107,9 @@ def create_link_token(scope_hint=None, item_id=None):
         item = db.q1("SELECT * FROM items WHERE id=?", (item_id,))
         if not item or not item.get("access_token"): raise PlaidError("Bank connection not found.")
         payload["access_token"] = item["access_token"]
+        # A connection with no error closes Link at once. When its bank data is
+        # old, ask for the full screens so the owner can actually sign in again.
+        if _bank_stale(item): payload["update"] = {"account_selection_enabled": True}
     else:
         payload["products"] = ["transactions"]
         payload["transactions"] = {"days_requested":730}
@@ -73,9 +127,17 @@ def sandbox_public_token(institution="ins_109508"):
     if db.get_config()["plaid_env"] != "sandbox": raise PlaidError("Test banks are only available in Sandbox.")
     return _post("/sandbox/public_token/create", {"institution_id":institution, "initial_products":["transactions"]})
 
-def _balance(a):
-    value = float((a.get("balances") or {}).get("current") or 0)
+def _balance(a, source=None):
+    # An account can follow the bank's available figure when that is what the bank shows.
+    balances = a.get("balances") or {}
+    value = balances.get("available") if source == "available" else None
+    value = float((balances.get("current") if value is None else value) or 0)
     return -value if a.get("type") in ("credit", "loan") else value
+
+
+def _saved_balance_source(conn, plaid_account_id):
+    row = conn.execute("SELECT balance_source FROM accounts WHERE plaid_account_id=? LIMIT 1", (plaid_account_id,)).fetchone()
+    return row[0] if row else None
 
 def map_plaid_category(raw):
     key = (raw or "").lower().replace("_", " ")
@@ -90,6 +152,12 @@ def ingest_item(public_token=None, access_token=None, institution="Unknown", sco
     access = exchanged.get("access_token")
     if not access: raise PlaidError("Bank connection failed. Try linking again.")
     meta = fetch_accounts(access, env)
+    if not isinstance(meta.get('accounts'), list) or not meta['accounts']:
+        raise PlaidError('The bank returned an incomplete account list. Saved history was not changed.', 'INVALID_ACCOUNT_LIST')
+    bank_meta = meta.get('item') or {}
+    if env == 'production' and not bank_meta.get('institution_id'):
+        raise PlaidError('The bank did not supply its identity. Reconnect the existing connection or try again.', 'INVALID_BANK_IDENTITY')
+    institution = bank_meta.get('institution_name') or institution
     now = datetime.now().isoformat(timespec="seconds")
     plaid_item_id = exchanged.get("item_id")
     conn = db._conn()
@@ -112,24 +180,35 @@ def ingest_item(public_token=None, access_token=None, institution="Unknown", sco
             if plaid_item_id and item["plaid_item_id"] and item["plaid_item_id"] != plaid_item_id:
                 raise PlaidError("That bank connection belongs to a different institution.")
         if item is None and plaid_item_id:
-            item = conn.execute("SELECT * FROM items WHERE plaid_item_id=? ORDER BY created_at,id LIMIT 1", (plaid_item_id,)).fetchone()
+            item = conn.execute("SELECT * FROM items WHERE plaid_item_id=? AND env=? ORDER BY created_at,id LIMIT 1", (plaid_item_id,env)).fetchone()
         if item is None:
             iid = "item_"+uuid.uuid4().hex[:12]
             conn.execute("INSERT INTO items(id,plaid_item_id,institution,env,access_token,created_at) VALUES(?,?,?,?,?,?)", (iid,plaid_item_id,institution,env,access,now))
         else:
             iid = item["id"]
             conn.execute("UPDATE items SET plaid_item_id=COALESCE(?,plaid_item_id),institution=?,env=?,access_token=? WHERE id=?", (plaid_item_id,institution,env,access,iid))
+        if bank_meta.get('institution_id'):
+            conn.execute('UPDATE items SET institution_id=? WHERE id=?',(bank_meta['institution_id'],iid))
+        accepted = 0
         for a in meta.get("accounts",[]):
             existing = conn.execute("SELECT id,archived FROM accounts WHERE item_id=? AND plaid_account_id=?", (iid,a["account_id"])).fetchone()
-            values = (a.get("name") or "Bank account",a.get("official_name"),a.get("type"),a.get("subtype"),a.get("mask"),_balance(a),(a.get("balances") or {}).get("iso_currency_code") or "USD")
+            values = (a.get("name") or "Bank account",a.get("official_name"),a.get("type"),a.get("subtype"),a.get("mask"),_balance(a, _saved_balance_source(conn, a.get("account_id"))),(a.get("balances") or {}).get("iso_currency_code") or "USD")
             if existing:
+                accepted += 1
                 if existing["archived"] or existing["id"] in known_aliases:
                     continue
                 # Archived accounts are frozen history, including their last
                 # known balance. Reconnecting never restores them implicitly.
                 conn.execute("UPDATE accounts SET name=?,official_name=?,type=?,subtype=?,mask=?,balance=?,iso_currency=? WHERE id=?", (*values,existing["id"]))
             else:
+                try: duplicate = bank_accounts.collision(conn, iid, a)
+                except ValueError as error: raise PlaidError(str(error), 'DUPLICATE_ACCOUNT') from None
+                if duplicate:
+                    continue
                 conn.execute("INSERT INTO accounts(id,item_id,name,official_name,type,subtype,scope,mask,balance,iso_currency,plaid_account_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", ("acct_"+uuid.uuid4().hex[:12],iid,*values[:4],scope,values[4],values[5],values[6],a["account_id"],now))
+                accepted += 1
+        if not accepted:
+            raise PlaidError('These bank accounts already exist in Ledger. Use Reconnect on the existing connection.', 'DUPLICATE_ACCOUNT')
         conn.commit()
     except Exception:
         conn.rollback(); raise
@@ -182,6 +261,9 @@ def refresh_item(item_id):
         c = db._conn()
         try:
             c.execute("BEGIN IMMEDIATE")
+            if (meta.get('item') or {}).get('institution_id'):
+                c.execute('UPDATE items SET institution_id=? WHERE id=?',(meta['item']['institution_id'],item_id))
+            account_map = {r['plaid_account_id']:dict(r) for r in c.execute('SELECT * FROM accounts WHERE item_id=?',(item_id,))}
             transaction_repair.init_schema(c)
             present_accounts = {a["account_id"] for a in meta["accounts"]}
             for provider_id, local in account_map.items():
@@ -191,6 +273,7 @@ def refresh_item(item_id):
                     db.set_account_archived(c, local["id"], 1)
                     local["archived"] = 1
             tx_columns = {row[1] for row in c.execute("PRAGMA table_info(transactions)")}
+            merchant_aliases = tx_names.aliases(c)
             scope_update = "scope=COALESCE(transactions.scope_override,excluded.scope)" if "scope_override" in tx_columns else "scope=excluded.scope"
             transfer_update = "is_transfer=COALESCE(transactions.is_transfer_override,excluded.is_transfer)" if "is_transfer_override" in tx_columns else "is_transfer=excluded.is_transfer"
             category_update = ("category_id=CASE WHEN COALESCE(transactions.category_override,0)=1 "
@@ -198,9 +281,15 @@ def refresh_item(item_id):
                                "THEN COALESCE(excluded.category_id,transactions.category_id) ELSE COALESCE(transactions.category_id,excluded.category_id) END") if "category_override" in tx_columns else "category_id=COALESCE(transactions.category_id,excluded.category_id)"
             name_update = "name=CASE WHEN COALESCE(transactions.name_override,0)=1 THEN transactions.name ELSE excluded.name END" if "name_override" in tx_columns else "name=excluded.name"
             # Newly granted accounts must be inserted before advancing the cursor.
-            default_scope = next(iter(account_map.values()), {}).get("scope", "personal")
+            default_scope = next((a['scope'] for a in account_map.values() if not a['archived']), 'personal')
+            duplicate_feeds = set()
             for a in meta.get("accounts", []):
                 if a["account_id"] not in account_map:
+                    try: duplicate = bank_accounts.collision(c, item_id, a)
+                    except ValueError as error: raise PlaidError(str(error), 'DUPLICATE_ACCOUNT') from None
+                    if duplicate:
+                        duplicate_feeds.add(a['account_id'])
+                        continue
                     aid = "acct_" + uuid.uuid4().hex[:12]
                     c.execute("INSERT INTO accounts(id,item_id,name,official_name,type,subtype,scope,mask,balance,iso_currency,plaid_account_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", (aid,item_id,a.get("name") or "Bank account",a.get("official_name"),a.get("type"),a.get("subtype"),default_scope,a.get("mask"),_balance(a),(a.get("balances") or {}).get("iso_currency_code") or "USD",a["account_id"],now))
                     account_map[a["account_id"]] = dict(c.execute("SELECT * FROM accounts WHERE id=?", (aid,)).fetchone())
@@ -214,7 +303,7 @@ def refresh_item(item_id):
                     "posted": t.get("date") or date.today().isoformat(),
                     "amount": round(-float(t["amount"]), 2),
                     "name": t.get("name") or "Bank transaction",
-                    "merchant": t.get("merchant_name") or t.get("name") or "",
+                    "merchant": tx_names.display_merchant(t.get("name"), t.get("merchant_name") or t.get("name") or "", merchant_aliases),
                     "pending": int(bool(t.get("pending"))),
                 })
             for provider_id, account in account_map.items():
@@ -227,6 +316,8 @@ def refresh_item(item_id):
                     c.execute("UPDATE accounts SET archived=1,scope=(SELECT scope FROM accounts WHERE id=?) WHERE id=?", (canonical, account["id"]))
                     account_aliases[account["id"]] = canonical
             for t in changes["added"]+changes["modified"]:
+                if t['account_id'] in duplicate_feeds:
+                    continue
                 a = account_map.get(t["account_id"])
                 if not a: raise PlaidError("A new account is still being prepared. We will retry this sync.", "ACCOUNT_NOT_READY")
                 if a["archived"] or a["id"] in account_aliases:
@@ -254,7 +345,7 @@ def refresh_item(item_id):
                     scope=candidate.get("scope_override") or a["scope"],
                     amount=round(-float(t["amount"]),2),
                     name=candidate.get("name") if candidate.get("name_override") else t.get("name") or "Bank transaction",
-                    merchant=t.get("merchant_name") or t.get("name") or "",
+                    merchant=tx_names.display_merchant(t.get("name"), t.get("merchant_name") or t.get("name") or "", merchant_aliases),
                     personal_finance_category=pfc,
                     is_transfer=candidate.get("is_transfer_override") if candidate.get("is_transfer_override") is not None else int(primary in ("TRANSFER_IN","TRANSFER_OUT","LOAN_PAYMENTS")))
                 suggestion = category_picker.choose(candidate, conn=c)
@@ -266,9 +357,15 @@ def refresh_item(item_id):
                  pending_transaction_id=excluded.pending_transaction_id,
                  {category_update},
                  {transfer_update}""".format(transfer_update=transfer_update, scope_update=scope_update, category_update=category_update, name_update=name_update)
-                c.execute(sql, ("tx_"+uuid.uuid4().hex[:16],a["id"],a["scope"],round(-float(t["amount"]),2),t.get("date") or date.today().isoformat(),t.get("name") or "Bank transaction",t.get("merchant_name") or t.get("name") or "",selected_category,int(bool(t.get("pending"))),t["transaction_id"],now,t.get("pending_transaction_id"),int(primary in ("TRANSFER_IN","TRANSFER_OUT","LOAN_PAYMENTS"))))
+                c.execute(sql, ("tx_"+uuid.uuid4().hex[:16],a["id"],a["scope"],round(-float(t["amount"]),2),t.get("date") or date.today().isoformat(),t.get("name") or "Bank transaction",tx_names.display_merchant(t.get("name"), t.get("merchant_name") or t.get("name") or "", merchant_aliases),selected_category,int(bool(t.get("pending"))),t["transaction_id"],now,t.get("pending_transaction_id"),int(primary in ("TRANSFER_IN","TRANSFER_OUT","LOAN_PAYMENTS"))))
                 current = c.execute("SELECT id FROM transactions WHERE plaid_transaction_id=?", (t["transaction_id"],)).fetchone()
                 if current:
+                    if "bank_category_primary" in tx_columns:
+                        c.execute("UPDATE transactions SET bank_category_primary=?,bank_category_detailed=?,bank_category_confidence=? WHERE id=?",
+                                  (pfc.get("primary"), pfc.get("detailed"), pfc.get("confidence_level"), current["id"]))
+                    if "bank_merchant" in tx_columns:
+                        c.execute("UPDATE transactions SET bank_merchant=? WHERE id=?",
+                                  (tx_names.bank_merchant(t.get("name"), t.get("merchant_name") or t.get("name") or ""), current["id"]))
                     receipt_store.invalidate_transaction(current["id"], conn=c)
             # Process removals last so a pending row can first be promoted to
             # its posted identity. Removed alias ids cannot delete canonical ids.
@@ -277,13 +374,13 @@ def refresh_item(item_id):
             for a in meta.get("accounts",[]):
                 local = account_map.get(a["account_id"])
                 if local and not local["archived"] and local["id"] not in account_aliases:
-                    c.execute("UPDATE accounts SET balance=? WHERE plaid_account_id=? AND item_id=?",(_balance(a),a["account_id"],item_id))
+                    c.execute("UPDATE accounts SET balance=? WHERE plaid_account_id=? AND item_id=?",(_balance(a, local.get("balance_source")),a["account_id"],item_id))
             c.execute("UPDATE items SET cursor=? WHERE id=?",(changes["cursor"],item_id))
             c.commit()
         except Exception:
             c.rollback(); raise
         finally: c.close()
-        return {"added":len(changes["added"]),"modified":len(changes["modified"]),"removed":len(changes["removed"])}
+        return {"added":len(changes["added"]),"modified":len(changes["modified"]),"removed":len(changes["removed"]),"bank_updated_at":_record_bank_status(item)}
 
 def archive_account(account_id, restore=False):
     """Pause one account without changing any of its saved financial records."""
@@ -291,6 +388,8 @@ def archive_account(account_id, restore=False):
         c = db._conn()
         try:
             with c:
+                if restore and account_id in transaction_repair.aliases(c):
+                    raise PlaidError('This duplicate account was consolidated. Use its original account.', 'DUPLICATE_ACCOUNT')
                 changed = db.set_account_archived(c, account_id, 0 if restore else 1)
                 if not changed: raise PlaidError("Account not found.")
         finally: c.close()

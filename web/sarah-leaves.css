@@ -24,7 +24,8 @@
 :root[data-review-mode=custom] .ar-bubble::after{border-radius:inherit!important}
 :root[data-review-mode=custom] .ar-bubble b{position:relative;z-index:1;text-shadow:0 1px 6px var(--panel)}
 :root[data-review-mode=custom] .ar-bubble small{position:relative;z-index:1;text-shadow:0 1px 6px var(--panel)}
-@keyframes leafBreeze{from{rotate:-2deg;translate:-50% calc(-50% + 2px)}to{rotate:2deg;translate:-50% calc(-50% - 2px)}}
+/* Leaves participate in flow layout; only drift around their reserved space. */
+@keyframes leafBreeze{from{rotate:-2deg;translate:0 2px}to{rotate:2deg;translate:0 -2px}}
 @media(hover:hover) and (pointer:fine){
  :root[data-review-mode=custom] .ar-bubble:hover{animation-play-state:paused;transform:translateY(-6px) rotate(-4deg) scale(1.12)!important}
  :root[data-review-mode=custom] .ar-bubble:nth-child(2n):hover{transform:translateY(-6px) rotate(4deg) scale(1.12)!important}
@@ -35,5 +36,5 @@
  :root[data-review-mode=custom] .ar-bubble{min-width:48px;min-height:48px}
 }
 html[data-motion-paused=true][data-review-mode=custom] .ar-bubble{animation-play-state:paused!important}
-@media(prefers-reduced-motion:reduce){:root[data-review-mode=custom] .ar-bubble{animation:none!important;rotate:0deg;translate:-50% -50%}}
+@media(prefers-reduced-motion:reduce){:root[data-review-mode=custom] .ar-bubble{animation:none!important;rotate:0deg;translate:none}}
 :root[data-review-mode=custom] .card.motion-surface:not(.motion-visible) .ar-bubble{animation-play-state:paused}

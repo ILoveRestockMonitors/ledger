@@ -3,8 +3,10 @@
   'use strict';
   function createCache(request, now = Date.now, ttl = 15000) {
     const entries = new Map();
+    let revision = 0;
     return {
-      clear() { entries.clear(); },
+      clear() { entries.clear(); revision++; },
+      get revision() { return revision; },
       read(path) {
         const cached = entries.get(path);
         if (cached && (cached.pending || now() - cached.at < ttl)) return cached.promise;

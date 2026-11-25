@@ -177,6 +177,7 @@
  :root[data-review-mode=aurora][data-theme=dark] .cornelious-legend{background-position:72% center}
  :root[data-review-mode=aurora] #app #view :is(.card,.hero-card,.review-strip,.subscription-row){
   background:var(--panel)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
   backdrop-filter:blur(22px) saturate(140%)!important;
   -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
  }
@@ -283,6 +284,7 @@
 :root[data-review-mode=aurora] #app #view .page-intro:has(+ .account-manual-bar)>div:first-child,
 :root[data-review-mode=aurora] #app #view .account-manual-bar,
 :root[data-review-mode=aurora] #app #view .spending-report > :is(.page-intro,.report-filters){
+ -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
  backdrop-filter:blur(22px) saturate(140%)!important;
  -webkit-backdrop-filter:blur(22px) saturate(140%)!important;
 }

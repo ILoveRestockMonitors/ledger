@@ -30,7 +30,10 @@ import cancellations
 import scheduler
 import demo_preview
 import category_rules
+import category_model
 import category_picker
+import amazon_connector
+import budget_consolidation
 from db import q, q1, ex
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,7 +94,8 @@ class Handler(BaseHTTPRequestHandler):
     def _body(self):
         try: n = int(self.headers.get("Content-Length") or 0)
         except ValueError: raise ApiError(400, "Invalid request length.")
-        if n < 0 or n > 1048576: raise ApiError(413, "This request is too large.")
+        max_body = 16_000_000 if urlsplit(self.path).path == '/api/amazon/import' else 1048576
+        if n < 0 or n > max_body: raise ApiError(413, "This request is too large.")
         if not n: return {}
         if self.headers.get_content_type() != "application/json": raise ApiError(415, "Use a JSON request.")
         try:
@@ -138,6 +142,8 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(401, "Sign in to Ledger to continue.")
 
     def _dispatch(self, method):
+        # A handler serves multiple requests on a persistent connection.
+        self.auth_cookie = None
         path = urlsplit(self.path).path
         try:
             self._guard(method, path)
@@ -167,7 +173,7 @@ class Handler(BaseHTTPRequestHandler):
         # Explicit allowlist: new API features cannot silently reach live data,
         # credentials, workers or writes through the demo surface.
         if not ((method == "GET" and route in demo_preview.READ_PATHS)
-                or (method == "POST" and route == "/projections")):
+                or (method == "POST" and route in ("/projections", "/transactions/consolidate-budgeted/preview"))):
             raise ApiError(403, "Demo version is read-only. Financial changes, bank syncing and assistants are off.")
         body = self._body() if method == "POST" else None
         with demo_preview.dataset():
@@ -184,6 +190,8 @@ class Handler(BaseHTTPRequestHandler):
                 detail = receipt_store.detail(self._query_params().get("id"))
                 detail["transaction"] = receipt_store.decorate_transactions([detail["transaction"]])[0]
                 return self._json(200, {**detail, "demo": True, "worker": receipt_service.status(demo=True)})
+            if method == "POST" and route == "/transactions/consolidate-budgeted/preview":
+                return self._json(200, budget_consolidation.preview(body.get("month"), body.get("scope")))
             if method == "POST": return self._json(200, forecasts.project(body))
             return self._api("GET", "/api" + route)
 
@@ -203,13 +211,16 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/projections/defaults": return self._json(200, forecasts.defaults(self._query_params().get("scope")))
         if path == "/api/cancellations": return self._json(200, cancellations.listing())
         if path == "/api/cancellations/status": return self._json(200, cancellations.status())
+        if path == '/api/amazon/status':
+            if DEMO: return self._json(200, {'connected':False,'ready':False,'stage':'disconnected','message':'Amazon connection is off in sample mode.'})
+            return self._json(200, amazon_connector.status())
         if path == "/api/receipts": return self._json(200, receipt_service.listing(demo=DEMO))
         if path == "/api/receipts/transaction":
             detail = receipt_store.detail(self._query_params().get("id"))
             detail["transaction"] = receipt_store.decorate_transactions([detail["transaction"]])[0]
             worker = receipt_service.status(demo=DEMO)
             job = detail.get("job") or {}
-            if not DEMO and job.get("status") == "needs_user":
+            if not DEMO and job.get("status") == "needs_user" and detail.get('provider') != 'amazon':
                 worker["instructions"] = (
                     "On your home lab, open this lookup’s dedicated browser using the handoff command in "
                     "docs/INSTALL.md. Sign in, close that browser, then choose Continue lookup here. "
@@ -220,14 +231,16 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/accounts":
             archived = self._query_params().get("archived") == "1"
-            rows = q("SELECT * FROM accounts WHERE archived=? ORDER BY scope, name", (int(archived),))
+            rows = q("""SELECT * FROM accounts WHERE archived=? AND id NOT IN
+                       (SELECT duplicate_account_id FROM transaction_account_aliases) ORDER BY scope, name""", (int(archived),))
             return self._json(200, rows)
 
         if path == "/api/items":
             rows = q("""SELECT i.*, COUNT(a.id) n_accounts,
                                SUM(CASE WHEN a.archived=0 THEN 1 ELSE 0 END) n_active_accounts,
                                COALESCE(SUM(CASE WHEN a.archived=0 THEN a.balance END),0) balance
-                        FROM items i LEFT JOIN accounts a ON a.item_id=i.id
+                        FROM items i LEFT JOIN accounts a ON a.item_id=i.id AND a.id NOT IN
+                          (SELECT duplicate_account_id FROM transaction_account_aliases)
                         GROUP BY i.id ORDER BY i.created_at""")
             cfg = db.get_config()
             for r in rows:
@@ -238,6 +251,9 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/categories":
             return self._json(200, q("SELECT * FROM categories ORDER BY kind DESC, name"))
+
+        if path == "/api/transactions/category-suggestions":
+            return self._json(200, {"suggestions": category_model.suggest(self._query_params().get("id") or "")})
 
         if path == "/api/transactions":
             args = []
@@ -258,8 +274,8 @@ class Handler(BaseHTTPRequestHandler):
                 where.append("posted<=?"); args.append(qs["until"])
             if qs.get("search"):
                 receipt_store.init_schema()
-                where.append("(t.name LIKE ? OR t.merchant LIKE ? OR t.note LIKE ? OR EXISTS (SELECT 1 FROM receipt_allocations ra JOIN receipt_jobs rj ON rj.id=ra.job_id WHERE ra.transaction_id=t.id AND ra.active=1 AND rj.status='applied' AND ra.description LIKE ?))")
-                like = f"%{qs['search']}%"; args += [like, like, like, like]
+                where.append("(t.name LIKE ? OR t.merchant LIKE ? OR COALESCE(t.matched_name,'') LIKE ? OR t.note LIKE ? OR EXISTS (SELECT 1 FROM receipt_allocations ra JOIN receipt_jobs rj ON rj.id=ra.job_id WHERE ra.transaction_id=t.id AND ra.active=1 AND rj.status='applied' AND ra.description LIKE ?))")
+                like = f"%{qs['search']}%"; args += [like, like, like, like, like]
             limit = max(1, min(int(qs.get("limit", 200)), 1000))
             offset = max(0, int(qs.get("offset", 0)))
             w = " AND ".join(where)
@@ -338,7 +354,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/export/transactions.csv":
             rows = q("""SELECT t.id, t.posted, t.scope, COALESCE(a.name,'Cash / manual') account, COALESCE(c.name,'') category,
-                               t.name, t.merchant, t.amount, t.recurring, t.note
+                               t.name, t.name_override, t.matched_name, t.merchant, t.amount, t.recurring, t.note
                         FROM transactions t LEFT JOIN accounts a ON t.account_id=a.id
                         LEFT JOIN categories c ON t.category_id=c.id ORDER BY t.posted""")
             import csv, io
@@ -349,7 +365,8 @@ class Handler(BaseHTTPRequestHandler):
             for r in rows:
                 # Export allocations instead of the original expense row, so
                 # summing the amount column still counts each bank charge once.
-                items = allocations.get(r["id"]) or [{"cat_name": r["category"], "description": r["name"], "amount": r["amount"]}]
+                base_desc = r["name"] if r.get("name_override") else (r.get("matched_name") or r["name"])
+                items = allocations.get(r["id"]) or [{"cat_name": r["category"], "description": base_desc, "amount": r["amount"]}]
                 for item in items:
                     amount = -item["amount_cents"] / 100 if "amount_cents" in item else item["amount"]
                     values = [r["posted"],r["scope"],r["account"],item.get("cat_name") or "",item["description"],r["merchant"],amount,r["recurring"],r["note"]]
@@ -390,6 +407,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/cancellations/resume":
             if DEMO: raise ApiError(400, "Cancellation agents are disabled in demo mode.")
             return self._json(200, cancellations.resume(b.get("id")))
+        if path.startswith('/api/amazon/'):
+            if DEMO or receipt_service.disabled(): raise ApiError(403, 'Amazon connection is off in sample or test mode.')
+            action = path.removeprefix('/api/amazon/')
+            if action not in ('connect','verify','refresh','sync','disconnect','import'): raise ApiError(404,'Not found.')
+            return self._json(202, amazon_connector.command(action,b))
         if path == "/api/receipts/settings":
             return self._json(200, receipt_service.save_settings(b, demo=DEMO))
         if path in ("/api/receipts/request", "/api/receipts/resume"):
@@ -560,12 +582,18 @@ class Handler(BaseHTTPRequestHandler):
             _scan_safely()
             return self._json(200, {"ok": True, "id": tid})
 
+        if path == "/api/transactions/category-selection-preview":
+            return self._json(200, category_rules.preview_selection(b.get("ids"), b.get("category_id")))
         if path == "/api/transactions/category-preview":
             return self._json(200, category_rules.preview(b.get("id"), b.get("category_id")))
         if path == "/api/transactions/category-apply":
             return self._json(200, category_rules.apply(b.get("preview_id"), b.get("remember", False)))
         if path == "/api/transactions/category-undo":
             return self._json(200, category_rules.undo(b.get("batch_id")))
+        if path == "/api/transactions/consolidate-budgeted/preview":
+            return self._json(200, budget_consolidation.preview(b.get("month"), b.get("scope")))
+        if path == "/api/transactions/consolidate-budgeted/apply":
+            return self._json(200, budget_consolidation.apply(b.get("preview_id"), b.get("selections")))
 
         if path == "/api/transactions/update":
             tid = b.get("id")
@@ -573,6 +601,16 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(404, "transaction not found")
             fields = ("category_id", "name", "note", "scope", "recurring", "is_transfer", "amount", "posted")
             patch = {key: b[key] for key in fields if key in b}
+            if b.get("remember_name") is True and isinstance(patch.get("name"), str) and patch["name"].strip():
+                # The owner named the store: use it for every purchase from that bank store.
+                import tx_names
+                c = db._conn()
+                try:
+                    c.execute("BEGIN IMMEDIATE")
+                    tx_names.remember(c, tid, patch.pop("name"))
+                    c.commit()
+                finally:
+                    c.close()
             if "amount" in patch:
                 patch["amount"] = number(patch["amount"], -1e12, 1e12)
                 if not patch["amount"]: raise ValueError("Enter a non-zero amount.")
@@ -693,6 +731,16 @@ def main():
     else:
         # Re-evaluate persisted suggestions with current rules before serving
         # them, including false positives created by an older detector.
+        try:
+            # Release legacy Amazon jobs that paused on the retired Codex worker,
+            # and dismiss non-retail subservices such as Blink subscriptions.
+            ex("UPDATE receipt_jobs SET status='queued', message='' WHERE provider='amazon' AND status='needs_user' AND message LIKE '%codex login%'")
+            ex("""UPDATE receipt_jobs SET status='dismissed', message='Handled as subscription merchant.'
+                  WHERE provider='amazon' AND status IN ('queued','needs_user')
+                    AND transaction_id IN (SELECT id FROM transactions WHERE lower(COALESCE(merchant,''))='blink')""")
+            amazon_connector.apply_saved_names()
+        except Exception:
+            pass
         _scan_safely()
         scheduler.start()
         def worker_loop():
